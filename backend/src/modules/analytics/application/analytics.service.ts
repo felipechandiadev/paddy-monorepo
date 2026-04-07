@@ -573,7 +573,7 @@ export class AnalyticsService {
 
     const receptions = await this.receptionsRepository.find({
       where: { producerId, deletedAt: IsNull() },
-      take: 50000,
+      take: 5000,
     });
 
     const totalReceptions = receptions.length;
@@ -593,7 +593,7 @@ export class AnalyticsService {
         status: SettlementStatusEnum.COMPLETED,
         deletedAt: IsNull(),
       },
-      take: 50000,
+      take: 5000,
     });
 
     const totalPayments = settlements.reduce(
@@ -621,7 +621,7 @@ export class AnalyticsService {
     const receptions = await this.receptionsRepository.find({
       where: { seasonId, deletedAt: IsNull() },
       relations: ['producer', 'riceType'],
-      take: 50000,
+      take: 5000,
     });
 
     if (receptions.length === 0) {
@@ -692,7 +692,7 @@ export class AnalyticsService {
     const receptions = await this.receptionsRepository.find({
       where,
       relations: ['analysisRecord'],
-      take: 50000,
+      take: 5000,
     });
 
     if (receptions.length === 0) {
@@ -752,7 +752,7 @@ export class AnalyticsService {
 
     const settlements = await this.settlementsRepository.find({
       where,
-      take: 50000,
+      take: 5000,
     });
 
     if (settlements.length === 0) {
@@ -878,7 +878,7 @@ export class AnalyticsService {
         where: settlementsWhere,
         relations: ['producer'],
         order: { updatedAt: 'ASC' },
-        take: 50000,
+        take: 5000,
       });
 
       if (settlements.length === 0 && !includeAnalyzed) {
@@ -898,7 +898,7 @@ export class AnalyticsService {
             deletedAt: IsNull(),
           },
           order: { createdAt: 'DESC' },
-          take: 50000,
+          take: 5000,
         });
 
         for (const transaction of settlementTransactions) {
@@ -1365,7 +1365,7 @@ export class AnalyticsService {
             deletedAt: IsNull(),
           },
           relations: ['producer'],
-          take: 50000,
+          take: 5000,
         })
       : [];
 
@@ -3739,7 +3739,7 @@ export class AnalyticsService {
     const allReceptions = await this.receptionsRepository.find({
       where: { seasonId, deletedAt: IsNull() },
       order: { createdAt: 'ASC' },
-      take: 50000,
+      take: 5000,
     });
 
     const completedDataset = await this.getCompletedSettlementDataset(seasonId);
@@ -3846,7 +3846,7 @@ export class AnalyticsService {
         deletedAt: IsNull(),
       },
       order: { updatedAt: 'ASC' },
-      take: 50000,
+      take: 5000,
     });
 
     const settlementIds = settlements.map((settlement) => settlement.id);
