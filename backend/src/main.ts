@@ -47,10 +47,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Paddy Backend running on http://localhost:${port}`);
-  console.log(`📚 API Documentation available at http://localhost:${port}/api/v1`);
+  console.log(`🚀 Paddy Backend running on port ${port}`);
+  console.log(`📚 API Documentation available at /api/v1`);
 }
 
 bootstrap();
