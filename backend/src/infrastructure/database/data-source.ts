@@ -73,6 +73,6 @@ export const dataSource = new DataSource({
   synchronize:
     process.env.TYPEORM_SYNCHRONIZE === 'true' &&
     process.env.NODE_ENV === 'development',
-  logging: process.env.NODE_ENV === 'development',
+  logging: false, // Disable all logging to prevent memory buildup
   dropSchema: process.env.NODE_ENV === 'test', // Drop en tests
 });
