@@ -51,17 +51,6 @@ async function bootstrap() {
 
   console.log(`🚀 Paddy Backend running on port ${port}`);
   console.log(`📚 API Documentation available at /api/v1`);
-
-  // Memory monitoring - log every 5 seconds
-  setInterval(() => {
-    const used = process.memoryUsage();
-    console.log('[MEMORY]', {
-      rss: Math.round(used.rss / 1024 / 1024),
-      heapTotal: Math.round(used.heapTotal / 1024 / 1024),
-      heapUsed: Math.round(used.heapUsed / 1024 / 1024),
-      external: Math.round(used.external / 1024 / 1024),
-    }, 'MB');
-  }, 5000);
 }
 
 bootstrap();
