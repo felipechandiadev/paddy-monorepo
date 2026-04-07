@@ -621,6 +621,7 @@ export class AnalyticsService {
     const receptions = await this.receptionsRepository.find({
       where: { seasonId, deletedAt: IsNull() },
       relations: ['producer', 'riceType'],
+      take: 50000,
     });
 
     if (receptions.length === 0) {
@@ -691,6 +692,7 @@ export class AnalyticsService {
     const receptions = await this.receptionsRepository.find({
       where,
       relations: ['analysisRecord'],
+      take: 50000,
     });
 
     if (receptions.length === 0) {
@@ -750,6 +752,7 @@ export class AnalyticsService {
 
     const settlements = await this.settlementsRepository.find({
       where,
+      take: 50000,
     });
 
     if (settlements.length === 0) {
@@ -875,6 +878,7 @@ export class AnalyticsService {
         where: settlementsWhere,
         relations: ['producer'],
         order: { updatedAt: 'ASC' },
+        take: 50000,
       });
 
       if (settlements.length === 0 && !includeAnalyzed) {
@@ -894,6 +898,7 @@ export class AnalyticsService {
             deletedAt: IsNull(),
           },
           order: { createdAt: 'DESC' },
+          take: 50000,
         });
 
         for (const transaction of settlementTransactions) {
@@ -1360,6 +1365,7 @@ export class AnalyticsService {
             deletedAt: IsNull(),
           },
           relations: ['producer'],
+          take: 50000,
         })
       : [];
 
