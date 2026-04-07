@@ -573,6 +573,7 @@ export class AnalyticsService {
 
     const receptions = await this.receptionsRepository.find({
       where: { producerId, deletedAt: IsNull() },
+      take: 50000,
     });
 
     const totalReceptions = receptions.length;
@@ -592,6 +593,7 @@ export class AnalyticsService {
         status: SettlementStatusEnum.COMPLETED,
         deletedAt: IsNull(),
       },
+      take: 50000,
     });
 
     const totalPayments = settlements.reduce(
@@ -3731,6 +3733,7 @@ export class AnalyticsService {
     const allReceptions = await this.receptionsRepository.find({
       where: { seasonId, deletedAt: IsNull() },
       order: { createdAt: 'ASC' },
+      take: 50000,
     });
 
     const completedDataset = await this.getCompletedSettlementDataset(seasonId);
@@ -3837,6 +3840,7 @@ export class AnalyticsService {
         deletedAt: IsNull(),
       },
       order: { updatedAt: 'ASC' },
+      take: 50000,
     });
 
     const settlementIds = settlements.map((settlement) => settlement.id);
