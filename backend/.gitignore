@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Backups - JSON database exports (local only)
+backups/
+backups/*.json
+
+# Environment variables — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# Editor configs
+.vscode/
+.idea/

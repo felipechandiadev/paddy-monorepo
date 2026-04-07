@@ -1,0 +1,70 @@
+# ===== Node/npm =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+dist/
+build/
+
+# ===== Backend =====
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/coverage/
+backend/tsconfig.build.tsbuildinfo
+
+# ===== Frontend (Next.js) =====
+frontend/.next/
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/out/
+frontend/.turbo/
+frontend/dist/
+
+# ===== IDEs & Editors =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env.local
+.env.*.local
+*.sublime-project
+*.sublime-workspace
+
+# ===== Logs =====
+*.log
+logs/
+lerna-debug.log
+
+# ===== Misc =====
+.turbo/
+dist/
+build/
+*.tgz
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Editor backups =====
+*~
+*.orig
+*.bak
+
+# ===== MySQL/Database =====
+*.sql
+dump.sql
+backup-*.sql
+
+# ===== Certificates =====
+*.pem
+*.key
+*.crt
