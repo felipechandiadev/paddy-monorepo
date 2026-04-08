@@ -635,6 +635,7 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
           scroll="body"
           zIndex={90}
           contentStyle={{ maxHeight: '95vh' }}
+          pageOrientation="portrait"
         >
           <ReceptionToPrint
             reception={selectedReception}

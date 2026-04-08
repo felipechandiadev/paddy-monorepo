@@ -626,7 +626,7 @@ const SettlementsDataGrid: React.FC<SettlementsDataGridProps> = ({
           zIndex={90}
           contentStyle={{ maxHeight: '95vh' }}
           pageSize="Letter"
-          pageOrientation="portrait"
+          pageOrientation="landscape"
         >
           <SettlementToPrint settlement={selectedSettlementForPrint} />
         </PrintDialog>

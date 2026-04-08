@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "paddy-monorepo"
+    }
+  ],
+  "settings": {
+    "git.repositories": ["."],
+    "git.ignoreLimitWarning": true
+  }
+}
