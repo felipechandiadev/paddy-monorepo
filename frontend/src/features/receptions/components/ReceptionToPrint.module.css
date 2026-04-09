@@ -1,3 +1,7 @@
+@page {
+  size: landscape;
+}
+
 .sheet {
   width: 210mm;
   min-height: 297mm;
@@ -460,10 +464,6 @@
 }
 
 @media print {
-  @page {
-    size: landscape;
-  }
-
   .sheet {
     width: 100%;
     min-height: auto;
