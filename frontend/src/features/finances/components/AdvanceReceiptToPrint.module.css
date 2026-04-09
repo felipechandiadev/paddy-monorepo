@@ -1,5 +1,9 @@
+@page {
+  size: portrait;
+}
+
 .sheet {
-  width: 215.9mm;
+  width: 210mm;
   min-height: 279.4mm;
   margin: 0 auto;
   padding: 14mm;
@@ -276,8 +280,8 @@
   .sheet {
     box-shadow: none;
     margin: 0;
-    width: auto;
+    width: 100%;
     min-height: auto;
-    padding: 0;
+    padding: 8mm;
   }
 }
