@@ -460,6 +460,10 @@
 }
 
 @media print {
+  @page {
+    size: landscape;
+  }
+
   .sheet {
     width: 100%;
     min-height: auto;

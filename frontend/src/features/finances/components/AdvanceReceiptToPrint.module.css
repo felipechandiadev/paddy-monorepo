@@ -273,6 +273,10 @@
 }
 
 @media print {
+  @page {
+    size: landscape;
+  }
+
   .sheet {
     box-shadow: none;
     margin: 0;
