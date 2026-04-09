@@ -164,14 +164,14 @@
 }
 
 .checkContainer {
-  min-height: 276px;
+  min-height: 262px;
   border: 2px dashed #9ca3af;
   border-radius: 12px;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.2rem;
+  padding: 1.14rem;
 }
 
 .checkContainerLabel {
