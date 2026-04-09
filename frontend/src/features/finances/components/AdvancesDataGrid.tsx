@@ -518,6 +518,7 @@ const AdvancesDataGrid: React.FC<AdvancesDataGridProps> = ({
         onSuccess={(advance) => {
           onAdvanceCreate?.(advance);
           setIsCreateDialogOpen(false);
+          handlePrintAdvance(advance);
         }}
       />
 
