@@ -496,7 +496,7 @@ export class OperationsService {
     };
 
     ['H', 'I', 'J', 'K'].forEach((columnKey) => {
-      worksheet.getColumn(columnKey).numFmt = '#,##0.00';
+      worksheet.getColumn(columnKey).numFmt = '#,##0';
     });
     worksheet.getColumn('L').numFmt = '$#,##0';
 
