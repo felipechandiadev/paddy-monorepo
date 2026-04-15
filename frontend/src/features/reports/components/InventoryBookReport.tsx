@@ -244,7 +244,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
 
     void runReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.seasonId]);
+  }, [filters.seasonId, filters.month]);
 
   const movementColumns = useMemo<PrintableReportTableColumn<InventoryBookMovementItem>[]>(
     () => [

@@ -3602,8 +3602,9 @@ export class AnalyticsService {
 
     const previousReceivedKg = allReceptions.reduce((sum, reception) => {
       const receptionDate = getReceptionDate(reception);
-      if (receptionDate && receptionDate < start) {
-        return sum + this.toNumber(reception.netWeight);
+      const netWeight = this.toNumber(reception.netWeight);
+      if (receptionDate && receptionDate < start && netWeight > 0) {
+        return sum + netWeight;
       }
 
       return sum;
@@ -3619,8 +3620,9 @@ export class AnalyticsService {
 
     const monthReceivedKg = allReceptions.reduce((sum, reception) => {
       const receptionDate = getReceptionDate(reception);
-      if (receptionDate && receptionDate >= start && receptionDate < endExclusive) {
-        return sum + this.toNumber(reception.netWeight);
+      const netWeight = this.toNumber(reception.netWeight);
+      if (receptionDate && receptionDate >= start && receptionDate < endExclusive && netWeight > 0) {
+        return sum + netWeight;
       }
 
       return sum;
@@ -3649,8 +3651,9 @@ export class AnalyticsService {
     const receptionMovements = allReceptions
       .filter((reception) => {
         const receptionDate = getReceptionDate(reception);
+        const netWeight = this.toNumber(reception.netWeight);
         return Boolean(
-          receptionDate && receptionDate >= start && receptionDate < endExclusive,
+          receptionDate && receptionDate >= start && receptionDate < endExclusive && netWeight > 0,
         );
       })
       .map((reception) => {
@@ -3751,13 +3754,14 @@ export class AnalyticsService {
     const receivedByMonth = new Map<string, number>();
     for (const reception of allReceptions) {
       const monthKey = this.toMonthKeyFromDate(getReceptionDate(reception));
-      if (!monthKey) {
+      const netWeight = this.toNumber(reception.netWeight);
+      if (!monthKey || netWeight <= 0) {
         continue;
       }
 
       receivedByMonth.set(
         monthKey,
-        this.toNumber(receivedByMonth.get(monthKey)) + this.toNumber(reception.netWeight),
+        this.toNumber(receivedByMonth.get(monthKey)) + netWeight,
       );
     }
 
