@@ -336,34 +336,37 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
         sortable: true,
       },
       {
+        field: 'createdAt',
+        headerName: 'Fecha Recepción',
+        width: 140,
+        sortable: true,
+        renderCell: ({ value }) => (
+          <span>{new Date(value).toLocaleDateString('es-CL')}</span>
+        ),
+      },
+      {
         field: 'producer',
         headerName: 'Productor',
         width: 200,
         sortable: true,
       },
       {
-        field: 'riceType',
-        headerName: 'Tipo de Arroz',
-        width: 180,
+        field: 'rut',
+        headerName: 'RUT Productor',
+        width: 130,
         sortable: true,
-      },
-      {
-        field: 'season',
-        headerName: 'Temporada',
-        minWidth: 150,
-        sortable: true,
-        valueGetter: ({ row }) => (row as ReceptionListItem).season || '-',
+        renderCell: ({ value }) => <span>{value || '-'}</span>,
       },
       {
         field: 'licensePlate',
-        headerName: 'Placa',
+        headerName: 'Patente',
         width: 120,
         sortable: true,
       },
       {
         field: 'grossWeight',
-        headerName: 'Peso Bruto',
-        width: 120,
+        headerName: 'Peso Bruto (kg)',
+        width: 130,
         type: 'number',
         sortable: true,
         renderCell: ({ value }) => (
@@ -372,7 +375,7 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
       },
       {
         field: 'tare',
-        headerName: 'Tara',
+        headerName: 'Tara (kg)',
         width: 110,
         type: 'number',
         sortable: true,
@@ -382,8 +385,8 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
       },
       {
         field: 'netWeight',
-        headerName: 'Peso Neto',
-        width: 120,
+        headerName: 'Peso Neto (kg)',
+        width: 130,
         type: 'number',
         sortable: true,
         renderCell: ({ value }) => (
@@ -392,8 +395,8 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
       },
       {
         field: 'paddyNeto',
-        headerName: 'Paddy Neto',
-        width: 130,
+        headerName: 'Paddy Neto (kg)',
+        width: 140,
         type: 'number',
         sortable: true,
         renderCell: ({ value }) => (
@@ -404,8 +407,8 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
       },
       {
         field: 'price',
-        headerName: 'Precio',
-        width: 130,
+        headerName: 'Precio Arroz (CLP)',
+        width: 150,
         type: 'number',
         sortable: true,
         renderCell: ({ value }) => (
@@ -455,13 +458,17 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
         },
       },
       {
-        field: 'createdAt',
-        headerName: 'Fecha',
-        width: 110,
+        field: 'riceType',
+        headerName: 'Tipo de Arroz',
+        width: 180,
         sortable: true,
-        renderCell: ({ value }) => (
-          <span>{new Date(value).toLocaleDateString('es-CL')}</span>
-        ),
+      },
+      {
+        field: 'season',
+        headerName: 'Temporada',
+        minWidth: 150,
+        sortable: true,
+        valueGetter: ({ row }) => (row as ReceptionListItem).season || '-',
       },
       {
         field: 'actions',
