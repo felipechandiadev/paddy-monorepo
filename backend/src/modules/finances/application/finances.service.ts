@@ -8,6 +8,7 @@ import {
   formatDateString,
   daysBetween,
   toJSDate,
+  parseDateInputLocal,
 } from '@shared/utils/luxon-utils';
 import {
   Advance,
@@ -109,7 +110,7 @@ export class FinancesService {
       return null;
     }
 
-    const dt = parseDateInput(value);
+    const dt = parseDateInputLocal(value);
     return dt ? toJSDate(dt) : null;
   }
 

@@ -77,6 +77,35 @@ export function parseDateInput(value?: string | Date | null): DateTime | null {
 }
 
 /**
+ * Flexible date parser for various input formats - LOCAL TIMEZONE VERSION
+ * Handles Date objects, ISO strings, and YYYY-MM-DD strings
+ * For date-only strings (YYYY-MM-DD), returns LOCAL TIMEZONE start of day
+ * Use this for date-only fields that should be interpreted in local timezone
+ * @param value Input value in various formats
+ * @returns DateTime in LOCAL TIMEZONE or null
+ */
+export function parseDateInputLocal(value?: string | Date | null): DateTime | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return DateTime.fromJSDate(value); // Uses local timezone
+  }
+
+  const strValue = String(value).trim();
+  
+  // Check if it's a date-only string (YYYY-MM-DD format)
+  const dateOnlyMatch = strValue.match(/^\d{4}-\d{2}-\d{2}$/);
+  if (dateOnlyMatch) {
+    // For date-only strings, parse as LOCAL TIMEZONE at start of day
+    // This ensures the date is preserved in local timezone
+    const dt = DateTime.fromISO(strValue + 'T00:00:00', { zone: 'system' });
+    return dt.isValid ? dt : null;
+  }
+
+  return parseDateString(strValue);
+}
+
+/**
  * Calculates the number of days between two dates
  * @param start Start date
  * @param end End date (exclusive = end of day)
