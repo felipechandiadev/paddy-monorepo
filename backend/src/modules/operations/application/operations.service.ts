@@ -452,11 +452,10 @@ export class OperationsService {
 
     worksheet.columns = [
       { header: 'Folio', key: 'id' },
-      { header: 'Guia', key: 'guideNumber' },
+      { header: 'Guía', key: 'guideNumber' },
+      { header: 'Fecha Recepción', key: 'createdAt' },
       { header: 'Productor', key: 'producerName' },
       { header: 'RUT Productor', key: 'producerRut' },
-      { header: 'Tipo de Arroz', key: 'riceTypeName' },
-      { header: 'Temporada', key: 'seasonName' },
       { header: 'Patente', key: 'licensePlate' },
       { header: 'Peso Bruto (kg)', key: 'grossWeight' },
       { header: 'Tara (kg)', key: 'tareWeight' },
@@ -464,17 +463,17 @@ export class OperationsService {
       { header: 'Paddy Neto (kg)', key: 'finalNetWeight' },
       { header: 'Precio Arroz (CLP)', key: 'ricePrice' },
       { header: 'Estado', key: 'statusLabel' },
-      { header: 'Fecha Recepcion', key: 'createdAt' },
+      { header: 'Tipo de Arroz', key: 'riceTypeName' },
+      { header: 'Temporada', key: 'seasonName' },
     ];
 
     receptions.forEach((reception) => {
       worksheet.addRow({
         id: Number(reception.id),
         guideNumber: reception.guideNumber || '',
+        createdAt: this.formatDateValue(reception.createdAt),
         producerName: reception.producer?.name || '',
         producerRut: reception.producer?.rut || '',
-        riceTypeName: reception.riceType?.name || '',
-        seasonName: reception.season?.name || '',
         licensePlate: reception.licensePlate || '',
         grossWeight: Number(reception.grossWeight || 0),
         tareWeight: Number(reception.tareWeight || 0),
@@ -482,7 +481,8 @@ export class OperationsService {
         finalNetWeight: Number(reception.finalNetWeight || 0),
         ricePrice: Number(reception.ricePrice || 0),
         statusLabel: this.formatReceptionStatusLabel(reception),
-        createdAt: this.formatDateValue(reception.createdAt),
+        riceTypeName: reception.riceType?.name || '',
+        seasonName: reception.season?.name || '',
       });
     });
 
@@ -495,10 +495,10 @@ export class OperationsService {
       to: 'N1',
     };
 
-    ['H', 'I', 'J', 'K'].forEach((columnKey) => {
+    ['G', 'H', 'I', 'J'].forEach((columnKey) => {
       worksheet.getColumn(columnKey).numFmt = '#,##0';
     });
-    worksheet.getColumn('L').numFmt = '$#,##0';
+    worksheet.getColumn('K').numFmt = '$#,##0';
 
     worksheet.columns.forEach((column) => {
       let maxLength = 12;
