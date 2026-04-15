@@ -100,7 +100,7 @@ export class OperationsService {
       analysis.summaryPercent ?? analysis.totalGroupPercent,
     );
 
-    const totalDiscountKg = this.roundTo2(
+    const totalDiscountKg = Math.round(
       summaryPenalty ?? (netWeight * summaryPercent) / 100,
     );
 
@@ -108,10 +108,10 @@ export class OperationsService {
     const bonusPercent = this.toNumber(analysis.bonusPercent);
     const bonusKg =
       bonusEnabled && bonusPercent > 0
-        ? this.roundTo2((netWeight * bonusPercent) / 100)
+        ? Math.round((netWeight * bonusPercent) / 100)
         : 0;
 
-    const finalNetWeight = this.roundTo2(netWeight - totalDiscountKg + bonusKg);
+    const finalNetWeight = Math.round(netWeight - totalDiscountKg + bonusKg);
     const dryPercent = this.toNumber(
       analysis.dryPercent ?? reception.dryPercent,
     );
@@ -556,8 +556,9 @@ export class OperationsService {
     await this.configService.getTemplateById(createDto.templateId);
 
     // Calcular netWeight = grossWeight - tareWeight
-    const netWeight =
-      createDto.grossWeight - createDto.tareWeight;
+    const netWeight = Math.round(
+      createDto.grossWeight - createDto.tareWeight
+    );
 
     const receptionDate = this.parseDateInput(createDto.receptionDate) ?? new Date();
     const receptionBookNumber =
@@ -601,8 +602,9 @@ export class OperationsService {
       const receptionsRepo = manager.getRepository(Reception);
       const analysisRepo = manager.getRepository(AnalysisRecord);
 
-      const netWeight =
-        createDto.reception.grossWeight - createDto.reception.tareWeight;
+      const netWeight = Math.round(
+        createDto.reception.grossWeight - createDto.reception.tareWeight
+      );
 
       const receptionDate = this.parseDateInput(createDto.reception.receptionDate) ?? new Date();
 
@@ -688,15 +690,16 @@ export class OperationsService {
     delete updateDto.status;
 
     if (updateDto.grossWeight || updateDto.tareWeight) {
-      updateDto.netWeight =
+      updateDto.netWeight = Math.round(
         (updateDto.grossWeight || reception.grossWeight) -
-        (updateDto.tareWeight || reception.tareWeight);
+        (updateDto.tareWeight || reception.tareWeight)
+      );
        // If reception is not analyzed, recalculate finalNetWeight
        if (reception.status === ReceptionStatusEnum.CANCELLED) {
          const netWeight = updateDto.netWeight;
         const totalDiscountKg = Number(reception.totalDiscountKg) || 0;
         const bonusKg = Number(reception.bonusKg) || 0;
-         updateDto.finalNetWeight = netWeight - totalDiscountKg + bonusKg;
+         updateDto.finalNetWeight = Math.round(netWeight - totalDiscountKg + bonusKg);
        }
     }
 
@@ -1258,7 +1261,7 @@ export class OperationsService {
 
     const summaryPenaltyKg =
       parseNumber(source.summaryPenaltyKg) ??
-      roundTo2(
+      Math.round(
         (Number(reception.netWeight ?? 0) / 100) *
           sumNumbers([
             Math.max(0, Number(humedadPercent ?? 0) - Number(humedadTolerance ?? 0)),

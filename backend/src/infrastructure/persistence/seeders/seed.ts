@@ -466,7 +466,7 @@ async function seed() {
         ? roundTo2(Math.max(0, humedadRange - 15))
         : 0;
 
-      const totalDiscountKg = roundTo2(
+      const totalDiscountKg = Math.round(
         (reception.netWeight * (humedadPercent + impurezasPercent)) / 100,
       );
 
@@ -476,10 +476,10 @@ async function seed() {
 
       const bonusKg =
         bonusEnabled && totalGroupPercent < groupTolerance
-          ? roundTo2((reception.netWeight * template.toleranceBonus) / 100)
+          ? Math.round((reception.netWeight * template.toleranceBonus) / 100)
           : 0;
 
-      const finalNetWeight = roundTo2(
+      const finalNetWeight = Math.round(
         reception.netWeight - totalDiscountKg + bonusKg,
       );
 
@@ -636,8 +636,8 @@ async function seed() {
 
     for (let i = 0; i < 12; i++) {
       const riceType = getRiceTypeByIndex(i);
-      const grossWeight = roundTo2(43200 + i * 780 + (i % 3) * 240);
-      const tareWeight = roundTo2(14700 + (i % 4) * 180);
+      const grossWeight = Math.round(43200 + i * 780 + (i % 3) * 240);
+      const tareWeight = Math.round(14700 + (i % 4) * 180);
 
       receptionSeedPlan.push({
         producerIndex: i % 6,
