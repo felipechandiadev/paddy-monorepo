@@ -45,9 +45,9 @@ function PrintableReportTable<Row>({
       className={`overflow-hidden rounded-xl ${containerBorderClass} bg-white print:break-inside-avoid print:rounded-none print:border-none print:bg-transparent`}
     >
       <div className="border-b border-neutral-200 px-2 py-1 print:px-1 print:py-0.5">
-        <h3 className="text-base font-semibold text-neutral-900 print:text-[9px] print:font-bold">{title}</h3>
+        <h3 className="text-base font-semibold text-neutral-900 print:text-[12px] print:font-bold">{title}</h3>
         {subtitle ? (
-          <p className="mt-1 text-sm text-neutral-600 print:text-[7px] print:mt-0.5 print:text-neutral-700">{subtitle}</p>
+          <p className="mt-1 text-sm text-neutral-600 print:text-[9px] print:mt-0.5 print:text-neutral-700">{subtitle}</p>
         ) : null}
       </div>
 
