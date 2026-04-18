@@ -62,15 +62,15 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
   );
 
   return (
-    <section className="rounded-xl border border-neutral-200 bg-white px-4 py-4 print:hidden">
-      <h3 className="text-base font-semibold text-neutral-900">
+    <section className="rounded-xl border border-neutral-200 bg-white px-4 py-4 print:rounded-none print:border-none print:px-0 print:py-2">
+      <h3 className="text-base font-semibold text-neutral-900 print:text-sm">
         Saldos del Mes
       </h3>
-      <p className="mt-1 text-sm text-neutral-600">
+      <p className="mt-1 text-sm text-neutral-600 print:text-xs">
         Kilogramos en Depósito y Propio al cierre del período seleccionado.
       </p>
 
-      <div className="mt-4 h-72 w-full rounded-md bg-neutral-50 p-2">
+      <div className="mt-4 h-72 w-full rounded-md bg-neutral-50 p-2 print:h-40 print:mt-2 print:bg-white print:p-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={items} margin={{ top: 8, right: 8, left: 70, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />

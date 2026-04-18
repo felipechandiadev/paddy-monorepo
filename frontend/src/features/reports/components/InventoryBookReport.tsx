@@ -653,28 +653,34 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
           )}
 
           {reportSummary && (
-            <InventoryBalanceBarChart
-              deposito={reportSummary.closingBalance.deposito}
-              propio={reportSummary.closingBalance.propio}
-              numberFormatter={numberFormatter}
-            />
+            <div className={`${styles.chartContainer} print:block`}>
+              <InventoryBalanceBarChart
+                deposito={reportSummary.closingBalance.deposito}
+                propio={reportSummary.closingBalance.propio}
+                numberFormatter={numberFormatter}
+              />
+            </div>
           )}
 
-          <PrintableReportTable<InventoryBookMovementItem>
-            title="Movimientos del Mes"
-            subtitle="Recepciones y compras consolidadas por liquidación del mes seleccionado."
-            columns={movementColumns}
-            rows={filteredMovements}
-            emptyMessage="Sin movimientos para el mes seleccionado."
-          />
+          <div className={styles.tableSection}>
+            <PrintableReportTable<InventoryBookMovementItem>
+              title="Movimientos del Mes"
+              subtitle="Recepciones y compras consolidadas por liquidación del mes seleccionado."
+              columns={movementColumns}
+              rows={filteredMovements}
+              emptyMessage="Sin movimientos para el mes seleccionado."
+            />
+          </div>
 
-          <PrintableReportTable<InventoryBookSeasonSummaryItem>
-            title="Resumen Mensual de Temporada"
-            subtitle="Evolución mensual de saldos de Depósito y Propio durante la temporada."
-            columns={monthlySummaryColumns}
-            rows={seasonSummary.monthly}
-            emptyMessage="Sin resumen mensual disponible para la temporada."
-          />
+          <div className={styles.tableSection}>
+            <PrintableReportTable<InventoryBookSeasonSummaryItem>
+              title="Resumen Mensual de Temporada"
+              subtitle="Evolución mensual de saldos de Depósito y Propio durante la temporada."
+              columns={monthlySummaryColumns}
+              rows={seasonSummary.monthly}
+              emptyMessage="Sin resumen mensual disponible para la temporada."
+            />
+          </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:grid-cols-3 print:gap-2">
             <ReportSummaryCard
