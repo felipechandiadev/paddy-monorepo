@@ -3877,6 +3877,140 @@ export class AnalyticsService {
     };
   }
 
+  async generateInventoryBookExcel(seasonId: number, month: string): Promise<{ fileName: string; fileBuffer: Buffer }> {
+    const report = await this.getInventoryBookMonthlyReport(seasonId, month);
+
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Paddy';
+    workbook.created = new Date();
+
+    // ===== HOJA 1: MOVIMIENTOS =====
+    const movementsSheet = workbook.addWorksheet('Movimientos');
+    movementsSheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    movementsSheet.columns = [
+      { header: 'Fecha', key: 'date' },
+      { header: 'Tipo', key: 'movementType' },
+      { header: 'Guía Recepción', key: 'receptionId' },
+      { header: 'RUT', key: 'rut' },
+      { header: 'Agricultor', key: 'producerName' },
+      { header: 'Guía Despacho', key: 'dispatchGuide' },
+      { header: 'Kilos Recepción', key: 'receivedKg' },
+      { header: 'Factura Compra', key: 'purchaseInvoice' },
+      { header: 'Kilos Compra', key: 'purchasedKg' },
+      { header: 'Precio (CLP)', key: 'pricePerKg' },
+      { header: 'Total (CLP)', key: 'totalAmount' },
+      { header: 'Saldo Dep. (Antes)', key: 'depositoBalanceBefore' },
+      { header: 'Saldo Prop. (Antes)', key: 'propioBalanceBefore' },
+      { header: 'Saldo Dep. (Después)', key: 'depositoBalanceAfter' },
+      { header: 'Saldo Prop. (Después)', key: 'propioBalanceAfter' },
+    ];
+
+    report.movements.forEach((movement) => {
+      const dateObj = movement.date instanceof Date ? movement.date : new Date(movement.date);
+      const formattedDate = dateObj.toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+
+      movementsSheet.addRow({
+        date: formattedDate,
+        movementType: movement.movementType === 'RECEPTION' ? 'Recepción' : 'Compra',
+        receptionId: movement.receptionId ?? '',
+        rut: movement.rut ?? '',
+        producerName: movement.producerName ?? '',
+        dispatchGuide: movement.dispatchGuide ?? '',
+        receivedKg: movement.receivedKg ?? '',
+        purchaseInvoice: movement.purchaseInvoice ?? '',
+        purchasedKg: movement.purchasedKg ?? '',
+        pricePerKg: movement.pricePerKg ?? '',
+        totalAmount: movement.totalAmount ?? '',
+        depositoBalanceBefore: this.round2(movement.depositoBalanceBefore ?? 0),
+        propioBalanceBefore: this.round2(movement.propioBalanceBefore ?? 0),
+        depositoBalanceAfter: this.round2(movement.depositoBalanceAfter ?? 0),
+        propioBalanceAfter: this.round2(movement.propioBalanceAfter ?? 0),
+      });
+    });
+
+    const headerRow = movementsSheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    movementsSheet.autoFilter = {
+      from: 'A1',
+      to: 'O1',
+    };
+
+    // Formato para columnas numéricas
+    ['G', 'I', 'J', 'K', 'L', 'M', 'N', 'O'].forEach((columnKey) => {
+      movementsSheet.getColumn(columnKey).numFmt = '#,##0.00';
+    });
+
+    movementsSheet.columns.forEach((column) => {
+      let maxLength = 12;
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        const cellValue = cell.value === null || cell.value === undefined ? '' : String(cell.value);
+        maxLength = Math.max(maxLength, cellValue.length + 2);
+      });
+      column.width = Math.min(maxLength, 45);
+    });
+
+    // ===== HOJA 2: RESUMEN =====
+    const summarySheet = workbook.addWorksheet('Resumen');
+
+    summarySheet.columns = [
+      { header: 'Concepto', key: 'concept', width: 30 },
+      { header: 'Valor', key: 'value', width: 15 },
+    ];
+
+    const summary = report.summary;
+    const summaryData = [
+      { concept: 'Periodo', value: report.month },
+      { concept: 'Temporada', value: report.season.name },
+      { concept: '', value: '' },
+      { concept: 'SALDOS ANTERIORES', value: '' },
+      { concept: '  Saldo Anterior Depósito (kg)', value: this.round2(summary.previousBalance.deposito) },
+      { concept: '  Saldo Anterior Propio (kg)', value: this.round2(summary.previousBalance.propio) },
+      { concept: '  Total Anterior (kg)', value: this.round2(summary.previousBalance.total) },
+      { concept: '', value: '' },
+      { concept: 'MOVIMIENTOS DEL MES', value: '' },
+      { concept: '  Kilos Recibidos', value: this.round2(summary.receivedKg) },
+      { concept: '  Kilos Comprados', value: this.round2(summary.purchasedKg) },
+      { concept: '', value: '' },
+      { concept: 'SALDOS DE CIERRE', value: '' },
+      { concept: '  Saldo Cierre Depósito (kg)', value: this.round2(summary.closingBalance.deposito) },
+      { concept: '  Saldo Cierre Propio (kg)', value: this.round2(summary.closingBalance.propio) },
+      { concept: '  Total Cierre (kg)', value: this.round2(summary.closingBalance.total) },
+    ];
+
+    summaryData.forEach((item) => {
+      const row = summarySheet.addRow(item);
+      if (item.concept.match(/^(SALDOS|MOVIMIENTOS|Periodo|Temporada)/)) {
+        row.font = { bold: true };
+      }
+      if (item.value === '') {
+        row.getCell('concept').fill = { type: 'pattern', pattern: 'lightGray', fgColor: { rgb: 'FFF2CCCC' } };
+      }
+    });
+
+    summarySheet.getColumn('value').numFmt = '#,##0.00';
+
+    const rawBuffer = await workbook.xlsx.writeBuffer();
+    const fileBuffer = Buffer.isBuffer(rawBuffer)
+      ? rawBuffer
+      : Buffer.from(rawBuffer as ArrayBuffer);
+
+    const monthLabel = report.month.replace('-', '_');
+    const fileName = `Libro-Existencias_${report.season.name}_${monthLabel}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    return {
+      fileName,
+      fileBuffer,
+    };
+  }
+
   // ===== IVA CREDITO VS DEBITO =====
   async getIvaTaxReport(seasonId: number, month?: string) {
     const season = await this.getSeasonOrFail(seasonId);

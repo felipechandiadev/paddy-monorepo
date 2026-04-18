@@ -9,7 +9,9 @@ import {
   UseGuards,
   Logger,
   NotFoundException,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AnalyticsService } from '../application/analytics.service';
 import { JwtAuthGuard } from '../../../shared/guards';
 import { AdvanceStatusEnum } from '../../../shared/enums';
@@ -432,6 +434,39 @@ export class AnalyticsController {
     );
 
     return this.analyticsService.getInventoryBookSeasonSummary(seasonId);
+  }
+
+  @Get('inventory-book/export/excel')
+  async exportInventoryBookExcel(
+    @Res() response: Response,
+    @Query('seasonId', ParseIntPipe) seasonId: number,
+    @Query('month') month: string,
+  ): Promise<void> {
+    if (!month?.trim()) {
+      throw new BadRequestException('month es obligatorio con formato YYYY-MM');
+    }
+
+    this.logger.log(
+      `[GET] /analytics/inventory-book/export/excel - seasonId: ${seasonId}, month: ${month}`,
+    );
+
+    try {
+      const { fileName, fileBuffer } = await this.analyticsService.generateInventoryBookExcel(
+        seasonId,
+        month,
+      );
+
+      response.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      response.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      response.setHeader('Content-Length', fileBuffer.length.toString());
+      response.send(fileBuffer);
+    } catch (error) {
+      this.logger.error(`Error exporting inventory book: ${error}`);
+      throw error;
+    }
   }
 
   // ===== IVA CREDITO VS DEBITO =====
