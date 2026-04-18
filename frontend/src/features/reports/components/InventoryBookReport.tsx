@@ -172,7 +172,8 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
     setIsExporting(true);
 
     try {
-      const exportUrl = `/api/analytics/inventory-book/export/excel?seasonId=${filters.seasonId}&month=${filters.month}`;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const exportUrl = `${apiBase}/analytics/inventory-book/export/excel?seasonId=${filters.seasonId}&month=${filters.month}`;
       const response = await fetch(exportUrl, { method: 'GET' });
 
       if (!response.ok) {
