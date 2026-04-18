@@ -557,6 +557,8 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
               </div>
             </header>
 
+            <div className={styles.separator} />
+
             <div className={styles.reportInfoGrid}>
               <div className={styles.infoBlock}>
                 <div className={styles.infoLabel}>Período</div>

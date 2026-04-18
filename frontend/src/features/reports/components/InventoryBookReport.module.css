@@ -77,6 +77,12 @@
   color: #6b7280;
 }
 
+.separator {
+  height: 1px;
+  background: rgba(17, 24, 39, 0.22);
+  margin: 1rem 0;
+}
+
 .reportInfoGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -107,7 +113,7 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -195,7 +201,6 @@
 
   .tableSection {
     margin-bottom: 0.75rem;
-    page-break-inside: avoid;
   }
 
   .tableSectionTitle {
@@ -208,6 +213,5 @@
 
   .chartContainer {
     margin-bottom: 0.75rem;
-    page-break-inside: avoid;
   }
 }
