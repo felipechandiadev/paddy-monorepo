@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useReactToPrint } from 'react-to-print';
 import Select, { Option } from '@/shared/components/ui/Select/Select';
 import IconButton from '@/shared/components/ui/IconButton/IconButton';
@@ -97,6 +97,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
   initialPrintDateLabel,
 }) => {
   const reportPrintRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
 
   const [filters, setFilters] = useState<InventoryBookUIFilters>({
     seasonId: initialSeasonId ?? seasons[0]?.id,
@@ -168,13 +169,24 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       return;
     }
 
+    const token = (session?.user as any)?.accessToken;
+    if (!token) {
+      setExportError('No hay sesión activa. Por favor, reinicia sesión.');
+      return;
+    }
+
     setExportError(null);
     setIsExporting(true);
 
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
       const exportUrl = `${apiBase}/analytics/inventory-book/export/excel?seasonId=${filters.seasonId}&month=${filters.month}`;
-      const response = await fetch(exportUrl, { method: 'GET' });
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         let message = 'No fue posible exportar el Libro de Existencias a Excel.';
@@ -216,7 +228,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
     } finally {
       setIsExporting(false);
     }
-  }, [filters.seasonId, filters.month]);
+  }, [filters.seasonId, filters.month, session]);
 
   const runReport = useCallback(async () => {
     const seasonId = filters.seasonId;
