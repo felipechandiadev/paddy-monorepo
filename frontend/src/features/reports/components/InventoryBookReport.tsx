@@ -540,8 +540,8 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
 
       {!loading && report && seasonSummary && (
         <div ref={reportPrintRef} className={`flex flex-col gap-6 print:gap-1 print:${styles.sheet}`}>
+          {/* Professional Print Header - Print Only */}
           <div className={`hidden print:block ${styles.sheet}`}>
-            {/* Professional Print Header */}
             <header className={styles.companyHeader}>
               <div>
                 <p className={styles.companyKicker}>Sociedad Comercial e Industrial</p>
@@ -561,7 +561,10 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
             </header>
 
             <div className={styles.separator} />
+          </div>
 
+          {/* Web Content and Print Content - Show in both modes */}
+          <div className={`print:${styles.sheet}`}>
             <div className={styles.reportInfoGrid}>
               <div className={styles.infoBlock}>
                 <div className={styles.infoLabel}>Período</div>

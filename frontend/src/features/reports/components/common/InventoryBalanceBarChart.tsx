@@ -172,7 +172,7 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
       </p>
 
       {/* Web Chart (hidden in print) */}
-      <div className={styles.chartContainer + ' hidden print:hidden'}>
+      <div className={styles.chartContainer + ' print:hidden'}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={items} margin={{ top: 8, right: 8, left: 70, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
