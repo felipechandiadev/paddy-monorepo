@@ -3890,21 +3890,19 @@ export class AnalyticsService {
     movementsSheet.views = [{ state: 'frozen', ySplit: 1 }];
 
     movementsSheet.columns = [
+      { header: 'Movimiento', key: 'movementType' },
       { header: 'Fecha', key: 'date' },
-      { header: 'Tipo', key: 'movementType' },
       { header: 'Guía Recepción', key: 'receptionId' },
       { header: 'RUT', key: 'rut' },
       { header: 'Agricultor', key: 'producerName' },
       { header: 'Guía Despacho', key: 'dispatchGuide' },
-      { header: 'Kilos Recepción', key: 'receivedKg' },
+      { header: 'Kilos (Recepción)', key: 'receivedKg' },
       { header: 'Factura Compra', key: 'purchaseInvoice' },
-      { header: 'Kilos Compra', key: 'purchasedKg' },
-      { header: 'Precio (CLP)', key: 'pricePerKg' },
-      { header: 'Total (CLP)', key: 'totalAmount' },
-      { header: 'Saldo Dep. (Antes)', key: 'depositoBalanceBefore' },
-      { header: 'Saldo Prop. (Antes)', key: 'propioBalanceBefore' },
-      { header: 'Saldo Dep. (Después)', key: 'depositoBalanceAfter' },
-      { header: 'Saldo Prop. (Después)', key: 'propioBalanceAfter' },
+      { header: 'Kilos (Compra)', key: 'purchasedKg' },
+      { header: 'PRECIO', key: 'pricePerKg' },
+      { header: 'TOTAL', key: 'totalAmount' },
+      { header: 'Saldo Depósito (kg)', key: 'depositoBalanceAfter' },
+      { header: 'Saldo Propio (kg)', key: 'propioBalanceAfter' },
     ];
 
     report.movements.forEach((movement) => {
@@ -3916,8 +3914,8 @@ export class AnalyticsService {
       });
 
       movementsSheet.addRow({
-        date: formattedDate,
         movementType: movement.movementType === 'RECEPTION' ? 'Recepción' : 'Compra',
+        date: formattedDate,
         receptionId: movement.receptionId ?? '',
         rut: movement.rut ?? '',
         producerName: movement.producerName ?? '',
@@ -3927,8 +3925,6 @@ export class AnalyticsService {
         purchasedKg: movement.purchasedKg ?? '',
         pricePerKg: movement.pricePerKg ?? '',
         totalAmount: movement.totalAmount ?? '',
-        depositoBalanceBefore: this.round2(movement.depositoBalanceBefore ?? 0),
-        propioBalanceBefore: this.round2(movement.propioBalanceBefore ?? 0),
         depositoBalanceAfter: this.round2(movement.depositoBalanceAfter ?? 0),
         propioBalanceAfter: this.round2(movement.propioBalanceAfter ?? 0),
       });
@@ -3940,12 +3936,12 @@ export class AnalyticsService {
 
     movementsSheet.autoFilter = {
       from: 'A1',
-      to: 'O1',
+      to: 'M1',
     };
 
     // Formato para columnas numéricas
     // Kilos y Saldos: enteros (sin decimales)
-    ['G', 'I', 'L', 'M', 'N', 'O'].forEach((columnKey) => {
+    ['G', 'I', 'L', 'M'].forEach((columnKey) => {
       movementsSheet.getColumn(columnKey).numFmt = '#,##0';
     });
     
