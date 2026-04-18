@@ -610,78 +610,36 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3 print:hidden">
-            <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
-              Temporada: {report.season.name} ({report.season.year})
-            </span>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              Mes: {formatMonthLabel(report.month)}
-            </span>
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-              {filteredMovements.length} movimientos
-            </span>
-          </div>
+            {reportSummary && (
+              <div className={styles.chartContainer}>
+                <InventoryBalanceBarChart
+                  deposito={reportSummary.closingBalance.deposito}
+                  propio={reportSummary.closingBalance.propio}
+                  numberFormatter={numberFormatter}
+                />
+              </div>
+            )}
 
-          {reportSummary && (
-            <div className="print:hidden grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <ReportSummaryCard
-                title="Saldo Ant. Depósito"
-                value={`${numberFormatter.format(reportSummary.previousBalance.deposito)} kg`}
-              />
-              <ReportSummaryCard
-                title="Saldo Ant. Propio"
-                value={`${numberFormatter.format(reportSummary.previousBalance.propio)} kg`}
-              />
-              <ReportSummaryCard
-                title="Kilos Recibidos"
-                value={`${numberFormatter.format(reportSummary.receivedKg)} kg`}
-              />
-              <ReportSummaryCard
-                title="Compras"
-                value={`${numberFormatter.format(reportSummary.purchasedKg)} kg`}
-              />
-              <ReportSummaryCard
-                title="Cierre Depósito"
-                value={`${numberFormatter.format(reportSummary.closingBalance.deposito)} kg`}
-              />
-              <ReportSummaryCard
-                title="Cierre Propio"
-                value={`${numberFormatter.format(reportSummary.closingBalance.propio)} kg`}
-                hint={`Total cierre: ${numberFormatter.format(reportSummary.closingBalance.total)} kg`}
+            <div className={styles.tableSection}>
+              <PrintableReportTable<InventoryBookMovementItem>
+                title="Movimientos del Mes"
+                subtitle="Recepciones y compras consolidadas por liquidación del mes seleccionado."
+                columns={movementColumns}
+                rows={filteredMovements}
+                emptyMessage="Sin movimientos para el mes seleccionado."
               />
             </div>
-          )}
 
-          {reportSummary && (
-            <div className={`${styles.chartContainer} print:block`}>
-              <InventoryBalanceBarChart
-                deposito={reportSummary.closingBalance.deposito}
-                propio={reportSummary.closingBalance.propio}
-                numberFormatter={numberFormatter}
+            <div className={styles.tableSection}>
+              <PrintableReportTable<InventoryBookSeasonSummaryItem>
+                title="Resumen Mensual de Temporada"
+                subtitle="Evolución mensual de saldos de Depósito y Propio durante la temporada."
+                columns={monthlySummaryColumns}
+                rows={seasonSummary.monthly}
+                emptyMessage="Sin resumen mensual disponible para la temporada."
               />
             </div>
-          )}
-
-          <div className={styles.tableSection}>
-            <PrintableReportTable<InventoryBookMovementItem>
-              title="Movimientos del Mes"
-              subtitle="Recepciones y compras consolidadas por liquidación del mes seleccionado."
-              columns={movementColumns}
-              rows={filteredMovements}
-              emptyMessage="Sin movimientos para el mes seleccionado."
-            />
-          </div>
-
-          <div className={styles.tableSection}>
-            <PrintableReportTable<InventoryBookSeasonSummaryItem>
-              title="Resumen Mensual de Temporada"
-              subtitle="Evolución mensual de saldos de Depósito y Propio durante la temporada."
-              columns={monthlySummaryColumns}
-              rows={seasonSummary.monthly}
-              emptyMessage="Sin resumen mensual disponible para la temporada."
-            />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:grid-cols-3 print:gap-2">
