@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import * as ExcelJS from 'exceljs';
 import { DateTime } from 'luxon';
 import {
   parseDateInput,
@@ -3880,7 +3881,6 @@ export class AnalyticsService {
   async generateInventoryBookExcel(seasonId: number, month: string): Promise<{ fileName: string; fileBuffer: Buffer }> {
     const report = await this.getInventoryBookMonthlyReport(seasonId, month);
 
-    const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Paddy';
     workbook.created = new Date();
@@ -3991,7 +3991,7 @@ export class AnalyticsService {
         row.font = { bold: true };
       }
       if (item.value === '') {
-        row.getCell('concept').fill = { type: 'pattern', pattern: 'lightGray', fgColor: { rgb: 'FFF2CCCC' } };
+        row.getCell('concept').fill = { type: 'pattern', pattern: 'lightGray', fgColor: { argb: 'FFF2CCCC' } };
       }
     });
 
