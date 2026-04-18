@@ -253,17 +253,20 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       {
         key: 'movementType',
         label: 'Movimiento',
-        render: (row) => (
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              row.movementType === 'RECEPTION'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-blue-100 text-blue-800'
-            }`}
-          >
-            {row.movementType === 'RECEPTION' ? 'Recepción' : 'Compra'}
-          </span>
-        ),
+        render: (row) => {
+          const text = row.movementType === 'RECEPTION' ? 'Recepción' : 'Compra';
+          return (
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-medium print:rounded-none print:px-0 print:py-0 print:bg-transparent print:text-[8px] print:font-normal ${
+                row.movementType === 'RECEPTION'
+                  ? 'bg-green-100 text-green-800 print:text-neutral-900'
+                  : 'bg-blue-100 text-blue-800 print:text-neutral-900'
+              }`}
+            >
+              {text}
+            </span>
+          );
+        },
       },
       {
         key: 'date',
@@ -631,7 +634,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
               />
             </div>
 
-            <div className={styles.tableSection}>
+            <div className={`${styles.tableSection} print:mt-2`}>
               <PrintableReportTable<InventoryBookSeasonSummaryItem>
                 title="Resumen Mensual de Temporada"
                 subtitle="Evolución mensual de saldos de Depósito y Propio durante la temporada."
@@ -642,7 +645,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:grid-cols-3 print:gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:grid-cols-3 print:gap-2 print:mt-2">
             <ReportSummaryCard
               title="Total Recibido Temporada"
               value={`${numberFormatter.format(seasonSummary.totals.receivedKg)} kg`}

@@ -14,10 +14,10 @@ const ReportSummaryCard: React.FC<ReportSummaryCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`rounded-lg border border-border bg-white p-4 ${className}`}>
-      <p className="text-xs uppercase tracking-wide text-neutral-500">{title}</p>
-      <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-neutral-500">{hint}</p> : null}
+    <div className={`rounded-lg border border-border bg-white p-4 print:border-neutral-300 print:rounded-none print:p-2 print:mb-1 ${className}`}>
+      <p className="text-xs uppercase tracking-wide text-neutral-500 print:text-[6px] print:text-neutral-700">{title}</p>
+      <p className="mt-2 text-xl font-semibold text-foreground print:mt-1 print:text-[9px]">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-neutral-500 print:mt-0.5 print:text-[6px] print:text-neutral-600">{hint}</p> : null}
     </div>
   );
 };
