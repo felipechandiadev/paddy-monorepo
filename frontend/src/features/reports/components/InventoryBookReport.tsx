@@ -27,6 +27,7 @@ import {
   toOptionalNumber,
 } from './common/reportUtils';
 import InventoryBalanceBarChart from './common/InventoryBalanceBarChart';
+import { formatChileanRut } from '@/shared/utils/chileanRutFormatter';
 
 interface InventoryBookReportProps {
   seasons: AdvanceSeasonOption[];
@@ -249,11 +250,6 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
   const movementColumns = useMemo<PrintableReportTableColumn<InventoryBookMovementItem>[]>(
     () => [
       {
-        key: 'date',
-        label: 'Fecha',
-        render: (row) => formatDateValue(row.date),
-      },
-      {
         key: 'movementType',
         label: 'Movimiento',
         render: (row) => (
@@ -269,31 +265,38 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
         ),
       },
       {
-        key: 'receptionBookNumber',
-        label: 'N° Libro',
-        render: (row) => row.receptionBookNumber ?? '-',
+        key: 'date',
+        label: 'Fecha',
+        render: (row) => formatDateValue(row.date),
+      },
+      {
+        key: 'receptionId',
+        label: 'Guía Recepción',
+        render: (row) => row.receptionId ?? '-',
       },
       {
         key: 'rut',
         label: 'RUT',
-        render: (row) => row.rut ?? '-',
+        render: (row) => formatChileanRut(row.rut),
       },
       {
         key: 'producerName',
-        label: 'Productor',
+        label: 'Agricultor',
         render: (row) => row.producerName ?? '-',
       },
       {
         key: 'dispatchGuide',
-        label: 'Guía',
+        label: 'Guía Despacho',
         render: (row) => row.dispatchGuide ?? '-',
       },
       {
         key: 'receivedKg',
-        label: 'Recibido (kg)',
+        label: 'Kilos (Recepción)',
         align: 'right',
         render: (row) =>
-          row.receivedKg === null ? '-' : numberFormatter.format(row.receivedKg),
+          row.movementType === 'RECEPTION' && row.receivedKg !== null
+            ? numberFormatter.format(row.receivedKg)
+            : '-',
       },
       {
         key: 'purchaseInvoice',
@@ -302,46 +305,51 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       },
       {
         key: 'purchasedKg',
-        label: 'Comprado (kg)',
+        label: 'Kilos (Compra)',
         align: 'right',
         render: (row) =>
-          row.purchasedKg === null ? '-' : numberFormatter.format(row.purchasedKg),
+          row.movementType === 'PURCHASE' && row.purchasedKg !== null
+            ? numberFormatter.format(row.purchasedKg)
+            : '-',
       },
       {
         key: 'pricePerKg',
-        label: 'Precio/kg',
+        label: 'PRECIO',
         align: 'right',
-        render: (row) =>
-          row.pricePerKg === null ? '-' : currencyFormatter.format(row.pricePerKg),
+        render: (row) => {
+          if (row.movementType === 'PURCHASE' && row.purchasedKg && row.totalAmount) {
+            const pricePerKg = row.totalAmount / row.purchasedKg;
+            return currencyFormatter.format(pricePerKg);
+          }
+          return '-';
+        },
       },
       {
         key: 'totalAmount',
-        label: 'Total',
+        label: 'TOTAL',
         align: 'right',
         render: (row) =>
-          row.totalAmount === null ? '-' : currencyFormatter.format(row.totalAmount),
+          row.totalAmount !== null
+            ? currencyFormatter.format(row.totalAmount)
+            : '-',
       },
       {
-        key: 'depositoDelta',
-        label: 'Δ Depósito',
+        key: 'depositoBalanceAfter',
+        label: 'Saldo Depósito (kg)',
         align: 'right',
-        render: (row) => (
-          <span className={row.depositoDelta < 0 ? 'text-red-700' : 'text-green-700'}>
-            {row.depositoDelta > 0 ? '+' : ''}
-            {numberFormatter.format(row.depositoDelta)}
-          </span>
-        ),
+        render: (row) =>
+          row.depositoBalanceAfter !== undefined
+            ? numberFormatter.format(row.depositoBalanceAfter)
+            : '-',
       },
       {
-        key: 'propioDelta',
-        label: 'Δ Propio',
+        key: 'propioBalanceAfter',
+        label: 'Saldo Propio (kg)',
         align: 'right',
-        render: (row) => (
-          <span className={row.propioDelta < 0 ? 'text-red-700' : 'text-blue-700'}>
-            {row.propioDelta > 0 ? '+' : ''}
-            {numberFormatter.format(row.propioDelta)}
-          </span>
-        ),
+        render: (row) =>
+          row.propioBalanceAfter !== undefined
+            ? numberFormatter.format(row.propioBalanceAfter)
+            : '-',
       },
     ],
     [currencyFormatter, numberFormatter],

@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -53,36 +52,40 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
   );
 
   const maxAbsoluteValue = useMemo(
-    () => Math.max(1, ...items.map((item) => Math.abs(item.value))),
+    () => Math.max(1, ...items.map((item) => Math.max(0, item.value))),
     [items],
   );
 
   const yDomain = useMemo(
-    () => [maxAbsoluteValue * -1, maxAbsoluteValue] as [number, number],
+    () => [0, maxAbsoluteValue * 1.2] as [number, number],
     [maxAbsoluteValue],
   );
 
   return (
     <section className="rounded-xl border border-neutral-200 bg-white px-4 py-4 print:hidden">
       <h3 className="text-base font-semibold text-neutral-900">
-        Barras Verticales de Saldos del Mes
+        Saldos del Mes
       </h3>
       <p className="mt-1 text-sm text-neutral-600">
-        Comparación entre saldo en Depósito y saldo Propio para el mes seleccionado.
+        Kilogramos en Depósito y Propio al cierre del período seleccionado.
       </p>
 
-      <div className="mt-4 h-72 w-full rounded-md border border-neutral-200 bg-neutral-50 p-2">
+      <div className="mt-4 h-72 w-full rounded-md bg-neutral-50 p-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={items} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="label" />
+          <BarChart data={items} margin={{ top: 8, right: 8, left: 70, bottom: 8 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+            <XAxis dataKey="label" stroke="#6b7280" />
             <YAxis
               domain={yDomain}
-              tickFormatter={(value) => numberFormatter.format(value)}
+              tickFormatter={(value) => numberFormatter.format(Math.round(value))}
+              stroke="#6b7280"
+              label={{ value: 'kg', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '12px' } }}
             />
-            <ReferenceLine y={0} stroke="#6b7280" strokeDasharray="4 4" />
-            <Tooltip />
-            <Bar dataKey="value" name="Saldo" unit=" kg">
+            <Tooltip 
+              formatter={(value: any) => [numberFormatter.format(value) + ' kg', 'Saldo']}
+              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+            />
+            <Bar dataKey="value" name="Saldo" radius={[8, 8, 0, 0]}>
               {items.map((entry) => (
                 <Cell
                   key={entry.key}
@@ -94,9 +97,15 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
-        <span>Valores negativos: bajo cero</span>
-        <span>Valores positivos: sobre cero</span>
+      <div className="mt-3 flex justify-center gap-6 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-3 rounded" style={{ backgroundColor: '#10b981' }}></div>
+          <span className="text-neutral-600">Depósito (kg)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-3 rounded" style={{ backgroundColor: '#3b82f6' }}></div>
+          <span className="text-neutral-600">Propio (kg)</span>
+        </div>
       </div>
     </section>
   );

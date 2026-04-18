@@ -68,7 +68,7 @@ export const dataSource = new DataSource({
     SettlementReceptionSnapshot,
     UserPermissionOverride,
   ],
-  migrations: [`${__dirname}/../persistence/migrations/**/*{.ts,.js}`],
+  migrations: [`${__dirname}/migrations/**/*{.ts,.js}`],
   migrationsRun: process.env.NODE_ENV === 'production',
   synchronize:
     process.env.TYPEORM_SYNCHRONIZE === 'true' &&

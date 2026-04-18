@@ -164,4 +164,5 @@ export interface UpdateReceptionPayload {
   price?: number;
   status?: ReceptionStatus;
   note?: string;
+  receptionDate?: string;
 }

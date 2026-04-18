@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Brackets } from 'typeorm';
 import * as ExcelJS from 'exceljs';
 import { DateTime } from 'luxon';
-import { parseDateInput, formatDateString } from '@shared/utils/luxon-utils';
+import { formatDateString } from '@shared/utils/luxon-utils';
 import { Reception, AnalysisRecord } from '../domain/operations.entity';
 import { ReceptionStatusEnum } from '@shared/enums';
 import { ConfigurationService } from '@modules/configuration/application/configuration.service';
@@ -67,27 +67,30 @@ export class OperationsService {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
 
-  private parseDateInput(value?: Date | string | null): Date | null {
+  private parseDateInput(value?: Date | string | null): string | null {
     if (!value) {
       return null;
     }
 
+    let dateStr: string;
+
     if (value instanceof Date) {
-      return value;
+      // Convertir Date a string UTC
+      dateStr = value.toISOString().split('T')[0];
+    } else {
+      // Ya es string, extraer solo la parte de fecha
+      dateStr = value;
     }
 
-    const dt = parseDateInput(value);
-    if (!dt || !dt.isValid) return null;
+    // Validar formato YYYY-MM-DD
+    const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch;
+      // Devolver en formato MySQL: "YYYY-MM-DD 12:00:00"
+      return `${year}-${month}-${day} 12:00:00`;
+    }
 
-    // For date-only input (YYYY-MM-DD), extract just the date portion
-    // and return it as a local Date to match what was provided
-    // This prevents timezone conversion issues between client and database
-    const year = dt.year;
-    const month = dt.month;
-    const day = dt.day;
-
-    // Create a Date in local timezone to match the provided date string
-    return new Date(year, month - 1, day);
+    return null;
   }
 
   private calculateReceptionTotals(
@@ -468,6 +471,9 @@ export class OperationsService {
     ];
 
     receptions.forEach((reception) => {
+      // Si finalNetWeight es null/undefined, usar netWeight (caso de recepciones sin análisis)
+      const paddyNeto = reception.finalNetWeight ?? reception.netWeight ?? 0;
+      
       worksheet.addRow({
         id: Number(reception.id),
         guideNumber: reception.guideNumber || '',
@@ -478,7 +484,7 @@ export class OperationsService {
         grossWeight: Number(reception.grossWeight || 0),
         tareWeight: Number(reception.tareWeight || 0),
         netWeight: Number(reception.netWeight || 0),
-        finalNetWeight: Number(reception.finalNetWeight || 0),
+        finalNetWeight: Number(paddyNeto),
         ricePrice: Number(reception.ricePrice || 0),
         statusLabel: this.formatReceptionStatusLabel(reception),
         riceTypeName: reception.riceType?.name || '',
@@ -560,7 +566,8 @@ export class OperationsService {
       createDto.grossWeight - createDto.tareWeight
     );
 
-    const receptionDate = this.parseDateInput(createDto.receptionDate) ?? new Date();
+    // Parse reception date or use null (will be set by creation timestamp)
+    const receptionDate = this.parseDateInput(createDto.receptionDate);
     const receptionBookNumber =
       typeof createDto.receptionBookNumber === 'string'
         ? createDto.receptionBookNumber.trim() || null
@@ -574,7 +581,7 @@ export class OperationsService {
       bonusKg: 0,
       finalNetWeight: netWeight,
       dryPercent: createDto.dryPercent ?? 0,
-      receptionDate,
+      receptionDate: receptionDate || null,
       receptionBookNumber,
       userId,
     });
@@ -606,13 +613,13 @@ export class OperationsService {
         createDto.reception.grossWeight - createDto.reception.tareWeight
       );
 
-      const receptionDate = this.parseDateInput(createDto.reception.receptionDate) ?? new Date();
+      const receptionDate = this.parseDateInput(createDto.reception.receptionDate);
 
       const reception = receptionsRepo.create({
         ...createDto.reception,
         netWeight,
         status: ReceptionStatusEnum.ANALYZED,
-        receptionDate,
+        receptionDate: receptionDate || null,
         userId,
       });
 
@@ -689,6 +696,35 @@ export class OperationsService {
     // No permitir cambiar status aquí (debe hacerse vía endpoints específicos)
     delete updateDto.status;
 
+    // Log qué recibimos
+    console.log('[BACKEND] updateReception called with receptionDate in payload:', 'receptionDate' in updateDto);
+    console.log('[BACKEND] updateDto.receptionDate value:', updateDto.receptionDate);
+
+    // Parse receptionDate if provided - now returns string "YYYY-MM-DD 12:00:00"
+    if (updateDto.receptionDate !== undefined && updateDto.receptionDate !== null) {
+      console.log('[BACKEND] 🔄 Processing receptionDate...');
+      
+      const dateStr = typeof updateDto.receptionDate === 'string' 
+        ? updateDto.receptionDate 
+        : (updateDto.receptionDate as Date).toISOString().split('T')[0];
+      
+      console.log('[BACKEND] receptionDate received (raw):', dateStr);
+      
+      const parsedDate = this.parseDateInput(dateStr);
+      console.log('[BACKEND] receptionDate parsed result:', parsedDate);
+      
+      if (parsedDate) {
+        reception.receptionDate = parsedDate;
+        console.log('[BACKEND] ✅ receptionDate set to:', parsedDate);
+      } else {
+        console.log('[BACKEND] ❌ parseDateInput returned null for:', dateStr);
+      }
+      
+      delete updateDto.receptionDate;
+    } else {
+      console.log('[BACKEND] ⏭️  No receptionDate in updateDto, skipping');
+    }
+
     if (updateDto.grossWeight || updateDto.tareWeight) {
       updateDto.netWeight = Math.round(
         (updateDto.grossWeight || reception.grossWeight) -
@@ -707,6 +743,17 @@ export class OperationsService {
     reception.updatedAt = new Date();
 
     const updatedReception = await this.receptionsRepository.save(reception);
+
+    // Re-fetch to verify the date was saved correctly as string
+    if (reception.receptionDate) {
+      const refreshed = await this.receptionsRepository.findOne({
+        where: { id: updatedReception.id }
+      });
+      if (refreshed && refreshed.receptionDate) {
+        Object.assign(updatedReception, refreshed);
+        console.log('[BACKEND] receptionDate persisted as:', updatedReception.receptionDate);
+      }
+    }
 
     // Capturar valores posteriores y loguear auditoría
     const afterData = {

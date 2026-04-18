@@ -1,6 +1,6 @@
 {
   "name": "paddy-backend",
-  "version": "1.0.0",
+  "version": "1.2.5",
   "description": "Rice reception & financial management system - DDD Architecture",
   "author": "Paddy Team",
   "private": true,

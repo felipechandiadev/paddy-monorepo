@@ -336,12 +336,12 @@ const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({
         sortable: true,
       },
       {
-        field: 'createdAt',
+        field: 'receptionDate',
         headerName: 'Fecha Recepción',
         width: 140,
         sortable: true,
         renderCell: ({ value }) => (
-          <span>{new Date(value).toLocaleDateString('es-CL')}</span>
+          <span>{value ? new Date(value).toLocaleDateString('es-CL') : '-'}</span>
         ),
       },
       {

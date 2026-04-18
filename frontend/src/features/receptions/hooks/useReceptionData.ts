@@ -210,12 +210,8 @@ export function useReceptionData(): ReceptionContextType {
         const params = data.data || [];
 
         if (!Array.isArray(params) || params.length === 0) {
-          console.warn('[useReceptionData] No analysis params received');
           return;
         }
-
-        console.log('✅ Ranges loaded:', params.length, 'analysis types');
-        console.log('📊 Available codes from API:', params.map((p: any) => p.code));
 
         // Mapeo de claves de cluster a códigos de análisis params
         const codeMap: Record<string, string> = {
@@ -236,11 +232,10 @@ export function useReceptionData(): ReceptionContextType {
           if (code && 'range' in cluster && cluster.range) {
             const param = params.find((p: any) => p.code === code);
             if (!param) {
-              console.warn(`⚠️ No param found for cluster "${key}" with code "${code}"`);
+              // Param not found, skip
             } else if (!param?.ranges || !Array.isArray(param.ranges)) {
-              console.warn(`⚠️ Param "${code}" has no ranges:`, param);
+              // No ranges available
             } else {
-              console.log(`✅ Loading ranges for "${key}":`);
               const ranges: Range[] = param.ranges.map((r: any, idx: number) => ({
                 id: r.id || idx,
                 start: r.rangeStart,
@@ -249,7 +244,6 @@ export function useReceptionData(): ReceptionContextType {
               }));
               // Asignar rangos al nodo de rango del cluster
               (cluster as any).range.setRanges(ranges);
-              console.log(`   Loaded ${ranges.length} ranges`);
             }
           }
         });

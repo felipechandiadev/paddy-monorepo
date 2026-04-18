@@ -228,8 +228,14 @@ async function seedExpanded() {
         const receptionsData = [];
         for (let r = 0; r < 3; r++) {
           const riceType = savedRiceTypes[r % savedRiceTypes.length];
-          const receptionDate = new Date(season.startDate);
-          receptionDate.setDate(receptionDate.getDate() + r * 10);
+          const receptionDateObj = new Date(season.startDate);
+          receptionDateObj.setDate(receptionDateObj.getDate() + r * 10);
+          
+          // Convert to string format "YYYY-MM-DD 12:00:00"
+          const year = receptionDateObj.getFullYear();
+          const month = String(receptionDateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(receptionDateObj.getDate()).padStart(2, '0');
+          const receptionDate = `${year}-${month}-${day} 12:00:00`;
 
           // 🔄 Fechas dentro del rango de la temporada
           const createdAt = randomDateInRange(season.startDate, season.endDate);

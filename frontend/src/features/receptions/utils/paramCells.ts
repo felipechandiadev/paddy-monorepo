@@ -108,7 +108,6 @@ export function createParamCluster(
   // Método para actualizar rangos
   (rangeNode as any).setRanges = (newRanges: Range[]) => {
     (rangeNode as any)._ranges = newRanges;
-    console.log(`[paramCells] setRanges for ${key}:`, newRanges.length, 'ranges', newRanges);
   };
 
   // El porcentaje automático debe calcularse solo cuando cambia el rango.
@@ -117,7 +116,6 @@ export function createParamCluster(
     const nodeRanges = (rangeNode as any)._ranges || [];
     const rangeValue = rangeNode.getValue();
     const percent = findPercentByRange(rangeValue, nodeRanges);
-    console.log(`[paramCells] rangeNode.effect for ${key}: range=${rangeValue}, nodeRanges=${nodeRanges.length}, percent=${percent}`);
     percentNode.setValue(percent);
   };
 
@@ -181,16 +179,12 @@ export function createDryCluster(): ParamCluster {
 
   (rangeNode as any).setRanges = (newRanges: Range[]) => {
     (rangeNode as any)._ranges = newRanges;
-    console.log('[paramCells] setRanges for Dry:', newRanges.length, 'ranges', newRanges);
   };
 
   rangeNode.effect = () => {
     const nodeRanges = (rangeNode as any)._ranges || [];
     const rangeValue = rangeNode.getValue();
     const percent = findPercentByRange(rangeValue, nodeRanges);
-    console.log(
-      `[paramCells] rangeNode.effect for Dry: range=${rangeValue}, nodeRanges=${nodeRanges.length}, percent=${percent}`
-    );
     percentNode.setValue(percent);
   };
 

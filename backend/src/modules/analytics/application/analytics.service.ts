@@ -148,11 +148,22 @@ export class AnalyticsService {
       return Number.isNaN(value.getTime()) ? null : value;
     }
 
-    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? `${value}T00:00:00`
-      : value;
-    const parsed = new Date(normalized);
+    // Parse YYYY-MM-DD format as local midnight
+    const dateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateMatch) {
+      const [, yearStr, monthStr, dayStr] = dateMatch;
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10);
+      const day = parseInt(dayStr, 10);
+      
+      // Create Date at midnight in LOCAL server timezone
+      const localDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      
+      return Number.isNaN(localDate.getTime()) ? null : localDate;
+    }
 
+    // For other formats, parse as-is
+    const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
@@ -3602,9 +3613,10 @@ export class AnalyticsService {
 
     const previousReceivedKg = allReceptions.reduce((sum, reception) => {
       const receptionDate = getReceptionDate(reception);
-      const netWeight = this.toNumber(reception.netWeight);
-      if (receptionDate && receptionDate < start && netWeight > 0) {
-        return sum + netWeight;
+      // Usar finalNetWeight (Paddy Neto) en lugar de netWeight
+      const paddyNetoKg = this.toNumber(reception.finalNetWeight ?? reception.netWeight);
+      if (receptionDate && receptionDate < start && paddyNetoKg > 0) {
+        return sum + paddyNetoKg;
       }
 
       return sum;
@@ -3620,9 +3632,10 @@ export class AnalyticsService {
 
     const monthReceivedKg = allReceptions.reduce((sum, reception) => {
       const receptionDate = getReceptionDate(reception);
-      const netWeight = this.toNumber(reception.netWeight);
-      if (receptionDate && receptionDate >= start && receptionDate < endExclusive && netWeight > 0) {
-        return sum + netWeight;
+      // Usar finalNetWeight (Paddy Neto) en lugar de netWeight
+      const paddyNetoKg = this.toNumber(reception.finalNetWeight ?? reception.netWeight);
+      if (receptionDate && receptionDate >= start && receptionDate < endExclusive && paddyNetoKg > 0) {
+        return sum + paddyNetoKg;
       }
 
       return sum;
@@ -3651,14 +3664,16 @@ export class AnalyticsService {
     const receptionMovements = allReceptions
       .filter((reception) => {
         const receptionDate = getReceptionDate(reception);
-        const netWeight = this.toNumber(reception.netWeight);
+        // Usar finalNetWeight (Paddy Neto) en lugar de netWeight
+        const paddyNetoKg = this.toNumber(reception.finalNetWeight ?? reception.netWeight);
         return Boolean(
-          receptionDate && receptionDate >= start && receptionDate < endExclusive && netWeight > 0,
+          receptionDate && receptionDate >= start && receptionDate < endExclusive && paddyNetoKg > 0,
         );
       })
       .map((reception) => {
         const receptionDate = getReceptionDate(reception) ?? reception.createdAt;
-        const receivedKg = this.round2(this.toNumber(reception.netWeight));
+        // Usar finalNetWeight (Paddy Neto) en lugar de netWeight
+        const receivedKg = this.round2(this.toNumber(reception.finalNetWeight ?? reception.netWeight));
 
         return {
           date: receptionDate,
@@ -3717,6 +3732,29 @@ export class AnalyticsService {
       return a.movementType.localeCompare(b.movementType);
     });
 
+    // Calcular saldos acumulados para cada movimiento
+    let runningDeposito = previousBalance.deposito;
+    let runningPropio = previousBalance.propio;
+
+    const movementsWithBalances = movements.map((movement) => {
+      const depositoBalanceBefore = this.round2(runningDeposito);
+      const propioBalanceBefore = this.round2(runningPropio);
+      
+      runningDeposito += movement.depositoDelta;
+      runningPropio += movement.propioDelta;
+      
+      const depositoBalanceAfter = this.round2(runningDeposito);
+      const propioBalanceAfter = this.round2(runningPropio);
+
+      return {
+        ...movement,
+        depositoBalanceBefore,
+        propioBalanceBefore,
+        depositoBalanceAfter,
+        propioBalanceAfter,
+      };
+    });
+
     return {
       month: monthKey,
       season: {
@@ -3730,7 +3768,7 @@ export class AnalyticsService {
         purchasedKg: this.round2(monthPurchasedKg),
         closingBalance,
       },
-      movements,
+      movements: movementsWithBalances,
     };
   }
 
@@ -3754,14 +3792,15 @@ export class AnalyticsService {
     const receivedByMonth = new Map<string, number>();
     for (const reception of allReceptions) {
       const monthKey = this.toMonthKeyFromDate(getReceptionDate(reception));
-      const netWeight = this.toNumber(reception.netWeight);
-      if (!monthKey || netWeight <= 0) {
+      // Usar finalNetWeight (Paddy Neto) en lugar de netWeight
+      const paddyNetoKg = this.toNumber(reception.finalNetWeight ?? reception.netWeight);
+      if (!monthKey || paddyNetoKg <= 0) {
         continue;
       }
 
       receivedByMonth.set(
         monthKey,
-        this.toNumber(receivedByMonth.get(monthKey)) + netWeight,
+        this.toNumber(receivedByMonth.get(monthKey)) + paddyNetoKg,
       );
     }
 

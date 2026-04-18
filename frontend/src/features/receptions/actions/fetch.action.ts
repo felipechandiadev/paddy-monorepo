@@ -905,6 +905,7 @@ export async function updateReceptionAndAnalysis(
       tare: Number(payload.reception.tare),
       price: Number(payload.reception.price),
       dryPercent: Number(payload.reception.dryPercent ?? payload.analysis.dryPercent ?? 0),
+      receptionDate: payload.reception.receptionDate || undefined,
       note: payload.reception.note,
     });
 
@@ -999,6 +1000,7 @@ export async function updateReception(
       receptionPayload.dryFeeApplied = (Number.isFinite(dryPercent) ? dryPercent : 0) > 0;
     }
     if (data.note !== undefined) receptionPayload.notes = data.note?.trim() || undefined;
+    if (data.receptionDate !== undefined) receptionPayload.receptionDate = data.receptionDate;
 
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'PUT',

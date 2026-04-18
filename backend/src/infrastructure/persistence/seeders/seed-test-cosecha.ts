@@ -375,8 +375,14 @@ class SeedTestCosecha {
         const riceTypeIndex = i % riceTypes.length;
         const riceType = riceTypes[riceTypeIndex];
 
-        const receptionDate = new Date(season.startDate);
-        receptionDate.setDate(receptionDate.getDate() + daySpacing * i);
+        const receptionDateObj = new Date(season.startDate);
+        receptionDateObj.setDate(receptionDateObj.getDate() + daySpacing * i);
+        
+        // Convert to string format "YYYY-MM-DD 12:00:00"
+        const year = receptionDateObj.getFullYear();
+        const month = String(receptionDateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(receptionDateObj.getDate()).padStart(2, '0');
+        const receptionDate = `${year}-${month}-${day} 12:00:00`;
 
         const grossWeight = 2000 + Math.random() * 500;
         const netWeight = grossWeight * 0.95;
@@ -396,8 +402,8 @@ class SeedTestCosecha {
           receptionDate,
           status: ReceptionStatusEnum.ANALYZED,
           notes: `Recepción de ${producer.name} en ${season.name}`,
-          createdAt: receptionDate,
-          updatedAt: receptionDate,
+          createdAt: receptionDateObj,
+          updatedAt: receptionDateObj,
         });
 
         const saved = await this.dataSource.manager.save(reception);

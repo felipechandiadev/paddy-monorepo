@@ -128,20 +128,16 @@ export default function ReceptionGeneralData({
   // Cargar plantilla por defecto
   useEffect(() => {
     if (disableDefaultTemplateLoad) {
-      console.log('[TEMPLATE] Carga de plantilla deshabilitada (isEditMode)');
       setTemplateReady(true); // Está lista aunque no se cargue (en edit mode)
       return;
     }
 
-    console.log('[TEMPLATE] Iniciando carga de plantilla por defecto');
     const loadDefaultTemplate = async () => {
       try {
         const defaultTemplate = await fetchDefaultTemplate();
         if (defaultTemplate) {
-          console.log('[TEMPLATE] Plantilla por defecto cargada:', defaultTemplate);
           setCurrentTemplateName(defaultTemplate.name);
           setData('templateId', Number(defaultTemplate.id) || 0);
-          console.log('[TEMPLATE] templateId seteado a:', Number(defaultTemplate.id) || 0);
           // Actualizar el contexto con TODOS los campos de la plantilla por defecto
           setTemplate({
             useToleranceGroup: defaultTemplate.useToleranceGroup ?? true,
@@ -530,8 +526,13 @@ export default function ReceptionGeneralData({
         <TextField
           label="Fecha de Recepción"
           type="date"
-          value={data.receptionDate ?? ''}
-          onChange={(e) => setData('receptionDate', e.target.value)}
+          value={data.receptionDate ? data.receptionDate.split('T')[0] : ''}
+          onChange={(e) => {
+            // Send only YYYY-MM-DD format
+            // Backend will convert to local time 12:00:00 to avoid timezone issues
+            const dateStr = e.target.value;
+            setData('receptionDate', dateStr);
+          }}
           required
         />
 

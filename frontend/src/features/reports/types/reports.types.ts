@@ -329,6 +329,11 @@ export interface InventoryBookMovementItem {
   grossKg: number | null;
   depositoDelta: number;
   propioDelta: number;
+  // Saldos acumulados
+  depositoBalanceBefore?: number;
+  propioBalanceBefore?: number;
+  depositoBalanceAfter?: number;
+  propioBalanceAfter?: number;
 }
 
 export interface InventoryBookMonthlyReportResponse {

@@ -53,11 +53,15 @@ export class Reception extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   guideNumber: string; // Número de Guía de Despacho
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   receptionBookNumber?: string | null; // Correlativo libro recepción
 
-  @Column({ type: 'date', nullable: true })
-  receptionDate?: Date | null; // Fecha operativa de recepción
+  @Column({ 
+    type: 'varchar', 
+    length: 19,
+    nullable: true
+  })
+  receptionDate?: string | null; // Fecha operativa de recepción: "YYYY-MM-DD HH:MM:SS" (sin zona horaria)
 
   @Column({ type: 'varchar', length: 50 })
   licensePlate: string; // Patente del camión

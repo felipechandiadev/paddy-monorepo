@@ -570,7 +570,6 @@ function CreateReceptionDialogContent({
       }
 
       if (selectedTemplate) {
-        console.log('[RECARGA TEMPLATE] Plantilla recargada:', selectedTemplate);
         setTemplate({
           useToleranceGroup: selectedTemplate.useToleranceGroup ?? true,
           groupToleranceValue: selectedTemplate.groupToleranceValue ?? 0,
@@ -637,22 +636,17 @@ function CreateReceptionDialogContent({
   }, [setTemplate]);
 
   const handleSaveReception = React.useCallback(async () => {
-    console.log('[GUARDAR] Click en Guardar Recepción');
-    console.log('[GUARDAR] Estado data:', JSON.stringify(data));
-    console.log('[GUARDAR] isTemplateReady:', isTemplateReady);
     setSavingReception(true);
     setError(null);
 
     try {
       if (isEditMode && !initialReception) {
-        console.log('[GUARDAR] No se encontró la recepción a editar');
         setError('No se encontró la recepción a editar.');
         setSavingReception(false);
         return;
       }
 
       if (!isTemplateReady) {
-        console.log('[GUARDAR] Plantilla aún no está lista');
         setError('La plantilla se está cargando. Por favor espere...');
         setSavingReception(false);
         return;
@@ -660,29 +654,37 @@ function CreateReceptionDialogContent({
 
       const isValid = validateReception();
       if (!isValid) {
-        console.log('[GUARDAR] Validación fallida');
         setError('Faltan datos obligatorios para guardar la recepción.');
         setSavingReception(false);
         return;
       }
 
       if (!Number(data.templateId ?? 0)) {
-        console.log('[GUARDAR] Falta plantilla, data.templateId:', data.templateId, 'Number:', Number(data.templateId ?? 0));
         setError('Debes seleccionar una plantilla antes de guardar la recepción.');
         setSavingReception(false);
         return;
       }
 
       calculateTotals();
-      console.log('[GUARDAR] Payload:', buildCreatePayload());
       const savePayload = buildCreatePayload();
+      
+      // Log para actualización de recepción
+      if (isEditMode) {
+        console.log('[UPDATE RECEPTION] 📤 Enviando fecha al backend:', savePayload.reception.receptionDate);
+        console.log('[UPDATE RECEPTION]    Payload completo reception:', savePayload.reception);
+      }
+      
       const saveResult = isEditMode
         ? await updateReceptionAndAnalysis(Number(initialReception?.id), savePayload)
         : await createReceptionAndAnalysis(savePayload);
-      console.log('[GUARDAR] Resultado:', saveResult);
+
+      // Log del resultado para actualización
+      if (isEditMode && saveResult.success && saveResult.data) {
+        console.log('[UPDATE RECEPTION] 📥 Respuesta del backend - receptionDate guardada:', saveResult.data.reception.receptionDate);
+        console.log('[UPDATE RECEPTION]    Valor en BD (esperado 2026-03-30 12:00:00):', saveResult.data.reception.receptionDate);
+      }
 
       if (!saveResult.success || !saveResult.data) {
-        console.log('[GUARDAR] Error al guardar:', saveResult.error);
         setError(saveResult.error || 'No se pudo guardar la recepción.');
         setSavingReception(false);
         return;
@@ -691,12 +693,10 @@ function CreateReceptionDialogContent({
       // Obtener la última recepción guardada con su análisis
       let realReception: PrintableReception | null = null;
       const lastReceptionResult = await fetchLastReception();
-      console.log('[GUARDAR] fetchLastReception:', lastReceptionResult);
       if (lastReceptionResult.success && lastReceptionResult.data) {
         const lastReception = lastReceptionResult.data;
         // Cargar el análisis asociado
         const analysisResult = await fetchReceptionAnalysis(lastReception.id);
-        console.log('[GUARDAR] fetchReceptionAnalysis:', analysisResult);
         realReception = mapPrintableReception(lastReception, analysisResult.data);
       } else {
         realReception = mapPrintableReception(saveResult.data.reception, saveResult.data.analysis);
@@ -749,10 +749,8 @@ function CreateReceptionDialogContent({
       setProducerAutocompleteResetKey((prev) => prev + 1);
       setRealPrintReception(realReception);
       setRealPrintOpen(true);
-      console.log('[GUARDAR] Diálogo de impresión abierto');
       onSuccess();
     } catch (err) {
-      console.log('[GUARDAR] Error inesperado:', err);
       setError(
         err instanceof Error
           ? err.message
