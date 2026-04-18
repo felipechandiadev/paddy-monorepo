@@ -539,7 +539,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       )}
 
       {!loading && report && seasonSummary && (
-        <div ref={reportPrintRef} className={`flex flex-col gap-6 print:${styles.sheet}`}>
+        <div ref={reportPrintRef} className={`flex flex-col gap-6 print:gap-1 print:${styles.sheet}`}>
           <div className={`hidden print:block ${styles.sheet}`}>
             {/* Professional Print Header */}
             <header className={styles.companyHeader}>

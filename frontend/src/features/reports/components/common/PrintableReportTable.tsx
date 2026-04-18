@@ -44,10 +44,10 @@ function PrintableReportTable<Row>({
     <section
       className={`overflow-hidden rounded-xl ${containerBorderClass} bg-white print:break-inside-avoid print:rounded-none print:border-none print:bg-transparent`}
     >
-      <div className="border-b border-neutral-200 px-2 py-1 print:px-1 print:py-0.5">
+      <div className="border-b border-neutral-200 px-2 py-1 print:px-0 print:py-0">
         <h3 className="text-base font-semibold text-neutral-900 print:text-[12px] print:font-bold">{title}</h3>
         {subtitle ? (
-          <p className="mt-1 text-sm text-neutral-600 print:text-[9px] print:mt-0.5 print:text-neutral-700">{subtitle}</p>
+          <p className="mt-1 text-sm text-neutral-600 print:text-[9px] print:mt-0 print:text-neutral-700">{subtitle}</p>
         ) : null}
       </div>
 
@@ -58,7 +58,7 @@ function PrintableReportTable<Row>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`border-b border-neutral-200 px-1 py-1 font-semibold print:px-0.5 print:py-0.5 print:border-b-gray-300 ${getPrintableTableAlignClass(
+                  className={`border-b border-neutral-200 px-1 py-1 font-semibold print:px-0 print:py-0 print:border-b-gray-300 ${getPrintableTableAlignClass(
                     column.align,
                   )}`}
                 >
@@ -74,7 +74,7 @@ function PrintableReportTable<Row>({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={`px-1 py-1 text-neutral-800 print:px-0.5 print:py-0.5 print:text-neutral-900 print:leading-tight ${getPrintableTableAlignClass(
+                      className={`px-1 py-1 text-neutral-800 print:px-0 print:py-0 print:text-neutral-900 print:leading-tight ${getPrintableTableAlignClass(
                         column.align,
                       )}`}
                     >
@@ -87,7 +87,7 @@ function PrintableReportTable<Row>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-1 py-3 text-center text-sm text-neutral-500 print:py-1 print:text-[7px] print:text-neutral-600"
+                  className="px-1 py-3 text-center text-sm text-neutral-500 print:py-0 print:text-[7px] print:text-neutral-600"
                 >
                   {emptyMessage}
                 </td>

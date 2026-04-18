@@ -168,17 +168,17 @@
 }
 
 .chartContainer {
-  margin-bottom: 1rem;
-  padding: 0.5rem 0;
+  margin-bottom: 0.3rem;
+  padding: 0;
 }
 
 @media print {
   .sheet {
-    padding: 8mm;
+    padding: 0;
   }
 
   .companyHeader {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
     gap: 1.5rem;
   }
 
@@ -220,14 +220,14 @@
   }
 
   .separator {
-    margin: 0.6rem 0;
+    margin: 0.3rem 0;
     height: 1px;
   }
 
   .reportInfoGrid {
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.2rem;
     padding: 0;
-    gap: 1rem;
+    gap: 0.8rem;
   }
 
   .infoBlock {
@@ -248,13 +248,13 @@
   }
 
   .summaryGrid {
-    margin-bottom: 0.6rem;
-    gap: 0.5rem;
-    padding: 0 1mm;
+    margin-bottom: 0.3rem;
+    gap: 0.3rem;
+    padding: 0;
   }
 
   .summaryCard {
-    padding: 0.4rem;
+    padding: 0.2rem;
     border: 1px solid #d1d5db;
     background: #ffffff;
   }
@@ -273,7 +273,7 @@
   }
 
   .tableSection {
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.2rem;
     padding: 0;
   }
 
