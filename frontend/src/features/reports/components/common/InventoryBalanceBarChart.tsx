@@ -60,9 +60,9 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
 
   // Renderizado estático para impresión
   const renderPrintChart = () => {
-    const chartWidth = 280;
-    const chartHeight = 100;
-    const padding = { top: 10, right: 10, left: 50, bottom: 30 };
+    const chartWidth = 750;
+    const chartHeight = 280;
+    const padding = { top: 20, right: 30, left: 85, bottom: 60 };
     
     const plotWidth = chartWidth - padding.left - padding.right;
     const plotHeight = chartHeight - padding.top - padding.bottom;
@@ -96,8 +96,8 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
         {/* Y Axis Label */}
         <text
           x={padding.left - 5}
-          y={chartHeight - padding.bottom + 12}
-          fontSize="7"
+          y={chartHeight - padding.bottom + 18}
+          fontSize="11"
           fill="#6b7280"
           textAnchor="end"
         >
@@ -106,8 +106,8 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
         
         <text
           x={padding.left - 5}
-          y={padding.top + 5}
-          fontSize="7"
+          y={padding.top + 8}
+          fontSize="11"
           fill="#6b7280"
           textAnchor="end"
         >
@@ -132,8 +132,8 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
               />
               <text
                 x={x + barWidth / 2}
-                y={chartHeight - padding.bottom + 12}
-                fontSize="7"
+                y={chartHeight - padding.bottom + 18}
+                fontSize="11"
                 fill="#6b7280"
                 textAnchor="middle"
               >
@@ -141,8 +141,8 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
               </text>
               <text
                 x={x + barWidth / 2}
-                y={y - 2}
-                fontSize="6"
+                y={y - 3}
+                fontSize="10"
                 fill="#111827"
                 textAnchor="middle"
                 fontWeight="bold"
@@ -154,10 +154,10 @@ const InventoryBalanceBarChart: React.FC<InventoryBalanceBarChartProps> = ({
         })}
         
         {/* Legend */}
-        <text x={70} y={chartHeight - 2} fontSize="6" fill="#10b981" fontWeight="bold">
+        <text x={100} y={chartHeight - 8} fontSize="10" fill="#10b981" fontWeight="bold">
           ■ Depósito
         </text>
-        <text x={130} y={chartHeight - 2} fontSize="6" fill="#3b82f6" fontWeight="bold">
+        <text x={280} y={chartHeight - 8} fontSize="10" fill="#3b82f6" fontWeight="bold">
           ■ Propio
         </text>
       </svg>
