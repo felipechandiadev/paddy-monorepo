@@ -10,6 +10,7 @@ import { AdvanceSeasonOption } from '@/features/finances/types/finances.types';
 import {
   fetchInventoryBookReport,
   fetchInventoryBookSeasonSummary,
+  exportInventoryBookExcel,
 } from '../actions/reports.action';
 import {
   InventoryBookMovementItem,
@@ -169,48 +170,25 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       return;
     }
 
-    const token = (session?.user as any)?.accessToken;
-    if (!token) {
-      setExportError('No hay sesión activa. Por favor, reinicia sesión.');
-      return;
-    }
-
     setExportError(null);
     setIsExporting(true);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-      const exportUrl = `${apiBase}/analytics/inventory-book/export/excel?seasonId=${filters.seasonId}&month=${filters.month}`;
-      const response = await fetch(exportUrl, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const result = await exportInventoryBookExcel(filters.seasonId, filters.month);
 
-      if (!response.ok) {
-        let message = 'No fue posible exportar el Libro de Existencias a Excel.';
-        const contentType = response.headers.get('content-type') || '';
-
-        if (contentType.includes('application/json')) {
-          const payload = await response.json().catch(() => null);
-          if (payload?.message) {
-            message = payload.message;
-          }
-        }
-
-        throw new Error(message);
+      if (result.error === 'SESSION_EXPIRED') {
+        await handleSessionExpired();
+        return;
       }
 
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get('content-disposition') || '';
-      
-      let fileName = 'libro-existencias.xlsx';
-      const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
-      if (fileNameMatch?.[1]) {
-        fileName = fileNameMatch[1];
+      if (!result.success || !result.data) {
+        setExportError(
+          result.error || 'No fue posible exportar el Libro de Existencias a Excel.',
+        );
+        return;
       }
 
+      const { blob, fileName } = result.data;
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -228,7 +206,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
     } finally {
       setIsExporting(false);
     }
-  }, [filters.seasonId, filters.month, session]);
+  }, [filters.seasonId, filters.month, handleSessionExpired]);
 
   const runReport = useCallback(async () => {
     const seasonId = filters.seasonId;

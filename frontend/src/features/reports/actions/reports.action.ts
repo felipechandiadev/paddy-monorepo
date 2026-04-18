@@ -985,3 +985,82 @@ export async function fetchRicePriceReport(
     };
   }
 }
+
+export async function exportInventoryBookExcel(
+  seasonId: number,
+  month: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    blob: Blob;
+    fileName: string;
+  };
+  error?: string;
+}> {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user?.accessToken) {
+    return {
+      success: false,
+      error: 'SESSION_EXPIRED',
+    };
+  }
+
+  try {
+    throwIfBackendUnavailable(null);
+
+    const url = `${ANALYTICS_API_BASE_URL}/inventory-book/export/excel?seasonId=${seasonId}&month=${month}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: getAuthHeaders(session.user.accessToken),
+      cache: 'no-store',
+    });
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        error: 'SESSION_EXPIRED',
+      };
+    }
+
+    if (!response.ok) {
+      const error = await parseErrorMessage(
+        response,
+        `No fue posible exportar el Libro de Existencias a Excel (${response.status}).`,
+      );
+
+      return {
+        success: false,
+        error,
+      };
+    }
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get('content-disposition') || '';
+
+    let fileName = 'libro-existencias.xlsx';
+    const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+    if (fileNameMatch?.[1]) {
+      fileName = fileNameMatch[1];
+    }
+
+    return {
+      success: true,
+      data: {
+        blob,
+        fileName,
+      },
+    };
+  } catch (error) {
+    throwIfBackendUnavailable(error);
+
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Error inesperado al exportar el Libro de Existencias a Excel.',
+    };
+  }
+}
