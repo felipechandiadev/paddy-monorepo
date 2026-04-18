@@ -15,7 +15,7 @@
     height: 100%;
     min-height: 100%;
     margin: 0;
-    padding: 0;
+    padding: 14mm;
     box-shadow: none;
     page-break-after: always;
   }
@@ -27,8 +27,6 @@
   align-items: flex-start;
   gap: 1.5rem;
   margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #111827;
 }
 
 .companyKicker {
@@ -75,18 +73,16 @@
 
 .documentSubtitle {
   margin: 0.3rem 0 0;
-  font-size: 11px;
+  font-size: 10px;
   color: #6b7280;
 }
 
 .reportInfoGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 6px;
+  margin-bottom: 1rem;
+  padding: 0;
 }
 
 .infoBlock {
@@ -95,39 +91,33 @@
 }
 
 .infoLabel {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   color: #6b7280;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
   letter-spacing: 0.05em;
 }
 
 .infoValue {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #111827;
 }
 
-.separator {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 1rem 0;
-}
-
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
 .summaryCard {
   padding: 0.75rem;
-  background: #f9fafb;
+  border: 1px solid #d1d5db;
   border-radius: 4px;
   text-align: center;
-  border-left: 3px solid #3b82f6;
+  background: #ffffff;
 }
 
 .summaryCardTitle {
@@ -145,56 +135,33 @@
   color: #111827;
 }
 
-.tableContainer {
-  margin-bottom: 1.5rem;
-}
-
-.tableTitle {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #111827;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.05em;
-}
-
-.footer {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-  font-size: 9px;
-  color: #6b7280;
-  text-align: center;
-}
-
 @media print {
-  .companyHeader {
-    margin-bottom: 0.8rem;
-    padding-bottom: 0.8rem;
-    border-bottom: 2px solid #111827;
+  .sheet {
+    padding: 14mm;
   }
 
   .reportInfoGrid {
     margin-bottom: 1rem;
-    padding: 0.75rem;
+    padding: 0;
+    gap: 1rem;
   }
 
   .summaryGrid {
-    margin-bottom: 1rem;
-    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    gap: 0.75rem;
   }
 
   .summaryCard {
-    padding: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
   }
 
-  .tableContainer {
-    margin-bottom: 1rem;
+  .summaryCardTitle {
+    font-size: 9px;
   }
 
-  .footer {
-    margin-top: 1rem;
-    padding-top: 0.5rem;
-    font-size: 8px;
+  .summaryCardValue {
+    font-size: 12px;
   }
 }

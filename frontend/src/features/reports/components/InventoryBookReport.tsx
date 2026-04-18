@@ -552,7 +552,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
                   Impreso: {initialPrintDateLabel}
                 </p>
                 <p className={styles.documentSubtitle}>
-                  Temporada: {report.season.name} {report.season.year}
+                  Temporada: {report.season.name}
                 </p>
               </div>
             </header>
@@ -563,16 +563,10 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
                 <div className={styles.infoValue}>{formatMonthLabel(report.month)}</div>
               </div>
               <div className={styles.infoBlock}>
-                <div className={styles.infoLabel}>Cosecha</div>
-                <div className={styles.infoValue}>{report.season.year}</div>
-              </div>
-              <div className={styles.infoBlock}>
                 <div className={styles.infoLabel}>Movimientos</div>
                 <div className={styles.infoValue}>{filteredMovements.length}</div>
               </div>
             </div>
-
-            <div className={styles.separator} />
 
             {reportSummary && (
               <div className={styles.summaryGrid}>
@@ -588,25 +582,25 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
                     {numberFormatter.format(reportSummary.previousBalance.propio)}
                   </div>
                 </div>
-                <div className={styles.summaryCard} style={{ borderLeftColor: '#10b981' }}>
+                <div className={styles.summaryCard}>
                   <div className={styles.summaryCardTitle}>Kilos Recibidos</div>
                   <div className={styles.summaryCardValue}>
                     {numberFormatter.format(reportSummary.receivedKg)}
                   </div>
                 </div>
-                <div className={styles.summaryCard} style={{ borderLeftColor: '#f59e0b' }}>
+                <div className={styles.summaryCard}>
                   <div className={styles.summaryCardTitle}>Kilos Comprados</div>
                   <div className={styles.summaryCardValue}>
                     {numberFormatter.format(reportSummary.purchasedKg)}
                   </div>
                 </div>
-                <div className={styles.summaryCard} style={{ borderLeftColor: '#10b981' }}>
+                <div className={styles.summaryCard}>
                   <div className={styles.summaryCardTitle}>Saldo Cierre Depósito</div>
                   <div className={styles.summaryCardValue}>
                     {numberFormatter.format(reportSummary.closingBalance.deposito)}
                   </div>
                 </div>
-                <div className={styles.summaryCard} style={{ borderLeftColor: '#3b82f6' }}>
+                <div className={styles.summaryCard}>
                   <div className={styles.summaryCardTitle}>Saldo Cierre Propio</div>
                   <div className={styles.summaryCardValue}>
                     {numberFormatter.format(reportSummary.closingBalance.propio)}
@@ -629,7 +623,7 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
           </div>
 
           {reportSummary && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 print:grid-cols-6 print:gap-2">
+            <div className="print:hidden grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               <ReportSummaryCard
                 title="Saldo Ant. Depósito"
                 value={`${numberFormatter.format(reportSummary.previousBalance.deposito)} kg`}
