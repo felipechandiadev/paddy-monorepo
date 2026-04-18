@@ -175,22 +175,23 @@
   }
 
   .companyHeader {
-    margin-bottom: 0.3rem;
-    gap: 1rem;
+    margin-bottom: 0.25rem;
+    gap: 1.5rem;
   }
 
   .companyKicker {
-    font-size: 7px;
+    font-size: 9px;
   }
 
   .companyName {
-    font-size: 18px;
-    margin: 0.1rem 0;
+    font-size: 22px;
+    margin: 0.2rem 0;
+    font-weight: 800;
   }
 
   .companyAddress {
-    font-size: 8px;
-    margin: 0.05rem 0;
+    font-size: 10px;
+    margin: 0;
   }
 
   .documentMeta {
@@ -198,29 +199,32 @@
   }
 
   .documentTitle {
-    font-size: 18px;
+    font-size: 23px;
     margin: 0;
+    font-weight: 900;
+    line-height: 1;
   }
 
   .documentDate {
-    font-size: 8px;
-    margin: 0.2rem 0 0;
+    font-size: 11px;
+    margin: 0.4rem 0 0;
+    font-weight: 600;
   }
 
   .documentSubtitle {
-    font-size: 7px;
-    margin: 0.1rem 0 0;
+    font-size: 10px;
+    margin: 0.3rem 0 0;
   }
 
   .separator {
-    margin: 0.3rem 0;
-    height: 0.5px;
+    margin: 0.6rem 0;
+    height: 1px;
   }
 
   .reportInfoGrid {
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.4rem;
     padding: 0;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .infoBlock {
@@ -228,51 +232,60 @@
   }
 
   .infoLabel {
-    font-size: 7px;
-    margin-bottom: 0.1rem;
+    font-size: 9px;
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .infoValue {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 600;
   }
 
   .summaryGrid {
-    margin-bottom: 0.3rem;
-    gap: 0.3rem;
+    margin-bottom: 0.6rem;
+    gap: 0.5rem;
   }
 
   .summaryCard {
-    padding: 0.3rem;
-    border: 0.5px solid #d1d5db;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
     background: #ffffff;
   }
 
   .summaryCardTitle {
-    font-size: 6px;
-    margin-bottom: 0.1rem;
+    font-size: 8px;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   .summaryCardValue {
-    font-size: 8px;
+    font-size: 10px;
+    font-weight: 800;
   }
 
   .tableSection {
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.4rem;
     padding: 0;
   }
 
   .tableSectionTitle {
-    font-size: 9px;
-    margin-bottom: 0.2rem;
+    font-size: 10px;
+    margin-bottom: 0.4rem;
+    font-weight: 700;
   }
 
   .tableSectionSubtitle {
-    font-size: 7px;
-    margin-bottom: 0.2rem;
+    font-size: 9px;
+    margin-bottom: 0.5rem;
   }
 
   .chartContainer {
-    margin-bottom: 0.2rem;
-    padding: 0.2rem 0;
+    margin-bottom: 0.3rem;
+    padding: 0;
   }
 }
