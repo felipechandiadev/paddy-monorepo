@@ -28,6 +28,7 @@ import {
 } from './common/reportUtils';
 import InventoryBalanceBarChart from './common/InventoryBalanceBarChart';
 import { formatChileanRut } from '@/shared/utils/chileanRutFormatter';
+import styles from './InventoryBookReport.module.css';
 
 interface InventoryBookReportProps {
   seasons: AdvanceSeasonOption[];
@@ -535,15 +536,84 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
       )}
 
       {!loading && report && seasonSummary && (
-        <div ref={reportPrintRef} className="flex flex-col gap-6 print:gap-4">
-          <div className="hidden print:block">
-            <h1 className="text-lg font-bold text-neutral-900">Libro de Existencias</h1>
-            <p className="text-sm text-neutral-600">
-              Temporada: {report.season.name} ({report.season.year})
-            </p>
-            <p className="text-xs text-neutral-500">
-              Mes: {formatMonthLabel(report.month)} · Impreso: {initialPrintDateLabel}
-            </p>
+        <div ref={reportPrintRef} className={`flex flex-col gap-6 print:${styles.sheet}`}>
+          <div className={`hidden print:block ${styles.sheet}`}>
+            {/* Professional Print Header */}
+            <header className={styles.companyHeader}>
+              <div>
+                <p className={styles.companyKicker}>Sociedad Comercial e Industrial</p>
+                <h1 className={styles.companyName}>Aparicio y Garcia Ltda</h1>
+                <p className={styles.companyAddress}>Panamericana Sur km 342</p>
+                <p className={styles.companyAddress}>Parral, Chile</p>
+              </div>
+              <div className={styles.documentMeta}>
+                <h2 className={styles.documentTitle}>LIBRO DE EXISTENCIAS</h2>
+                <p className={styles.documentDate} suppressHydrationWarning>
+                  Impreso: {initialPrintDateLabel}
+                </p>
+                <p className={styles.documentSubtitle}>
+                  Temporada: {report.season.name} {report.season.year}
+                </p>
+              </div>
+            </header>
+
+            <div className={styles.reportInfoGrid}>
+              <div className={styles.infoBlock}>
+                <div className={styles.infoLabel}>Período</div>
+                <div className={styles.infoValue}>{formatMonthLabel(report.month)}</div>
+              </div>
+              <div className={styles.infoBlock}>
+                <div className={styles.infoLabel}>Cosecha</div>
+                <div className={styles.infoValue}>{report.season.year}</div>
+              </div>
+              <div className={styles.infoBlock}>
+                <div className={styles.infoLabel}>Movimientos</div>
+                <div className={styles.infoValue}>{filteredMovements.length}</div>
+              </div>
+            </div>
+
+            <div className={styles.separator} />
+
+            {reportSummary && (
+              <div className={styles.summaryGrid}>
+                <div className={styles.summaryCard}>
+                  <div className={styles.summaryCardTitle}>Saldo Anterior Depósito</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.previousBalance.deposito)}
+                  </div>
+                </div>
+                <div className={styles.summaryCard}>
+                  <div className={styles.summaryCardTitle}>Saldo Anterior Propio</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.previousBalance.propio)}
+                  </div>
+                </div>
+                <div className={styles.summaryCard} style={{ borderLeftColor: '#10b981' }}>
+                  <div className={styles.summaryCardTitle}>Kilos Recibidos</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.receivedKg)}
+                  </div>
+                </div>
+                <div className={styles.summaryCard} style={{ borderLeftColor: '#f59e0b' }}>
+                  <div className={styles.summaryCardTitle}>Kilos Comprados</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.purchasedKg)}
+                  </div>
+                </div>
+                <div className={styles.summaryCard} style={{ borderLeftColor: '#10b981' }}>
+                  <div className={styles.summaryCardTitle}>Saldo Cierre Depósito</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.closingBalance.deposito)}
+                  </div>
+                </div>
+                <div className={styles.summaryCard} style={{ borderLeftColor: '#3b82f6' }}>
+                  <div className={styles.summaryCardTitle}>Saldo Cierre Propio</div>
+                  <div className={styles.summaryCardValue}>
+                    {numberFormatter.format(reportSummary.closingBalance.propio)}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 print:hidden">
