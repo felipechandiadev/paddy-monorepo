@@ -3944,7 +3944,13 @@ export class AnalyticsService {
     };
 
     // Formato para columnas numéricas
-    ['G', 'I', 'J', 'K', 'L', 'M', 'N', 'O'].forEach((columnKey) => {
+    // Kilos y Saldos: enteros (sin decimales)
+    ['G', 'I', 'L', 'M', 'N', 'O'].forEach((columnKey) => {
+      movementsSheet.getColumn(columnKey).numFmt = '#,##0';
+    });
+    
+    // Precios y Totales: con 2 decimales
+    ['J', 'K'].forEach((columnKey) => {
       movementsSheet.getColumn(columnKey).numFmt = '#,##0.00';
     });
 
@@ -3995,7 +4001,7 @@ export class AnalyticsService {
       }
     });
 
-    summarySheet.getColumn('value').numFmt = '#,##0.00';
+    summarySheet.getColumn('value').numFmt = '#,##0';
 
     const rawBuffer = await workbook.xlsx.writeBuffer();
     const fileBuffer = Buffer.isBuffer(rawBuffer)
