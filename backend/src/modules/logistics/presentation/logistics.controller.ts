@@ -11,6 +11,7 @@ import {
   HttpStatus,
   Logger,
   ValidationPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { LogisticsService } from '../application/logistics.service';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
@@ -29,7 +30,7 @@ export class LogisticsController {
   @Post('truck-receptions')
   @HttpCode(HttpStatus.CREATED)
   async createTruckReception(@Body(ValidationPipe) createTruckDto: CreateTruckDto) {
-    this.logger.log(`POST /truck-receptions - Registrando camión: ${createTruckDto.patente}`);
+    this.logger.log(`POST /truck-receptions - Registrando camión: ${createTruckDto.license_plate}`);
     try {
       const result = await this.logisticsService.createTruckReception(createTruckDto);
       return {
@@ -94,7 +95,7 @@ export class LogisticsController {
    * Obtener recepción por ID
    */
   @Get('truck-receptions/:id')
-  async getTruckReceptionById(@Param('id') id: string) {
+  async getTruckReceptionById(@Param('id', new ParseIntPipe()) id: number) {
     this.logger.log(`GET /truck-receptions/:id - ID: ${id}`);
     try {
       const result = await this.logisticsService.getTruckReceptionById(id);
@@ -173,7 +174,7 @@ export class LogisticsController {
    */
   @Put('truck-receptions/:id')
   async updateTruckReception(
-    @Param('id') id: string,
+    @Param('id', new ParseIntPipe()) id: number,
     @Body() updateData: Partial<CreateTruckDto>,
   ) {
     this.logger.log(`PUT /truck-receptions/:id - ID: ${id}`);
@@ -194,7 +195,7 @@ export class LogisticsController {
    * Cancelar recepción de camión
    */
   @Delete('truck-receptions/:id')
-  async cancelTruckReception(@Param('id') id: string) {
+  async cancelTruckReception(@Param('id', new ParseIntPipe()) id: number) {
     this.logger.log(`DELETE /truck-receptions/:id - ID: ${id}`);
     try {
       const result = await this.logisticsService.cancelTruckReception(id);

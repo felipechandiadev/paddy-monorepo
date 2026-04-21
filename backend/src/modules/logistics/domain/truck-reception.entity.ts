@@ -12,23 +12,25 @@ import {
 import { Producer } from '@modules/producers/domain/producer.entity';
 
 export enum TruckReceptionStatus {
-  ESPERA = 'ESPERA',
-  PESANDO_BRUTO = 'PESANDO_BRUTO',
-  PESANDO_TARA = 'PESANDO_TARA',
-  FINALIZADO = 'FINALIZADO',
+  WEIGHING_GROSS = 'WEIGHING_GROSS',
+  WEIGHING_TARE = 'WEIGHING_TARE',
+  FINISHED = 'FINISHED',
 }
 
 @Entity('truck_receptions')
-@Index(['numero_turno'])
 @Index(['producer_id'])
-@Index(['estado'])
-@Index(['fecha_hora_entrada'])
+@Index(['status'])
+@Index(['entry_at'])
 export class TruckReception {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @Column({ type: 'int', nullable: false })
-  numero_turno: number;
+  @Column({
+    type: 'enum',
+    enum: TruckReceptionStatus,
+    default: TruckReceptionStatus.WEIGHING_GROSS,
+  })
+  status: TruckReceptionStatus;
 
   @Column({ type: 'int', nullable: false })
   producer_id: number;
@@ -38,44 +40,34 @@ export class TruckReception {
   producer: Producer;
 
   @Column({ type: 'varchar', length: 50, nullable: false })
-  patente: string;
-
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  guia: string;
+  license_plate: string;
 
   @Column({ type: 'varchar', length: 100, nullable: false })
-  chofer_nombre: string;
+  driver_name: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false })
-  rut_chofer: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  carrier_company: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  dispatch_guide: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  peso_bruto: number;
+  gross_weight: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  peso_tara: number;
+  tare_weight: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, default: null })
-  peso_neto: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  net_weight: number;
 
-  @Column({
-    type: 'enum',
-    enum: TruckReceptionStatus,
-    default: TruckReceptionStatus.ESPERA,
-  })
-  estado: TruckReceptionStatus;
-
-  @CreateDateColumn()
-  fecha_hora_entrada: Date;
+  @Column({ type: 'timestamp', nullable: false })
+  entry_at: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  fecha_hora_finalizacion: Date;
+  finished_at: Date;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  numero_ticket: string;
-
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  pdf_url: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  created_by: string;
 
   @CreateDateColumn()
   created_at: Date;
@@ -83,15 +75,13 @@ export class TruckReception {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  created_by: string;
-
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
 
   calculateNetWeight(): void {
-    if (this.peso_bruto && this.peso_tara) {
-      this.peso_neto = parseFloat((this.peso_bruto - this.peso_tara).toFixed(2));
+    if (this.gross_weight && this.tare_weight) {
+      this.net_weight = parseFloat((this.gross_weight - this.tare_weight).toFixed(2));
     }
   }
 }
+
