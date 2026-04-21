@@ -1,5 +1,8 @@
-# 🚚 TRUCK MANAGEMENT SYSTEM (TMS) - ARQUITECTURA COMPLETA
+# 🚚 PADDY TMS - TRUCK MANAGEMENT SYSTEM
+## Arquitectura Técnica Completa
 
+**Nombre del Proyecto**: Paddy TMS  
+**Carpeta**: `/paddy-tms/`  
 **Documento de Arquitectura Integral**  
 **Fecha de Creación**: 21 de abril de 2026  
 **Estado**: 📋 EN DISEÑO Y PLANIFICACIÓN  
@@ -25,16 +28,23 @@
 
 ---
 
-## 🎯 VISIÓN GENERAL
+## 📌 DESCRIPCIÓN GENERAL DEL PROYECTO
 
-El **Truck Management System** es una PWA moderna que gestiona el flujo logístico completo de recepción de arroz paddy, desde la llegada del camión hasta la generación del ticket final. El sistema está diseñado para operar **en tiempo real** con dos vistas separadas:
+**Nombre Oficial**: Paddy TMS  
+**Nombre de Carpeta**: `/paddy-tms/`  
+**Acrónimo**: Truck Management System  
+**Propósito**: Gestionar el flujo logístico completo de recepción de arroz paddy
 
-- **👨‍💼 Admin Dashboard**: Interfaz completa para operadores (ingreso de datos, control)
-- **📺 Monitor Display**: Pantalla grande para choferes (llamados, próximos turnos, información clara)
+### 🎯 VISIÓN GENERAL
+
+El **Paddy TMS** es una PWA moderna que gestiona el flujo logístico completo de recepción de arroz paddy, desde la llegada del camión hasta la generación del ticket final. El sistema está diseñado para operar **en tiempo real** con dos vistas claramente separadas:
+
+- **👨‍💼 Admin Dashboard** (Protegido con Login): Interfaz completa para operadores logísticos (ingreso de datos, control, pesajes)
+- **📺 Monitor Display** (Público, Sin Login): Pantalla grande para choferes (llamados, próximos turnos, información clara y visible)
 
 ### Key Features
-- ✅ Máquina de estados robusto (5 estados)
-- ✅ Sincronización en tiempo real (Realtime DB)
+- ✅ Máquina de estados robusto (4 estados: ESPERA → PESANDO_BRUTO → PESANDO_TARA → FINALIZADO)
+- ✅ Sincronización en tiempo real (Socket.io + Polling con MySQL)
 - ✅ Funcionamiento offline-first (PWA + IndexedDB)
 - ✅ Integración con balanzas (RS232/USB)
 - ✅ Generación automática de tickets (PDF)
@@ -359,7 +369,7 @@ interface LogisticsSessionReport {
 
 ## 🎛️ MÁQUINA DE ESTADOS
 
-### Diagrama de Transiciones
+### Diagrama de Transiciones (4 Estados)
 
 ```
                     ┌─────────────┐
@@ -368,7 +378,7 @@ interface LogisticsSessionReport {
                     └──────┬──────┘
                            │
                            │ Operador: "Siguiente"
-                           │ (Validar: patente, chofer)
+                           │ (Validar: patente, chofer, guía)
                            ↓
                     ┌─────────────────┐
                     │ PESANDO_BRUTO   │
@@ -377,13 +387,6 @@ interface LogisticsSessionReport {
                            │
                            │ Registrar peso bruto
                            │ (Validar: peso > 0)
-                           ↓
-                    ┌─────────────────┐
-                    │  DESCARGANDO    │
-                    │ (En descarga)   │
-                    └──────┬──────────┘
-                           │
-                           │ Operador: "Listo para pesar"
                            ↓
                     ┌─────────────────┐
                     │ PESANDO_TARA    │
@@ -399,27 +402,23 @@ interface LogisticsSessionReport {
                     └─────────────────┘
 ```
 
+**Nota**: El proceso de DESCARGANDO es completamente independiente y externo al TMS. Se maneja en otro sistema y no forma parte de la máquina de estados del TMS.
+
 ### Validaciones por Transición
 
 ```typescript
 const STATE_GUARDS = {
   // ESPERA -> PESANDO_BRUTO
-  PESANDO_BRUTO: (truck: Truck) => {
+  PESANDO_BRUTO: (truck: TruckReception) => {
     return (
-      truck.patente.length > 0 &&
-      truck.chofer.length > 0 &&
-      truck.transportista.length > 0 &&
-      truck.guia.length > 0
+      truck.patente?.length > 0 &&
+      truck.chofer_nombre?.length > 0 &&
+      truck.guia?.length > 0
     );
   },
   
-  // PESANDO_BRUTO -> DESCARGANDO
-  DESCARGANDO: (truck: Truck) => {
-    return truck.peso_bruto !== null && truck.peso_bruto > 0;
-  },
-  
-  // DESCARGANDO -> PESANDO_TARA (Validar registro previo)
-  PESANDO_TARA: (truck: Truck) => {
+  // PESANDO_BRUTO -> PESANDO_TARA (Validar registro previo)
+  PESANDO_TARA: (truck: TruckReception) => {
     return (
       truck.peso_bruto !== null &&
       truck.peso_bruto > 0 &&
@@ -428,7 +427,7 @@ const STATE_GUARDS = {
   },
   
   // PESANDO_TARA -> FINALIZADO
-  FINALIZADO: (truck: Truck) => {
+  FINALIZADO: (truck: TruckReception) => {
     const pesoNeto = (truck.peso_bruto ?? 0) - (truck.peso_tara ?? 0);
     return (
       truck.peso_tara !== null &&
@@ -439,6 +438,7 @@ const STATE_GUARDS = {
     );
   },
 };
+```
 
 const VALID_TRANSITIONS: Record<TruckState, TruckState[]> = {
   ESPERA: [PESANDO_BRUTO],
@@ -464,103 +464,139 @@ enum TransitionError {
 
 ---
 
-## 📁 ESTRUCTURA DE CARPETAS
+## 📁 ESTRUCTURA DE CARPETAS Y RUTAS
 
-### Estructura Propuesta (Frontend)
+### 🔐 Rutas del Proyecto
+
+```
+PADDY TMS - Rutas
+═════════════════════════════════════════════════════════════════
+
+PÚBLICA (SIN LOGIN):
+├─ /paddy/logistics/monitor     ← 📺 Monitor de turnos (Choferes)
+│  └─ Pantalla grande, información clara, actualización RT
+│
+PROTEGIDA (CON LOGIN):
+├─ /paddy/auth/login            ← 🔐 Única entrada al sistema
+│
+├─ /paddy/logistics/weighing    ← ⚖️ Panel de pesaje (Admin)
+│  ├─ Registro de camiones
+│  ├─ Control de pesajes (bruto/tara)
+│  └─ Generación de tickets
+│
+└─ /paddy/dashboard             ← 📊 Dashboard principal
+   ├─ Estadísticas
+   ├─ Histórico
+   └─ Reportes
+
+AUTENTICACIÓN:
+├─ NextAuth.js (JWT + Session)
+├─ Rol: LOGISTICS_OPERATOR
+└─ Permiso: ver/crear/editar recepciones
+```
+
+### 📂 Estructura de Carpetas (Frontend)
 
 ```
 frontend/
 ├── src/
 │   ├── app/
 │   │   └── paddy/
-│   │       └── logistics/                    ← NUEVA SECCIÓN
-│   │           ├── dispatch/                 ← Monitor para choferes
-│   │           │   ├── page.tsx             ← Pantalla monitor
-│   │           │   └── layout.tsx
-│   │           ├── weighing/                 ← Panel de pesaje
-│   │           │   ├── page.tsx             ← Admin panel
-│   │           │   ├── [id]/
-│   │           │   │   └── page.tsx         ← Detalle camión
-│   │           │   └── layout.tsx
-│   │           └── layout.tsx               ← Layout general TMS
+│   │       ├── auth/
+│   │       │   ├── login/
+│   │       │   │   └── page.tsx              ← 🔐 Login (PÚBLICA)
+│   │       │   └── layout.tsx
+│   │       │
+│   │       ├── logistics/                    ← SECCIÓN PRINCIPAL
+│   │       │   ├── monitor/
+│   │       │   │   ├── page.tsx             ← 📺 Monitor (PÚBLICA - sin auth)
+│   │       │   │   └── layout.tsx
+│   │       │   │
+│   │       │   ├── weighing/
+│   │       │   │   ├── page.tsx             ← ⚖️ Panel pesaje (PROTEGIDA)
+│   │       │   │   ├── [id]/
+│   │       │   │   │   └── page.tsx
+│   │       │   │   └── layout.tsx
+│   │       │   │
+│   │       │   └── layout.tsx               ← Layout general TMS
+│   │       │
+│   │       ├── dashboard/
+│   │       │   ├── page.tsx                 ← 📊 Dashboard (PROTEGIDA)
+│   │       │   └── layout.tsx
+│   │       │
+│   │       └── layout.tsx                   ← Layout raíz /paddy
 │   │
 │   ├── features/
-│   │   └── logistics/                        ← NUEVA FEATURE
+│   │   └── logistics/                        ← FEATURE LOGISTICS
 │   │       ├── context/
-│   │       │   ├── LogisticsContext.tsx     ← Context principal
+│   │       │   ├── LogisticsContext.tsx     ← Context global
 │   │       │   ├── index.ts
 │   │       │   └── actions.ts               ← Acciones reducer
 │   │       │
 │   │       ├── hooks/
 │   │       │   ├── useLogisticsData.ts      ← Fetch & cache
-│   │       │   ├── useRealtimeSync.ts       ← Sincronización RT
-│   │       │   ├── useTruckState.ts         ← Máquina de estados
+│   │       │   ├── useRealtimeSync.ts       ← Socket.io sync
+│   │       │   ├── useTruckState.ts         ← State machine
 │   │       │   ├── useLogisticsQueue.ts     ← Cola de camiones
+│   │       │   ├── useAuth.ts               ← Auth check
 │   │       │   └── index.ts
 │   │       │
 │   │       ├── services/
 │   │       │   ├── truckService.ts          ← API calls
-│   │       │   ├── realtimeService.ts       ← Supabase realtime
-│   │       │   ├── weighingService.ts       ← Balanza integration
+│   │       │   ├── realtimeService.ts       ← Socket.io setup
+│   │       │   ├── weighingService.ts       ← Balanza
+│   │       │   ├── authService.ts           ← Auth validation
 │   │       │   └── index.ts
 │   │       │
 │   │       ├── components/
-│   │       │   ├── MonitorDisplay.tsx       ← Pantalla monitor (grande)
-│   │       │   ├── AdminDashboard.tsx       ← Panel admin (control)
-│   │       │   ├── TruckCard.tsx            ← Tarjeta camión
+│   │       │   ├── MonitorDisplay.tsx       ← 📺 Monitor (público)
+│   │       │   ├── AdminDashboard.tsx       ← ⚖️ Admin panel
 │   │       │   ├── WeighingForm.tsx         ← Formulario pesaje
-│   │       │   ├── QueueList.tsx            ← Lista próximos
-│   │       │   ├── CurrentTruckDisplay.tsx  ← Turno actual (monitor)
-│   │       │   ├── StateIndicator.tsx       ← Indicador estado
-│   │       │   ├── TimerDisplay.tsx         ← Timer espera
-│   │       │   ├── TruckInputForm.tsx       ← Registro nuevo camión
+│   │       │   ├── QueueList.tsx            ← Próximos camiones
+│   │       │   ├── CurrentTruckDisplay.tsx  ← Turno actual
+│   │       │   ├── TruckCard.tsx            ← Tarjeta camión
+│   │       │   ├── StateIndicator.tsx       ← Estado visual
+│   │       │   ├── TimerDisplay.tsx         ← Timer
+│   │       │   ├── TruckInputForm.tsx       ← Nuevo camión
+│   │       │   ├── LoginForm.tsx            ← Formulario login
 │   │       │   └── index.ts
 │   │       │
 │   │       ├── types/
-│   │       │   ├── logistics.types.ts       ← Tipos principales
-│   │       │   ├── state.types.ts           ← Tipos estado global
+│   │       │   ├── logistics.types.ts
+│   │       │   ├── state.types.ts
+│   │       │   ├── auth.types.ts
 │   │       │   └── index.ts
 │   │       │
 │   │       ├── actions/
-│   │       │   ├── truck.action.ts          ← Server actions
+│   │       │   ├── truck.action.ts
 │   │       │   ├── weighing.action.ts
+│   │       │   ├── auth.action.ts
 │   │       │   └── index.ts
 │   │       │
 │   │       ├── utils/
-│   │       │   ├── validation.ts            ← Validaciones
-│   │       │   ├── formatters.ts            ← Formateadores
-│   │       │   ├── calculations.ts          ← Cálculos (tiempos, pesos)
+│   │       │   ├── validation.ts
+│   │       │   ├── formatters.ts
+│   │       │   ├── calculations.ts
+│   │       │   ├── auth.ts
 │   │       │   └── index.ts
 │   │       │
-│   │       └── index.ts                     ← Export unificado
+│   │       └── index.ts
 │   │
-│   └── lib/
-│       ├── localStorage/
-│       │   └── truckStore.ts                ← Persistencia local
-│       └── serviceWorker/
-│           └── logistics-sw.ts              ← SW para TMS
-```
-
-### Estructura en Backend (NestJS)
-
-```
-backend/src/modules/
-├── logistics/                              ← NUEVO MÓDULO
-│   ├── presentation/
-│   │   └── logistics.controller.ts        ← Endpoints
-│   ├── application/
-│   │   ├── logistics.service.ts           ← Lógica
-│   │   └── weighing.service.ts
-│   ├── domain/
-│   │   └── logistics.entity.ts            ← Entidades
-│   ├── infrastructure/
-│   │   ├── weighingScale.adapter.ts       ← Adaptador balanza
-│   │   └── realtimeSync.adapter.ts        ← Sync RT
-│   ├── logistics.module.ts
-│   └── dtos/
-│       ├── truck.dto.ts
-│       └── weighing.dto.ts
-```
+│   ├── lib/
+│   │   ├── auth/
+│   │   │   ├── nextauth.ts                  ← NextAuth config
+│   │   │   └── permissions.ts               ← RBAC
+│   │   ├── localStorage/
+│   │   │   └── truckStore.ts
+│   │   └── serviceWorker/
+│   │       └── logistics-sw.ts
+│   │
+│   └── middleware.ts                        ← Proteger rutas
+│
+├── public/
+│   └── logistics-sw.js                      ← Service Worker
+│
+└── next.config.js
 
 ---
 
