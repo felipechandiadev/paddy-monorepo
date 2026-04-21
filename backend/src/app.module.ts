@@ -16,6 +16,7 @@ import { FinancesModule } from './modules/finances/finances.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { LogisticsModule } from './modules/logistics/logistics.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { CorrelationIdMiddleware } from './shared/middleware/correlation-id.middleware';
 
@@ -40,6 +41,7 @@ import {
   SettlementReceptionSnapshot,
 } from './modules/finances/domain/finances.entity';
 import { AuditEvent } from './modules/audit/domain/audit-event.entity';
+import { TruckReception } from './modules/logistics/domain/truck-reception.entity';
 
 const isDatabaseSslRequired =
   process.env.DATABASE_SSL_MODE?.toUpperCase() === 'REQUIRED';
@@ -86,6 +88,7 @@ const databaseSslConfig = isDatabaseSslEnabled
         SettlementReceptionSnapshot,
         UserPermissionOverride,
         AuditEvent,
+        TruckReception,
       ],
       synchronize:
         process.env.TYPEORM_SYNCHRONIZE === 'true' &&
@@ -102,6 +105,7 @@ const databaseSslConfig = isDatabaseSslEnabled
     AnalyticsModule,
     HealthModule,
     AuditModule,
+    LogisticsModule,
     DatabaseModule,
   ],
   providers: [],
