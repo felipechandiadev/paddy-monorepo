@@ -259,11 +259,11 @@ export default function WeighingPage() {
                 <Select
                   label="Productor"
                   value={newReception.productor}
-                  onChange={(e) => setNewReception({ ...newReception, productor: e.target.value })}
+                  onChange={(value) => setNewReception({ ...newReception, productor: value as string })}
                   options={[
-                    { value: 'Campo Verde S.A.', label: 'Campo Verde S.A.' },
-                    { value: 'Agrícola del Centro', label: 'Agrícola del Centro' },
-                    { value: 'La Huerta', label: 'La Huerta' },
+                    { id: 'Campo Verde S.A.', label: 'Campo Verde S.A.' },
+                    { id: 'Agrícola del Centro', label: 'Agrícola del Centro' },
+                    { id: 'La Huerta', label: 'La Huerta' },
                   ]}
                 />
                 <TextField
