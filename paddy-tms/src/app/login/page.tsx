@@ -4,28 +4,41 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLogistics } from '@/features/logistics/hooks/useLogistics';
 import { login } from '@/features/logistics/services/authService';
+import { TextField } from '@/shared/components/ui/TextField/TextField';
+import { Button } from '@/shared/components/ui/Button/Button';
+import Alert from '@/shared/components/ui/Alert/Alert';
 import { validateEmail, validatePassword } from '@/features/logistics/utils/validation';
+
+interface LoginValues {
+  email: string;
+  password: string;
+}
+
+const initialValues: LoginValues = {
+  email: '',
+  password: '',
+};
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser, setError } = useLogistics();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { setUser, setError: setContextError } = useLogistics();
+  
+  const [values, setValues] = useState<LoginValues>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const redirect = searchParams.get('redirect') || '/weighing';
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!validateEmail(email)) {
+    if (!values.email || !validateEmail(values.email)) {
       newErrors.email = 'Please enter a valid email';
     }
 
-    if (!password) {
+    if (!values.password) {
       newErrors.password = 'Password is required';
     }
 
@@ -35,6 +48,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     if (!validateForm()) {
       return;
@@ -42,96 +56,111 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(values.email, values.password);
       setUser(user);
-      setError(null);
+      setContextError(null);
       router.push(redirect);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed';
-      setErrors({ submit: message });
-      setError(message);
+      setSubmitError(message);
+      setContextError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Paddy TMS</h1>
-          <p className="text-center text-gray-600 mb-8">Truck Management System</p>
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <div className="w-full max-w-md bg-background rounded-lg shadow-2xl p-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-primary mb-2">Paddy TMS</h1>
+          <p className="text-sm text-foreground font-medium">Truck Management System</p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`
-                  w-full px-4 py-2 border rounded-lg text-sm
-                  ${errors.email ? 'border-red-500' : 'border-gray-300'}
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                  disabled:bg-gray-100 disabled:cursor-not-allowed
-                `}
-                placeholder="admin@example.com"
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
+        {/* Subtitle */}
+        <div className="subtitle text-center p-1 pt-0 w-full mb-4 leading-snug">
+          Ingresa tus credenciales
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`
-                  w-full px-4 py-2 border rounded-lg text-sm
-                  ${errors.password ? 'border-red-500' : 'border-gray-300'}
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                  disabled:bg-gray-100 disabled:cursor-not-allowed
-                `}
-                placeholder="••••••••"
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
-            </div>
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Error Alert */}
+          {submitError && (
+            <Alert variant="error" className="mb-4">
+              {submitError}
+            </Alert>
+          )}
 
-            {errors.submit && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {errors.submit}
-              </div>
-            )}
-
-            <button
-              type="submit"
+          {/* Email Field */}
+          <div className="form-group">
+            <TextField
+              id="tms-login-email"
+              label="Email"
+              type="email"
+              value={values.email}
+              onChange={(event) => {
+                setValues((prev) => ({ ...prev, email: event.target.value }));
+                if (errors.email) {
+                  setErrors((prev) => ({ ...prev, email: '' }));
+                }
+              }}
+              error={!!errors.email}
+              helperText={errors.email}
+              required
+              name="tms_login_email"
+              autoComplete="email"
               disabled={isLoading}
-              className="
-                w-full bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium
-                hover:bg-blue-700 transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed
-                mt-6
-              "
-            >
-              {isLoading ? 'Logging in...' : 'Login'}
-            </button>
-          </form>
-
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-600">
-            <p className="font-semibold mb-2">Demo Credentials:</p>
-            <p>Email: admin@example.com</p>
-            <p>Password: Demo12345</p>
+              placeholder="operator@paddy.com"
+            />
           </div>
+
+          {/* Password Field */}
+          <div className="form-group">
+            <TextField
+              id="tms-login-password"
+              label="Contraseña"
+              type="password"
+              value={values.password}
+              onChange={(event) => {
+                setValues((prev) => ({ ...prev, password: event.target.value }));
+                if (errors.password) {
+                  setErrors((prev) => ({ ...prev, password: '' }));
+                }
+              }}
+              error={!!errors.password}
+              helperText={errors.password}
+              required
+              name="tms_login_password"
+              autoComplete="current-password"
+              passwordVisibilityToggle
+              disabled={isLoading}
+              placeholder="••••••••"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="w-full mt-8">
+            <Button 
+              variant="primary" 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+            </Button>
+          </div>
+        </form>
+
+        {/* Demo Credentials */}
+        <div className="mt-8 p-4 bg-neutral rounded-lg border border-border">
+          <p className="text-xs font-semibold text-primary mb-2">Credenciales de Prueba:</p>
+          <p className="text-xs text-foreground mb-1">
+            <span className="font-medium">Email:</span> operator@paddy.com
+          </p>
+          <p className="text-xs text-foreground">
+            <span className="font-medium">Contraseña:</span> Operator123!
+          </p>
         </div>
       </div>
     </div>
