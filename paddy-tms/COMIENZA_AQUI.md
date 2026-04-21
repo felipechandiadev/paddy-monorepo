@@ -127,10 +127,12 @@ Role: LOGISTICS_OPERATOR
 ✅ Ver actualizaciones en tiempo real  
 ✅ Sin necesidad de login  
 
-### En el Dashboard (Protegido)
-✅ Ver estadísticas del día  
-✅ Ver histórico de recepciones  
-✅ Acceder a panel de pesaje  
+### En el Login (Público)
+✅ Interfaz moderna y limpia  
+✅ Componentes reutilizados del frontend  
+✅ Mismos estilos y colores del proyecto  
+✅ Validación en tiempo real  
+✅ Manejo seguro de credenciales  
 
 ### En el Panel de Pesaje (Protegido)
 ✅ Registrar nuevo camión  
@@ -138,6 +140,57 @@ Role: LOGISTICS_OPERATOR
 ✅ Registrar peso tara (salida)  
 ✅ Generar ticket automático  
 ✅ Ver próximos camiones  
+
+---
+
+## 🎨 COMPONENTES COMPARTIDOS
+
+El proyecto Paddy TMS reutiliza los componentes del frontend principal para mantener coherencia visual:
+
+### UI Components Disponibles
+- **TextField** - Input para texto, email, password (con validación)
+- **Button** - Botones con variantes (primary, secondary, etc) y loading state
+- **Alert** - Alertas para mensajes (error, success, info, warning)
+- **Select** - Dropdowns personalizados
+- **Dialog** - Modales/diálogos
+- **Badge** - Etiquetas/badges
+- **Switch** - Toggles
+- **Tabs** - Pestañas
+- **IconButton** - Botones con iconos
+- Y más...
+
+### Estilos y Tema
+```css
+/* Variables de color disponibles */
+--color-primary: #1C2046 (azul oscuro)
+--color-secondary: #04C9E7 (cyan)
+--color-accent: #2563a8 (azul)
+--color-success: #4CAF50 (verde)
+--color-error: #F44336 (rojo)
+--color-warning: #FFC107 (amarillo)
+--color-info: #2196F3 (azul claro)
+--color-neutral: #F3F4F6 (gris claro)
+```
+
+### Font
+- **Principal**: Inter (System UI, sans-serif)
+- **Monospace**: Geist Mono
+
+### Ubicación de Componentes
+```
+src/shared/components/
+├── ui/
+│   ├── Button/
+│   ├── TextField/
+│   ├── Alert/
+│   ├── Select/
+│   ├── Dialog/
+│   ├── Badge/
+│   ├── Switch/
+│   ├── Tabs/
+│   └── ...
+└── index.ts (exports centralizados)
+```
 
 ---
 
