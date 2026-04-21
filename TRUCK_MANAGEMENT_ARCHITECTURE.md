@@ -142,7 +142,7 @@ ADMIN PANEL                          MONITOR (Pantalla para Choferes)
 
 ## 🏗️ ARQUITECTURA TÉCNICA
 
-### Stack Tecnológico
+### Stack Tecnológico (ACTUALIZADO - MySQL Backend)
 
 ```
 FRONTEND (Next.js 16+)
@@ -153,13 +153,15 @@ FRONTEND (Next.js 16+)
 ├── TanStack Query (caching & fetching)
 ├── Service Workers (offline-first)
 ├── IndexedDB (persistencia local)
-└── Supabase Realtime (sync RT)
+└── Socket.io + Polling (sync RT - MYSQL COMPATIBLE)
 
-BACKEND (NestJS)
+BACKEND (NestJS + MySQL)
 ├── Express (HTTP)
-├── PostgreSQL (BD principal)
-├── TypeORM (ORM)
-├── Supabase (Realtime & Auth)
+├── MySQL (BD principal - TypeORM)
+├── TypeORM (ORM configurado para MySQL)
+├── Socket.io (WebSocket para Realtime)
+├── Redis (opcional - Pub/Sub para Realtime escalable)
+├── NextAuth (Autenticación)
 └── Integración Balanzas (RS232/USB)
 
 EXTRAS
@@ -197,14 +199,15 @@ EXTRAS
              │
 ┌────────────┼──────────────────────────────────────────────────┐
 │  API GATEWAY LAYER                                            │
-│  ├─ Supabase Realtime                                         │
-│  ├─ REST API Calls (Backend NestJS)                           │
-│  └─ WebSocket Connections (sync RT)                           │
+│  ├─ REST API Calls (Backend NestJS + MySQL)                  │
+│  ├─ Socket.io WebSocket (Realtime sync)                      │
+│  ├─ Polling fallback (cada 5 segundos)                       │
+│  └─ Redis Pub/Sub (opcional - para escalabilidad)            │
 └────────────┬──────────────────────────────────────────────────┘
              │
 ┌────────────┼──────────────────────────────────────────────────┐
 │  PERSISTENCE LAYER                                            │
-│  ├─ PostgreSQL (backend)                                      │
+│  ├─ MySQL (backend - TypeORM)                                │
 │  ├─ IndexedDB (frontend offline)                              │
 │  ├─ Service Workers (cache)                                   │
 │  └─ Local Storage (small data)                                │
@@ -956,32 +959,55 @@ export class LogisticsController {
 
 ## 🔄 SINCRONIZACIÓN EN TIEMPO REAL
 
-### Estrategia: Supabase Realtime + Server Actions
+### Estrategia: Socket.io + Polling (MySQL Compatible)
 
 ```typescript
-// 1. ESCUCHAR cambios en tabla trucks
+// 1. ESCUCHAR cambios via Socket.io
 const useRealtimeSync = (queueState: LogisticsQueueState) => {
   useEffect(() => {
-    const channel = supabase
-      .channel('logistics:trucks')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'trucks' },
-        (payload) => {
-          // Actualizar estado global
-          dispatch({
-            type: 'TRUCK_UPDATED',
-            payload: payload.new,
-          });
-        },
-      )
-      .subscribe();
+    const socket = io(process.env.NEXT_PUBLIC_API_URL, {
+      transports: ['websocket', 'polling'],
+    });
 
-    return () => channel.unsubscribe();
+    // Escuchar cambios en truck_receptions
+    socket.on('truck_reception:updated', (payload) => {
+      dispatch({
+        type: 'TRUCK_UPDATED',
+        payload: payload,
+      });
+    });
+
+    socket.on('truck_reception:state_changed', (payload) => {
+      dispatch({
+        type: 'TRUCK_STATE_UPDATED',
+        payload: payload,
+      });
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  // Polling fallback cada 5 segundos
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const result = await fetchTruckReceptions();
+        if (result.success) {
+          dispatch({
+            type: 'QUEUE_REFRESHED',
+            payload: result.data,
+          });
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 };
 
-// 2. NOTIFICAR cambios cuando se registra peso
+// 2. EMITIR cambios cuando se registra peso
 const registerWeighing = async (
   truck_id: string,
   peso: number,
@@ -990,8 +1016,15 @@ const registerWeighing = async (
   // Call Server Action
   const result = await registerWeighingAction(truck_id, peso, tipo);
 
-  // Supabase realtime automáticamente notifica a todos los clientes
-  // (via postgres NOTIFY en el backend)
+  // Emitir cambio a través de Socket.io
+  if (result.success) {
+    socket.emit('truck_reception:weight_registered', {
+      truck_id,
+      peso,
+      tipo,
+      timestamp: new Date(),
+    });
+  }
 
   return result;
 };
@@ -1030,6 +1063,43 @@ useEffect(() => {
   window.addEventListener('online', handleOnline);
   return () => window.removeEventListener('online', handleOnline);
 }, []);
+```
+
+### Backend: Socket.io Gateway (NestJS)
+
+```typescript
+// logistics.gateway.ts
+import { WebSocketGateway, WebSocketServer, SubscribeMessage, ConnectedSocket } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+
+@WebSocketGateway({
+  namespace: 'logistics',
+  cors: {
+    origin: process.env.FRONTEND_URL,
+  },
+})
+export class LogisticsGateway {
+  @WebSocketServer()
+  server: Server;
+
+  @SubscribeMessage('truck_reception:weight_registered')
+  handleWeightRegistered(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ) {
+    // Broadcast a todos los clientes conectados
+    this.server.emit('truck_reception:updated', data);
+    return { success: true };
+  }
+
+  broadcastTruckStateChange(truckReception: TruckReception) {
+    this.server.emit('truck_reception:state_changed', truckReception);
+  }
+
+  broadcastQueueUpdate(queue: LogisticsQueueState) {
+    this.server.emit('queue:refreshed', queue);
+  }
+}
 ```
 
 ---
@@ -1168,13 +1238,15 @@ mkdir -p backend/src/modules/logistics/{presentation,application,domain,infrastr
 
 ### FASE 5: Sincronización RT (Semana 3-4)
 
-#### Paso 5.1: Configurar Supabase Realtime
-- [ ] Habilitar LISTEN/NOTIFY en DB
-- [ ] Crear tabla de logs para auditoría
+#### Paso 5.1: Configurar Socket.io + MySQL
+- [ ] Instalar `socket.io` en backend y frontend
+- [ ] Crear LogisticsGateway (NestJS WebSocket)
+- [ ] Configurar CORS para Socket.io
 
-#### Paso 5.2: Implementar sync
-- [ ] WebSocket listeners
-- [ ] Difusión de cambios
+#### Paso 5.2: Implementar sync con Socket.io
+- [ ] Listeners en frontend (truck_reception:updated)
+- [ ] Emitir eventos desde backend
+- [ ] Polling fallback cada 5 segundos
 - [ ] Optimistic updates en UI
 
 #### Paso 5.3: Offline-first
@@ -1182,7 +1254,7 @@ mkdir -p backend/src/modules/logistics/{presentation,application,domain,infrastr
 - [ ] IndexedDB schema
 - [ ] Sync al volver online
 
-**Deliverable**: Dos clientes sincronizados en tiempo real
+**Deliverable**: Dos clientes sincronizados en tiempo real (Socket.io)
 
 ---
 
