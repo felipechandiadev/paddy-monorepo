@@ -69,12 +69,6 @@ export class TruckReception {
   fecha_hora_entrada: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  fecha_hora_peso_bruto: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  fecha_hora_peso_tara: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
   fecha_hora_finalizacion: Date;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
