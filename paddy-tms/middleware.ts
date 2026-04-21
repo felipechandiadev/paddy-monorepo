@@ -2,13 +2,12 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const protectedRoutes = [
-  '/paddy/dashboard',
-  '/paddy/logistics/weighing',
+  '/weighing',
 ];
 
 const publicRoutes = [
-  '/paddy/auth/login',
-  '/paddy/logistics/monitor',
+  '/login',
+  '/monitor',
 ];
 
 export function middleware(request: NextRequest) {
@@ -23,19 +22,19 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users from protected routes to login
   if (isProtected && !isAuthenticated) {
-    const loginUrl = new URL('/paddy/auth/login', request.url);
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect authenticated users away from login
-  if (pathname === '/paddy/auth/login' && isAuthenticated) {
-    return NextResponse.redirect(new URL('/paddy/dashboard', request.url));
+  if (pathname === '/login' && isAuthenticated) {
+    return NextResponse.redirect(new URL('/weighing', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/paddy/:path*'],
+  matcher: ['/((?!_next|static|.*\\..*).*)'],
 };

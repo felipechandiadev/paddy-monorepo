@@ -23,7 +23,7 @@ export default function TruckDetailsPage({ params }: PageProps) {
 
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/paddy/auth/login');
+      router.push('/login');
     }
   }, [isAuthenticated, authLoading, router]);
 

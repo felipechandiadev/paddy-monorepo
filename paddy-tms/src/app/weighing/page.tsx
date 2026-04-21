@@ -22,13 +22,13 @@ export default function WeighingPage() {
 
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/paddy/auth/login');
+      router.push('/login');
     }
   }, [isAuthenticated, authLoading, router]);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/paddy/auth/login');
+    router.push('/login');
   };
 
   const handleWeighingSubmit = async (data: WeighingData) => {

@@ -24,12 +24,11 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$nod
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/node_modules/next/dist/esm/server/web/exports/index.js [middleware-edge] (ecmascript)");
 ;
 const protectedRoutes = [
-    '/paddy/dashboard',
-    '/paddy/logistics/weighing'
+    '/weighing'
 ];
 const publicRoutes = [
-    '/paddy/auth/login',
-    '/paddy/logistics/monitor'
+    '/login',
+    '/monitor'
 ];
 function middleware(request) {
     const { pathname } = request.nextUrl;
@@ -40,19 +39,19 @@ function middleware(request) {
     const isPublic = publicRoutes.some((route)=>pathname.startsWith(route));
     // Redirect unauthenticated users from protected routes to login
     if (isProtected && !isAuthenticated) {
-        const loginUrl = new URL('/paddy/auth/login', request.url);
+        const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(loginUrl);
     }
     // Redirect authenticated users away from login
-    if (pathname === '/paddy/auth/login' && isAuthenticated) {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/paddy/dashboard', request.url));
+    if (pathname === '/login' && isAuthenticated) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/weighing', request.url));
     }
     return __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$exports$2f$index$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
 }
 const config = {
     matcher: [
-        '/paddy/:path*'
+        '/((?!_next|static|.*\\..*).*)'
     ]
 };
 }),

@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirect = searchParams.get('redirect') || '/paddy/dashboard';
+  const redirect = searchParams.get('redirect') || '/weighing';
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
