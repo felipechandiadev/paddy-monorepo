@@ -985,3 +985,80 @@ export async function fetchRicePriceReport(
     };
   }
 }
+
+export async function exportInventoryBookExcel(
+  seasonId: number,
+  month: string,
+): Promise<{ success: boolean; fileName?: string; data?: Uint8Array; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    const token = (session?.user as any)?.accessToken;
+
+    if (!token) {
+      return {
+        success: false,
+        error: 'No hay sesión activa para descargar el archivo.',
+      };
+    }
+
+    const headers = getAuthHeaders(token);
+    const query = new URLSearchParams();
+
+    query.set('seasonId', String(seasonId));
+    query.set('month', month);
+
+    const response = await fetch(
+      `${ANALYTICS_API_BASE_URL}/inventory-book/export/excel?${query.toString()}`,
+      {
+        headers,
+        cache: 'no-store',
+      },
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'SESSION_EXPIRED',
+        };
+      }
+
+      const error = await parseErrorMessage(
+        response,
+        `No fue posible descargar el Libro de Existencias (${response.status}).`,
+      );
+
+      return {
+        success: false,
+        error,
+      };
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+
+    let fileName = 'libro-existencias.xlsx';
+    const contentDisposition = response.headers.get('content-disposition') || '';
+    const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+
+    if (fileNameMatch?.[1]) {
+      fileName = fileNameMatch[1];
+    }
+
+    return {
+      success: true,
+      fileName,
+      data,
+    };
+  } catch (error) {
+    throwIfBackendUnavailable(error);
+
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Error inesperado al descargar el Libro de Existencias.',
+    };
+  }
+}
