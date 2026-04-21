@@ -1593,64 +1593,63 @@ function WeighingPage() {
     // Estado de UI
     const [selectedTruckId, setSelectedTruckId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [showNewReceptionForm, setShowNewReceptionForm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [activeTab, setActiveTab] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('ESPERA');
     // Datos de ejemplo (en producción vendría del backend)
     const [trucks, setTrucks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([
         {
-            id: '1',
-            numero_turno: 2,
-            patente: 'XYZ-88',
-            productor: 'Campo Verde S.A.',
-            chofer_nombre: 'Juan Pérez',
-            rut_chofer: '12.345.678-9',
-            estado: 'ESPERA',
-            fecha_entrada: new Date()
+            id: 1,
+            status: 'WEIGHING_GROSS',
+            producer_id: 1,
+            license_plate: 'XYZ-88',
+            driver_name: 'Juan Pérez',
+            carrier_company: 'Transportes Rápido',
+            dispatch_guide: 'DG-001',
+            entry_at: new Date()
         },
         {
-            id: '2',
-            numero_turno: 3,
-            patente: 'ABC-34',
-            productor: 'Agrícola del Centro',
-            chofer_nombre: 'Carlos García',
-            rut_chofer: '15.678.901-2',
-            estado: 'PESANDO_BRUTO',
-            peso_bruto: 2500,
-            fecha_entrada: new Date(Date.now() - 1800000)
+            id: 2,
+            status: 'WEIGHING_GROSS',
+            producer_id: 2,
+            license_plate: 'ABC-34',
+            driver_name: 'Carlos García',
+            carrier_company: 'Envíos Veloz',
+            dispatch_guide: 'DG-002',
+            gross_weight: 2500,
+            entry_at: new Date(Date.now() - 1800000)
         },
         {
-            id: '3',
-            numero_turno: 5,
-            patente: 'DEF-67',
-            productor: 'La Huerta',
-            chofer_nombre: 'Maria López',
-            rut_chofer: '18.901.234-5',
-            estado: 'EN_DESCARGA',
-            peso_bruto: 3200,
-            tiempoDescarga: 1132,
-            fecha_entrada: new Date(Date.now() - 3600000)
+            id: 3,
+            status: 'WEIGHING_TARE',
+            producer_id: 3,
+            license_plate: 'DEF-67',
+            driver_name: 'Maria López',
+            carrier_company: 'Logística Central',
+            gross_weight: 3200,
+            entry_at: new Date(Date.now() - 3600000)
         },
         {
-            id: '4',
-            numero_turno: 1,
-            patente: 'JKL-91',
-            productor: 'Campos Dorados',
-            chofer_nombre: 'Roberto Silva',
-            rut_chofer: '19.234.567-8',
-            estado: 'PESANDO_TARA',
-            peso_bruto: 2150,
-            fecha_entrada: new Date(Date.now() - 5400000)
+            id: 4,
+            status: 'FINISHED',
+            producer_id: 1,
+            license_plate: 'JKL-91',
+            driver_name: 'Roberto Silva',
+            carrier_company: 'Transporte Seguro',
+            gross_weight: 2150,
+            tare_weight: 400,
+            net_weight: 1750,
+            entry_at: new Date(Date.now() - 5400000),
+            finished_at: new Date(Date.now() - 3600000)
         }
     ]);
     const [newReception, setNewReception] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
-        productor: '',
-        patente: '',
-        guia: '',
-        chofer: '',
-        rut: ''
+        license_plate: '',
+        driver_name: '',
+        carrier_company: '',
+        dispatch_guide: '',
+        producer_id: ''
     });
     const [weighingForm, setWeighingForm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
-        pesoBruto: '',
-        pesoTara: ''
+        gross_weight: '',
+        tare_weight: ''
     });
     // Redireccionar si no está autenticado
     __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useEffect({
@@ -1669,67 +1668,73 @@ function WeighingPage() {
         router.push('/login');
     };
     const handleCreateReception = ()=>{
-        if (!newReception.productor || !newReception.patente || !newReception.chofer) {
+        if (!newReception.license_plate || !newReception.driver_name || !newReception.producer_id) {
             setError('Completa todos los campos requeridos');
             return;
         }
-        const nuevoCamion = {
-            id: Date.now().toString(),
-            numero_turno: trucks.length + 1,
-            patente: newReception.patente,
-            productor: newReception.productor,
-            chofer_nombre: newReception.chofer,
-            rut_chofer: newReception.rut,
-            estado: 'ESPERA',
-            fecha_entrada: new Date()
+        const nuevoTruck = {
+            id: Math.max(...trucks.map((t)=>t.id), 0) + 1,
+            license_plate: newReception.license_plate,
+            driver_name: newReception.driver_name,
+            carrier_company: newReception.carrier_company,
+            dispatch_guide: newReception.dispatch_guide,
+            producer_id: parseInt(newReception.producer_id),
+            status: 'WEIGHING_GROSS',
+            entry_at: new Date()
         };
         setTrucks([
             ...trucks,
-            nuevoCamion
+            nuevoTruck
         ]);
         setNewReception({
-            productor: '',
-            patente: '',
-            guia: '',
-            chofer: '',
-            rut: ''
+            license_plate: '',
+            driver_name: '',
+            carrier_company: '',
+            dispatch_guide: '',
+            producer_id: ''
         });
         setShowNewReceptionForm(false);
     };
-    const handleConfirmBruto = ()=>{
-        if (!weighingForm.pesoBruto) {
+    const handleRecordGrossWeight = ()=>{
+        if (!weighingForm.gross_weight) {
             setError('Ingresa el peso bruto');
             return;
         }
         setTrucks(trucks.map((t)=>t.id === selectedTruckId ? {
                 ...t,
-                peso_bruto: parseFloat(weighingForm.pesoBruto),
-                estado: 'EN_DESCARGA',
-                tiempoDescarga: 0
+                gross_weight: parseFloat(weighingForm.gross_weight),
+                status: 'WEIGHING_TARE'
             } : t));
         setWeighingForm({
-            pesoBruto: '',
-            pesoTara: ''
+            gross_weight: '',
+            tare_weight: ''
         });
     };
-    const handleConfirmTara = ()=>{
-        if (!weighingForm.pesoTara) {
+    const handleRecordTareWeight = ()=>{
+        if (!weighingForm.tare_weight) {
             setError('Ingresa el peso tara');
             return;
         }
-        const pesoNeto = (trucks.find((t)=>t.id === selectedTruckId)?.peso_bruto || 0) - parseFloat(weighingForm.pesoTara);
-        if (pesoNeto <= 0) {
+        const truck = trucks.find((t)=>t.id === selectedTruckId);
+        if (!truck || !truck.gross_weight) {
+            setError('Error: No hay peso bruto registrado');
+            return;
+        }
+        const netWeight = truck.gross_weight - parseFloat(weighingForm.tare_weight);
+        if (netWeight <= 0) {
             setError('El peso neto debe ser mayor a 0');
             return;
         }
         setTrucks(trucks.map((t)=>t.id === selectedTruckId ? {
                 ...t,
-                peso_tara: parseFloat(weighingForm.pesoTara),
-                estado: 'FINALIZADO'
+                tare_weight: parseFloat(weighingForm.tare_weight),
+                net_weight: parseFloat(netWeight.toFixed(2)),
+                status: 'FINISHED',
+                finished_at: new Date()
             } : t));
         setWeighingForm({
-            pesoBruto: '',
-            pesoTara: ''
+            gross_weight: '',
+            tare_weight: ''
         });
         setSelectedTruckId(null);
     };
@@ -1744,7 +1749,7 @@ function WeighingPage() {
                         className: "animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                        lineNumber: 184,
+                        lineNumber: 191,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1752,59 +1757,49 @@ function WeighingPage() {
                         children: "Loading..."
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                        lineNumber: 185,
+                        lineNumber: 192,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                lineNumber: 183,
+                lineNumber: 190,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-            lineNumber: 182,
+            lineNumber: 189,
             columnNumber: 7
         }, this);
     }
-    const getEstadoColor = (estado)=>{
-        switch(estado){
-            case 'ESPERA':
+    const getStatusColor = (status)=>{
+        switch(status){
+            case 'WEIGHING_GROSS':
                 return '#2563a8';
-            case 'PESANDO_BRUTO':
-                return '#4CAF50';
-            case 'EN_DESCARGA':
+            case 'WEIGHING_TARE':
                 return '#FFC107';
-            case 'PESANDO_TARA':
-                return '#FF9800';
-            case 'FINALIZADO':
+            case 'FINISHED':
                 return '#4CAF50';
             default:
                 return '#6b7280';
         }
     };
-    const getEstadoLabel = (estado)=>{
-        switch(estado){
-            case 'ESPERA':
-                return 'En Espera';
-            case 'PESANDO_BRUTO':
+    const getStatusLabel = (status)=>{
+        switch(status){
+            case 'WEIGHING_GROSS':
                 return 'Pesaje Bruto';
-            case 'EN_DESCARGA':
-                return 'En Descarga';
-            case 'PESANDO_TARA':
+            case 'WEIGHING_TARE':
                 return 'Pesaje Tara';
-            case 'FINALIZADO':
+            case 'FINISHED':
                 return 'Finalizado';
             default:
-                return estado;
+                return status;
         }
     };
-    const trucksByEstado = {
-        ESPERA: trucks.filter((t)=>t.estado === 'ESPERA'),
-        PESANDO_BRUTO: trucks.filter((t)=>t.estado === 'PESANDO_BRUTO'),
-        EN_DESCARGA: trucks.filter((t)=>t.estado === 'EN_DESCARGA'),
-        PESANDO_TARA: trucks.filter((t)=>t.estado === 'PESANDO_TARA'),
-        FINALIZADO: trucks.filter((t)=>t.estado === 'FINALIZADO')
+    const trucksByStatus = {
+        WEIGHING_GROSS: trucks.filter((t)=>t.status === 'WEIGHING_GROSS'),
+        WEIGHING_TARE: trucks.filter((t)=>t.status === 'WEIGHING_TARE'),
+        FINISHED: trucks.filter((t)=>t.status === 'FINISHED')
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen bg-background flex flex-col",
@@ -1823,7 +1818,7 @@ function WeighingPage() {
                                         children: "Panel de Pesaje"
                                     }, void 0, false, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 228,
+                                        lineNumber: 229,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1834,13 +1829,13 @@ function WeighingPage() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 229,
+                                        lineNumber: 230,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                lineNumber: 227,
+                                lineNumber: 228,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1849,23 +1844,23 @@ function WeighingPage() {
                                 children: "Logout"
                             }, void 0, false, {
                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                lineNumber: 233,
+                                lineNumber: 234,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                        lineNumber: 226,
+                        lineNumber: 227,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                    lineNumber: 225,
+                    lineNumber: 226,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                lineNumber: 224,
+                lineNumber: 225,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1883,7 +1878,7 @@ function WeighingPage() {
                                     children: "+ Nueva Recepción"
                                 }, void 0, false, {
                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                    lineNumber: 249,
+                                    lineNumber: 250,
                                     columnNumber: 13
                                 }, this),
                                 showNewReceptionForm && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1891,80 +1886,80 @@ function WeighingPage() {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Select$2f$Select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                             label: "Productor",
-                                            value: newReception.productor,
+                                            value: newReception.producer_id,
                                             onChange: (value)=>setNewReception({
                                                     ...newReception,
-                                                    productor: value
+                                                    producer_id: value?.toString() || ''
                                                 }),
                                             options: [
                                                 {
-                                                    id: 'Campo Verde S.A.',
+                                                    id: '1',
                                                     label: 'Campo Verde S.A.'
                                                 },
                                                 {
-                                                    id: 'Agrícola del Centro',
+                                                    id: '2',
                                                     label: 'Agrícola del Centro'
                                                 },
                                                 {
-                                                    id: 'La Huerta',
+                                                    id: '3',
                                                     label: 'La Huerta'
                                                 }
                                             ]
                                         }, void 0, false, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 259,
+                                            lineNumber: 260,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
                                             label: "Patente",
-                                            value: newReception.patente,
+                                            value: newReception.license_plate,
                                             onChange: (e)=>setNewReception({
                                                     ...newReception,
-                                                    patente: e.target.value
+                                                    license_plate: e.target.value
                                                 }),
                                             placeholder: "ABC-1234"
                                         }, void 0, false, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 269,
-                                            columnNumber: 17
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
-                                            label: "Guía",
-                                            value: newReception.guia,
-                                            onChange: (e)=>setNewReception({
-                                                    ...newReception,
-                                                    guia: e.target.value
-                                                }),
-                                            placeholder: "Número guía"
-                                        }, void 0, false, {
-                                            fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 275,
+                                            lineNumber: 270,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
                                             label: "Chofer",
-                                            value: newReception.chofer,
+                                            value: newReception.driver_name,
                                             onChange: (e)=>setNewReception({
                                                     ...newReception,
-                                                    chofer: e.target.value
+                                                    driver_name: e.target.value
                                                 }),
                                             placeholder: "Nombre"
                                         }, void 0, false, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 281,
+                                            lineNumber: 276,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
-                                            label: "RUT",
-                                            value: newReception.rut,
+                                            label: "Empresa de Transporte",
+                                            value: newReception.carrier_company,
                                             onChange: (e)=>setNewReception({
                                                     ...newReception,
-                                                    rut: e.target.value
+                                                    carrier_company: e.target.value
                                                 }),
                                             placeholder: "Opcional"
                                         }, void 0, false, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 287,
+                                            lineNumber: 282,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
+                                            label: "Guía de Despacho",
+                                            value: newReception.dispatch_guide,
+                                            onChange: (e)=>setNewReception({
+                                                    ...newReception,
+                                                    dispatch_guide: e.target.value
+                                                }),
+                                            placeholder: "Opcional"
+                                        }, void 0, false, {
+                                            fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                            lineNumber: 288,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1977,7 +1972,7 @@ function WeighingPage() {
                                                     children: "Crear"
                                                 }, void 0, false, {
                                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                    lineNumber: 294,
+                                                    lineNumber: 295,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -1987,24 +1982,24 @@ function WeighingPage() {
                                                     children: "Cancelar"
                                                 }, void 0, false, {
                                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                    lineNumber: 301,
+                                                    lineNumber: 302,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 293,
+                                            lineNumber: 294,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                    lineNumber: 258,
+                                    lineNumber: 259,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "space-y-3",
-                                    children: Object.entries(trucksByEstado).map(([estado, trucks])=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    children: Object.entries(trucksByStatus).map(([status, trucks])=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "text-xs font-semibold text-muted uppercase mb-2 flex items-center gap-2",
@@ -2012,18 +2007,18 @@ function WeighingPage() {
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             className: "w-3 h-3 rounded-full",
                                                             style: {
-                                                                backgroundColor: getEstadoColor(estado)
+                                                                backgroundColor: getStatusColor(status)
                                                             }
                                                         }, void 0, false, {
                                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                            lineNumber: 317,
+                                                            lineNumber: 318,
                                                             columnNumber: 21
                                                         }, this),
-                                                        getEstadoLabel(estado)
+                                                        getStatusLabel(status)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                    lineNumber: 316,
+                                                    lineNumber: 317,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2035,27 +2030,24 @@ function WeighingPage() {
                                                                 children: [
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "font-mono font-bold",
-                                                                        children: truck.patente
+                                                                        children: truck.license_plate
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                        lineNumber: 334,
+                                                                        lineNumber: 335,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "text-xs opacity-75",
-                                                                        children: [
-                                                                            "Turno #",
-                                                                            truck.numero_turno
-                                                                        ]
-                                                                    }, void 0, true, {
+                                                                        children: truck.driver_name
+                                                                    }, void 0, false, {
                                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                        lineNumber: 335,
+                                                                        lineNumber: 336,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 ]
                                                             }, truck.id, true, {
                                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 325,
+                                                                lineNumber: 326,
                                                                 columnNumber: 23
                                                             }, this)),
                                                         trucks.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2063,35 +2055,35 @@ function WeighingPage() {
                                                             children: "Sin camiones"
                                                         }, void 0, false, {
                                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                            lineNumber: 339,
+                                                            lineNumber: 340,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                    lineNumber: 323,
+                                                    lineNumber: 324,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
-                                        }, estado, true, {
+                                        }, status, true, {
                                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                            lineNumber: 315,
+                                            lineNumber: 316,
                                             columnNumber: 17
                                         }, this))
                                 }, void 0, false, {
                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                    lineNumber: 313,
+                                    lineNumber: 314,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                            lineNumber: 247,
+                            lineNumber: 248,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                        lineNumber: 246,
+                        lineNumber: 247,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -2101,7 +2093,7 @@ function WeighingPage() {
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "bg-white rounded-lg shadow-lg border-l-4 p-6",
                                 style: {
-                                    borderLeftColor: getEstadoColor(selectedTruck.estado)
+                                    borderLeftColor: getStatusColor(selectedTruck.status)
                                 },
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2114,41 +2106,41 @@ function WeighingPage() {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                                                                 className: "text-2xl font-bold text-foreground",
-                                                                children: selectedTruck.patente
+                                                                children: selectedTruck.license_plate
                                                             }, void 0, false, {
                                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 358,
+                                                                lineNumber: 359,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Badge$2f$Badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                                                 variant: "primary",
                                                                 children: [
-                                                                    "Turno #",
-                                                                    selectedTruck.numero_turno
+                                                                    "ID #",
+                                                                    selectedTruck.id
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 359,
+                                                                lineNumber: 360,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 357,
+                                                        lineNumber: 358,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "text-sm text-muted",
-                                                        children: getEstadoLabel(selectedTruck.estado)
+                                                        children: getStatusLabel(selectedTruck.status)
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 363,
+                                                        lineNumber: 364,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 356,
+                                                lineNumber: 357,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2159,27 +2151,27 @@ function WeighingPage() {
                                                         children: "Entrada:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 366,
+                                                        lineNumber: 367,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "text-sm font-mono",
-                                                        children: selectedTruck.fecha_entrada.toLocaleTimeString('es-CL')
+                                                        children: new Date(selectedTruck.entry_at).toLocaleTimeString('es-CL')
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 367,
+                                                        lineNumber: 368,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 365,
+                                                lineNumber: 366,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 355,
+                                        lineNumber: 356,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2189,96 +2181,81 @@ function WeighingPage() {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "text-xs text-muted",
-                                                        children: "Productor"
+                                                        children: "Chofer"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 376,
+                                                        lineNumber: 377,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "font-semibold text-foreground",
-                                                        children: selectedTruck.productor
+                                                        children: selectedTruck.driver_name
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 377,
+                                                        lineNumber: 378,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 375,
+                                                lineNumber: 376,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "text-xs text-muted",
-                                                        children: "Chofer"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 380,
-                                                        columnNumber: 21
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "font-semibold text-foreground",
-                                                        children: selectedTruck.chofer_nombre
+                                                        children: "Empresa de Transporte"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
                                                         lineNumber: 381,
                                                         columnNumber: 21
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                        className: "font-semibold text-foreground",
+                                                        children: selectedTruck.carrier_company || '-'
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                        lineNumber: 382,
+                                                        columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 379,
+                                                lineNumber: 380,
                                                 columnNumber: 19
                                             }, this),
-                                            selectedTruck.rut_chofer && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            selectedTruck.dispatch_guide && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "text-xs text-muted",
-                                                        children: "RUT"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 385,
-                                                        columnNumber: 23
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "font-semibold text-foreground",
-                                                        children: selectedTruck.rut_chofer
+                                                        children: "Guía de Despacho"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
                                                         lineNumber: 386,
                                                         columnNumber: 23
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                        className: "font-semibold text-foreground",
+                                                        children: selectedTruck.dispatch_guide
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                        lineNumber: 387,
+                                                        columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 384,
+                                                lineNumber: 385,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 374,
+                                        lineNumber: 375,
                                         columnNumber: 17
                                     }, this),
-                                    selectedTruck.estado === 'ESPERA' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                        variant: "primary",
-                                        className: "w-full",
-                                        onClick: ()=>{
-                                            setTrucks(trucks.map((t)=>t.id === selectedTruck.id ? {
-                                                    ...t,
-                                                    estado: 'PESANDO_BRUTO'
-                                                } : t));
-                                        },
-                                        children: "Ir a Pesaje Bruto"
-                                    }, void 0, false, {
-                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 393,
-                                        columnNumber: 19
-                                    }, this),
-                                    selectedTruck.estado === 'PESANDO_BRUTO' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    selectedTruck.status === 'WEIGHING_GROSS' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "space-y-4",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2288,26 +2265,26 @@ function WeighingPage() {
                                                     children: "Ingresa el peso bruto del camión"
                                                 }, void 0, false, {
                                                     fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                    lineNumber: 411,
+                                                    lineNumber: 396,
                                                     columnNumber: 23
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 410,
+                                                lineNumber: 395,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
                                                 label: "Peso Bruto (kg)",
                                                 type: "number",
-                                                value: weighingForm.pesoBruto,
+                                                value: weighingForm.gross_weight,
                                                 onChange: (e)=>setWeighingForm({
                                                         ...weighingForm,
-                                                        pesoBruto: e.target.value
+                                                        gross_weight: e.target.value
                                                     }),
                                                 placeholder: "Ej: 2500"
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 415,
+                                                lineNumber: 400,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2316,11 +2293,11 @@ function WeighingPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                                         variant: "primary",
                                                         className: "flex-1",
-                                                        onClick: handleConfirmBruto,
-                                                        children: "Confirmar Peso Bruto"
+                                                        onClick: handleRecordGrossWeight,
+                                                        children: "Registrar Peso Bruto"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 423,
+                                                        lineNumber: 408,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2330,93 +2307,149 @@ function WeighingPage() {
                                                         children: "Cancelar"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 430,
+                                                        lineNumber: 415,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 422,
+                                                lineNumber: 407,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 409,
+                                        lineNumber: 394,
                                         columnNumber: 19
                                     }, this),
-                                    selectedTruck.estado === 'EN_DESCARGA' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    selectedTruck.status === 'WEIGHING_TARE' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "space-y-4",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "p-4 bg-warning/10 border border-warning rounded-lg",
+                                                className: "grid grid-cols-2 gap-4 p-4 bg-neutral rounded-lg",
                                                 children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "text-sm text-foreground font-medium",
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
-                                                            "Peso Bruto: ",
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                className: "font-bold",
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-xs text-muted",
+                                                                children: "Peso Bruto"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                                lineNumber: 430,
+                                                                columnNumber: 25
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "font-bold text-lg text-foreground",
                                                                 children: [
-                                                                    selectedTruck.peso_bruto,
+                                                                    selectedTruck.gross_weight,
                                                                     " kg"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 445,
-                                                                columnNumber: 37
+                                                                lineNumber: 431,
+                                                                columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 444,
+                                                        lineNumber: 429,
                                                         columnNumber: 23
                                                     }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "text-xs text-muted mt-2",
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
-                                                            "Tiempo descargando: ",
-                                                            Math.floor((selectedTruck.tiempoDescarga || 0) / 60),
-                                                            ":",
-                                                            String((selectedTruck.tiempoDescarga || 0) % 60).padStart(2, '0')
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-xs text-muted",
+                                                                children: "Peso Tara"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                                lineNumber: 434,
+                                                                columnNumber: 25
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "font-bold text-lg text-foreground",
+                                                                children: [
+                                                                    weighingForm.tare_weight || '0',
+                                                                    " kg"
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                                lineNumber: 435,
+                                                                columnNumber: 25
+                                                            }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 447,
+                                                        lineNumber: 433,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 443,
+                                                lineNumber: 428,
                                                 columnNumber: 21
                                             }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                                variant: "primary",
-                                                className: "w-full",
-                                                onClick: ()=>{
-                                                    setTrucks(trucks.map((t)=>t.id === selectedTruck.id ? {
-                                                            ...t,
-                                                            estado: 'PESANDO_TARA'
-                                                        } : t));
-                                                },
-                                                children: "Listo para Pesaje Tara"
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
+                                                label: "Peso Tara (kg)",
+                                                type: "number",
+                                                value: weighingForm.tare_weight,
+                                                onChange: (e)=>setWeighingForm({
+                                                        ...weighingForm,
+                                                        tare_weight: e.target.value
+                                                    }),
+                                                placeholder: "Ej: 400"
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 451,
+                                                lineNumber: 438,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex gap-3",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                                        variant: "primary",
+                                                        className: "flex-1",
+                                                        onClick: handleRecordTareWeight,
+                                                        children: "Finalizar Recepción"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                        lineNumber: 446,
+                                                        columnNumber: 23
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                                        variant: "secondary",
+                                                        className: "flex-1",
+                                                        onClick: ()=>setSelectedTruckId(null),
+                                                        children: "Cancelar"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                        lineNumber: 453,
+                                                        columnNumber: 23
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                lineNumber: 445,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 442,
+                                        lineNumber: 427,
                                         columnNumber: 19
                                     }, this),
-                                    selectedTruck.estado === 'PESANDO_TARA' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    selectedTruck.status === 'FINISHED' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "space-y-4",
                                         children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Alert$2f$Alert$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                                variant: "success",
+                                                children: "✓ Recepción completada exitosamente"
+                                            }, void 0, false, {
+                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
+                                                lineNumber: 466,
+                                                columnNumber: 21
+                                            }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-3 gap-4 p-4 bg-neutral rounded-lg",
+                                                className: "grid grid-cols-3 gap-4 p-4 bg-success/10 border border-success rounded-lg",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
@@ -2429,9 +2462,9 @@ function WeighingPage() {
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-lg text-foreground",
+                                                                className: "font-bold text-foreground",
                                                                 children: [
-                                                                    selectedTruck.peso_bruto,
+                                                                    selectedTruck.gross_weight,
                                                                     " kg"
                                                                 ]
                                                             }, void 0, true, {
@@ -2456,9 +2489,9 @@ function WeighingPage() {
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-lg text-foreground",
+                                                                className: "font-bold text-foreground",
                                                                 children: [
-                                                                    weighingForm.pesoTara || '0',
+                                                                    selectedTruck.tare_weight,
                                                                     " kg"
                                                                 ]
                                                             }, void 0, true, {
@@ -2483,9 +2516,9 @@ function WeighingPage() {
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-lg text-success",
+                                                                className: "font-bold text-foreground",
                                                                 children: [
-                                                                    weighingForm.pesoTara ? (selectedTruck.peso_bruto - parseFloat(weighingForm.pesoTara)).toFixed(0) : '0',
+                                                                    selectedTruck.net_weight,
                                                                     " kg"
                                                                 ]
                                                             }, void 0, true, {
@@ -2505,156 +2538,6 @@ function WeighingPage() {
                                                 lineNumber: 469,
                                                 columnNumber: 21
                                             }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$TextField$2f$TextField$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TextField"], {
-                                                label: "Peso Tara (kg)",
-                                                type: "number",
-                                                value: weighingForm.pesoTara,
-                                                onChange: (e)=>setWeighingForm({
-                                                        ...weighingForm,
-                                                        pesoTara: e.target.value
-                                                    }),
-                                                placeholder: "Ej: 400"
-                                            }, void 0, false, {
-                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 487,
-                                                columnNumber: 21
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "flex gap-3",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                                        variant: "primary",
-                                                        className: "flex-1",
-                                                        onClick: handleConfirmTara,
-                                                        children: "Finalizar"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 495,
-                                                        columnNumber: 23
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                                        variant: "secondary",
-                                                        className: "flex-1",
-                                                        onClick: ()=>setSelectedTruckId(null),
-                                                        children: "Cancelar"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 502,
-                                                        columnNumber: 23
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 494,
-                                                columnNumber: 21
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 468,
-                                        columnNumber: 19
-                                    }, this),
-                                    selectedTruck.estado === 'FINALIZADO' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "space-y-4",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Alert$2f$Alert$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                                                variant: "success",
-                                                children: "✓ Recepción completada exitosamente"
-                                            }, void 0, false, {
-                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 515,
-                                                columnNumber: 21
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-3 gap-4 p-4 bg-success/10 border border-success rounded-lg",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        children: [
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-xs text-muted",
-                                                                children: "Peso Bruto"
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 520,
-                                                                columnNumber: 25
-                                                            }, this),
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-foreground",
-                                                                children: [
-                                                                    selectedTruck.peso_bruto,
-                                                                    " kg"
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 521,
-                                                                columnNumber: 25
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 519,
-                                                        columnNumber: 23
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        children: [
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-xs text-muted",
-                                                                children: "Peso Tara"
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 524,
-                                                                columnNumber: 25
-                                                            }, this),
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-foreground",
-                                                                children: [
-                                                                    selectedTruck.peso_tara,
-                                                                    " kg"
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 525,
-                                                                columnNumber: 25
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 523,
-                                                        columnNumber: 23
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        children: [
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-xs text-muted",
-                                                                children: "Peso Neto"
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 528,
-                                                                columnNumber: 25
-                                                            }, this),
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "font-bold text-foreground",
-                                                                children: [
-                                                                    (selectedTruck.peso_bruto - (selectedTruck.peso_tara || 0)).toFixed(0),
-                                                                    " kg"
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                                lineNumber: 529,
-                                                                columnNumber: 25
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                        lineNumber: 527,
-                                                        columnNumber: 23
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 518,
-                                                columnNumber: 21
-                                            }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Button$2f$Button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                                 variant: "secondary",
                                                 className: "w-full",
@@ -2662,24 +2545,24 @@ function WeighingPage() {
                                                 children: "Volver al Panel"
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                                lineNumber: 534,
+                                                lineNumber: 485,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 514,
+                                        lineNumber: 465,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                lineNumber: 353,
+                                lineNumber: 354,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                            lineNumber: 351,
+                            lineNumber: 352,
                             columnNumber: 13
                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "h-full flex items-center justify-center",
@@ -2691,7 +2574,7 @@ function WeighingPage() {
                                         children: "Selecciona un camión"
                                     }, void 0, false, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 548,
+                                        lineNumber: 499,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2699,39 +2582,39 @@ function WeighingPage() {
                                         children: "Haz click en un camión de la barra lateral para comenzar"
                                     }, void 0, false, {
                                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                        lineNumber: 549,
+                                        lineNumber: 500,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                                lineNumber: 547,
+                                lineNumber: 498,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                            lineNumber: 546,
+                            lineNumber: 497,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                        lineNumber: 349,
+                        lineNumber: 350,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-                lineNumber: 244,
+                lineNumber: 245,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/paddy/paddy-tms/src/app/weighing/page.tsx",
-        lineNumber: 222,
+        lineNumber: 223,
         columnNumber: 5
     }, this);
 }
-_s(WeighingPage, "SKOKwiQ+kJmlZ+8EgvhGBy0g9Z0=", false, function() {
+_s(WeighingPage, "OhqxgOE7/f71JqZrKKFEqe2msME=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"],
         __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$features$2f$logistics$2f$hooks$2f$useAuth$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"],

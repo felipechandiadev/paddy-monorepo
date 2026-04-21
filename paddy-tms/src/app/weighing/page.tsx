@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/logistics/hooks/useAuth';
 import { useLogistics } from '@/features/logistics/hooks/useLogistics';
@@ -12,17 +12,18 @@ import Badge from '@/shared/components/ui/Badge/Badge';
 import Alert from '@/shared/components/ui/Alert/Alert';
 
 interface TruckReceptionUI {
-  id: string;
-  numero_turno: number;
-  patente: string;
-  productor: string;
-  chofer_nombre: string;
-  rut_chofer?: string;
-  estado: 'ESPERA' | 'PESANDO_BRUTO' | 'EN_DESCARGA' | 'PESANDO_TARA' | 'FINALIZADO';
-  peso_bruto?: number;
-  peso_tara?: number;
-  fecha_entrada: Date;
-  tiempoDescarga?: number;
+  id: number;
+  status: 'WEIGHING_GROSS' | 'WEIGHING_TARE' | 'FINISHED';
+  producer_id: number;
+  license_plate: string;
+  driver_name: string;
+  carrier_company?: string;
+  dispatch_guide?: string;
+  gross_weight?: number;
+  tare_weight?: number;
+  net_weight?: number;
+  entry_at: Date;
+  finished_at?: Date;
 }
 
 export default function WeighingPage() {
@@ -31,69 +32,68 @@ export default function WeighingPage() {
   const { setError } = useLogistics();
   
   // Estado de UI
-  const [selectedTruckId, setSelectedTruckId] = useState<string | null>(null);
+  const [selectedTruckId, setSelectedTruckId] = useState<number | null>(null);
   const [showNewReceptionForm, setShowNewReceptionForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ESPERA' | 'PESANDO_BRUTO' | 'EN_DESCARGA' | 'PESANDO_TARA' | 'FINALIZADO'>('ESPERA');
   
   // Datos de ejemplo (en producción vendría del backend)
   const [trucks, setTrucks] = useState<TruckReceptionUI[]>([
     {
-      id: '1',
-      numero_turno: 2,
-      patente: 'XYZ-88',
-      productor: 'Campo Verde S.A.',
-      chofer_nombre: 'Juan Pérez',
-      rut_chofer: '12.345.678-9',
-      estado: 'ESPERA',
-      fecha_entrada: new Date(),
+      id: 1,
+      status: 'WEIGHING_GROSS',
+      producer_id: 1,
+      license_plate: 'XYZ-88',
+      driver_name: 'Juan Pérez',
+      carrier_company: 'Transportes Rápido',
+      dispatch_guide: 'DG-001',
+      entry_at: new Date(),
     },
     {
-      id: '2',
-      numero_turno: 3,
-      patente: 'ABC-34',
-      productor: 'Agrícola del Centro',
-      chofer_nombre: 'Carlos García',
-      rut_chofer: '15.678.901-2',
-      estado: 'PESANDO_BRUTO',
-      peso_bruto: 2500,
-      fecha_entrada: new Date(Date.now() - 1800000),
+      id: 2,
+      status: 'WEIGHING_GROSS',
+      producer_id: 2,
+      license_plate: 'ABC-34',
+      driver_name: 'Carlos García',
+      carrier_company: 'Envíos Veloz',
+      dispatch_guide: 'DG-002',
+      gross_weight: 2500,
+      entry_at: new Date(Date.now() - 1800000),
     },
     {
-      id: '3',
-      numero_turno: 5,
-      patente: 'DEF-67',
-      productor: 'La Huerta',
-      chofer_nombre: 'Maria López',
-      rut_chofer: '18.901.234-5',
-      estado: 'EN_DESCARGA',
-      peso_bruto: 3200,
-      tiempoDescarga: 1132,
-      fecha_entrada: new Date(Date.now() - 3600000),
+      id: 3,
+      status: 'WEIGHING_TARE',
+      producer_id: 3,
+      license_plate: 'DEF-67',
+      driver_name: 'Maria López',
+      carrier_company: 'Logística Central',
+      gross_weight: 3200,
+      entry_at: new Date(Date.now() - 3600000),
     },
     {
-      id: '4',
-      numero_turno: 1,
-      patente: 'JKL-91',
-      productor: 'Campos Dorados',
-      chofer_nombre: 'Roberto Silva',
-      rut_chofer: '19.234.567-8',
-      estado: 'PESANDO_TARA',
-      peso_bruto: 2150,
-      fecha_entrada: new Date(Date.now() - 5400000),
+      id: 4,
+      status: 'FINISHED',
+      producer_id: 1,
+      license_plate: 'JKL-91',
+      driver_name: 'Roberto Silva',
+      carrier_company: 'Transporte Seguro',
+      gross_weight: 2150,
+      tare_weight: 400,
+      net_weight: 1750,
+      entry_at: new Date(Date.now() - 5400000),
+      finished_at: new Date(Date.now() - 3600000),
     },
   ]);
 
   const [newReception, setNewReception] = useState({
-    productor: '',
-    patente: '',
-    guia: '',
-    chofer: '',
-    rut: '',
+    license_plate: '',
+    driver_name: '',
+    carrier_company: '',
+    dispatch_guide: '',
+    producer_id: '',
   });
 
   const [weighingForm, setWeighingForm] = useState({
-    pesoBruto: '',
-    pesoTara: '',
+    gross_weight: '',
+    tare_weight: '',
   });
 
   // Redireccionar si no está autenticado
@@ -109,29 +109,29 @@ export default function WeighingPage() {
   };
 
   const handleCreateReception = () => {
-    if (!newReception.productor || !newReception.patente || !newReception.chofer) {
+    if (!newReception.license_plate || !newReception.driver_name || !newReception.producer_id) {
       setError('Completa todos los campos requeridos');
       return;
     }
 
-    const nuevoCamion: TruckReceptionUI = {
-      id: Date.now().toString(),
-      numero_turno: trucks.length + 1,
-      patente: newReception.patente,
-      productor: newReception.productor,
-      chofer_nombre: newReception.chofer,
-      rut_chofer: newReception.rut,
-      estado: 'ESPERA',
-      fecha_entrada: new Date(),
+    const nuevoTruck: TruckReceptionUI = {
+      id: Math.max(...trucks.map(t => t.id), 0) + 1,
+      license_plate: newReception.license_plate,
+      driver_name: newReception.driver_name,
+      carrier_company: newReception.carrier_company,
+      dispatch_guide: newReception.dispatch_guide,
+      producer_id: parseInt(newReception.producer_id),
+      status: 'WEIGHING_GROSS',
+      entry_at: new Date(),
     };
 
-    setTrucks([...trucks, nuevoCamion]);
-    setNewReception({ productor: '', patente: '', guia: '', chofer: '', rut: '' });
+    setTrucks([...trucks, nuevoTruck]);
+    setNewReception({ license_plate: '', driver_name: '', carrier_company: '', dispatch_guide: '', producer_id: '' });
     setShowNewReceptionForm(false);
   };
 
-  const handleConfirmBruto = () => {
-    if (!weighingForm.pesoBruto) {
+  const handleRecordGrossWeight = () => {
+    if (!weighingForm.gross_weight) {
       setError('Ingresa el peso bruto');
       return;
     }
@@ -140,24 +140,29 @@ export default function WeighingPage() {
       t.id === selectedTruckId 
         ? { 
             ...t, 
-            peso_bruto: parseFloat(weighingForm.pesoBruto),
-            estado: 'EN_DESCARGA',
-            tiempoDescarga: 0,
+            gross_weight: parseFloat(weighingForm.gross_weight),
+            status: 'WEIGHING_TARE',
           }
         : t
     ));
-    setWeighingForm({ pesoBruto: '', pesoTara: '' });
+    setWeighingForm({ gross_weight: '', tare_weight: '' });
   };
 
-  const handleConfirmTara = () => {
-    if (!weighingForm.pesoTara) {
+  const handleRecordTareWeight = () => {
+    if (!weighingForm.tare_weight) {
       setError('Ingresa el peso tara');
       return;
     }
 
-    const pesoNeto = (trucks.find(t => t.id === selectedTruckId)?.peso_bruto || 0) - parseFloat(weighingForm.pesoTara);
+    const truck = trucks.find(t => t.id === selectedTruckId);
+    if (!truck || !truck.gross_weight) {
+      setError('Error: No hay peso bruto registrado');
+      return;
+    }
+
+    const netWeight = truck.gross_weight - parseFloat(weighingForm.tare_weight);
     
-    if (pesoNeto <= 0) {
+    if (netWeight <= 0) {
       setError('El peso neto debe ser mayor a 0');
       return;
     }
@@ -166,12 +171,14 @@ export default function WeighingPage() {
       t.id === selectedTruckId 
         ? { 
             ...t, 
-            peso_tara: parseFloat(weighingForm.pesoTara),
-            estado: 'FINALIZADO',
+            tare_weight: parseFloat(weighingForm.tare_weight),
+            net_weight: parseFloat(netWeight.toFixed(2)),
+            status: 'FINISHED',
+            finished_at: new Date(),
           }
         : t
     ));
-    setWeighingForm({ pesoBruto: '', pesoTara: '' });
+    setWeighingForm({ gross_weight: '', tare_weight: '' });
     setSelectedTruckId(null);
   };
 
@@ -188,34 +195,28 @@ export default function WeighingPage() {
     );
   }
 
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case 'ESPERA': return '#2563a8';
-      case 'PESANDO_BRUTO': return '#4CAF50';
-      case 'EN_DESCARGA': return '#FFC107';
-      case 'PESANDO_TARA': return '#FF9800';
-      case 'FINALIZADO': return '#4CAF50';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'WEIGHING_GROSS': return '#2563a8';
+      case 'WEIGHING_TARE': return '#FFC107';
+      case 'FINISHED': return '#4CAF50';
       default: return '#6b7280';
     }
   };
 
-  const getEstadoLabel = (estado: string) => {
-    switch (estado) {
-      case 'ESPERA': return 'En Espera';
-      case 'PESANDO_BRUTO': return 'Pesaje Bruto';
-      case 'EN_DESCARGA': return 'En Descarga';
-      case 'PESANDO_TARA': return 'Pesaje Tara';
-      case 'FINALIZADO': return 'Finalizado';
-      default: return estado;
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'WEIGHING_GROSS': return 'Pesaje Bruto';
+      case 'WEIGHING_TARE': return 'Pesaje Tara';
+      case 'FINISHED': return 'Finalizado';
+      default: return status;
     }
   };
 
-  const trucksByEstado = {
-    ESPERA: trucks.filter(t => t.estado === 'ESPERA'),
-    PESANDO_BRUTO: trucks.filter(t => t.estado === 'PESANDO_BRUTO'),
-    EN_DESCARGA: trucks.filter(t => t.estado === 'EN_DESCARGA'),
-    PESANDO_TARA: trucks.filter(t => t.estado === 'PESANDO_TARA'),
-    FINALIZADO: trucks.filter(t => t.estado === 'FINALIZADO'),
+  const trucksByStatus = {
+    WEIGHING_GROSS: trucks.filter(t => t.status === 'WEIGHING_GROSS'),
+    WEIGHING_TARE: trucks.filter(t => t.status === 'WEIGHING_TARE'),
+    FINISHED: trucks.filter(t => t.status === 'FINISHED'),
   };
 
   return (
@@ -258,36 +259,36 @@ export default function WeighingPage() {
               <div className="p-3 bg-neutral rounded-lg border border-border space-y-2">
                 <Select
                   label="Productor"
-                  value={newReception.productor}
-                  onChange={(value) => setNewReception({ ...newReception, productor: value as string })}
+                  value={newReception.producer_id}
+                  onChange={(value) => setNewReception({ ...newReception, producer_id: value?.toString() || '' })}
                   options={[
-                    { id: 'Campo Verde S.A.', label: 'Campo Verde S.A.' },
-                    { id: 'Agrícola del Centro', label: 'Agrícola del Centro' },
-                    { id: 'La Huerta', label: 'La Huerta' },
+                    { id: '1', label: 'Campo Verde S.A.' },
+                    { id: '2', label: 'Agrícola del Centro' },
+                    { id: '3', label: 'La Huerta' },
                   ]}
                 />
                 <TextField
                   label="Patente"
-                  value={newReception.patente}
-                  onChange={(e) => setNewReception({ ...newReception, patente: e.target.value })}
+                  value={newReception.license_plate}
+                  onChange={(e) => setNewReception({ ...newReception, license_plate: e.target.value })}
                   placeholder="ABC-1234"
                 />
                 <TextField
-                  label="Guía"
-                  value={newReception.guia}
-                  onChange={(e) => setNewReception({ ...newReception, guia: e.target.value })}
-                  placeholder="Número guía"
-                />
-                <TextField
                   label="Chofer"
-                  value={newReception.chofer}
-                  onChange={(e) => setNewReception({ ...newReception, chofer: e.target.value })}
+                  value={newReception.driver_name}
+                  onChange={(e) => setNewReception({ ...newReception, driver_name: e.target.value })}
                   placeholder="Nombre"
                 />
                 <TextField
-                  label="RUT"
-                  value={newReception.rut}
-                  onChange={(e) => setNewReception({ ...newReception, rut: e.target.value })}
+                  label="Empresa de Transporte"
+                  value={newReception.carrier_company}
+                  onChange={(e) => setNewReception({ ...newReception, carrier_company: e.target.value })}
+                  placeholder="Opcional"
+                />
+                <TextField
+                  label="Guía de Despacho"
+                  value={newReception.dispatch_guide}
+                  onChange={(e) => setNewReception({ ...newReception, dispatch_guide: e.target.value })}
                   placeholder="Opcional"
                 />
                 <div className="flex gap-2">
@@ -311,14 +312,14 @@ export default function WeighingPage() {
 
             {/* Estados */}
             <div className="space-y-3">
-              {Object.entries(trucksByEstado).map(([estado, trucks]) => (
-                <div key={estado}>
+              {Object.entries(trucksByStatus).map(([status, trucks]) => (
+                <div key={status}>
                   <div className="text-xs font-semibold text-muted uppercase mb-2 flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: getEstadoColor(estado) }}
+                      style={{ backgroundColor: getStatusColor(status) }}
                     />
-                    {getEstadoLabel(estado)}
+                    {getStatusLabel(status)}
                   </div>
                   <div className="space-y-1 ml-2">
                     {trucks.map(truck => (
@@ -331,8 +332,8 @@ export default function WeighingPage() {
                             : 'bg-neutral text-foreground hover:bg-border'
                         }`}
                       >
-                        <div className="font-mono font-bold">{truck.patente}</div>
-                        <div className="text-xs opacity-75">Turno #{truck.numero_turno}</div>
+                        <div className="font-mono font-bold">{truck.license_plate}</div>
+                        <div className="text-xs opacity-75">{truck.driver_name}</div>
                       </button>
                     ))}
                     {trucks.length === 0 && (
@@ -350,22 +351,22 @@ export default function WeighingPage() {
           {selectedTruck ? (
             <div className="max-w-2xl space-y-6">
               {/* Tarjeta del Camión Seleccionado */}
-              <div className="bg-white rounded-lg shadow-lg border-l-4 p-6" style={{ borderLeftColor: getEstadoColor(selectedTruck.estado) }}>
+              <div className="bg-white rounded-lg shadow-lg border-l-4 p-6" style={{ borderLeftColor: getStatusColor(selectedTruck.status) }}>
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-2xl font-bold text-foreground">{selectedTruck.patente}</h2>
+                      <h2 className="text-2xl font-bold text-foreground">{selectedTruck.license_plate}</h2>
                       <Badge variant="primary">
-                        Turno #{selectedTruck.numero_turno}
+                        ID #{selectedTruck.id}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted">{getEstadoLabel(selectedTruck.estado)}</p>
+                    <p className="text-sm text-muted">{getStatusLabel(selectedTruck.status)}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-muted">Entrada:</div>
                     <div className="text-sm font-mono">
-                      {selectedTruck.fecha_entrada.toLocaleTimeString('es-CL')}
+                      {new Date(selectedTruck.entry_at).toLocaleTimeString('es-CL')}
                     </div>
                   </div>
                 </div>
@@ -373,39 +374,23 @@ export default function WeighingPage() {
                 {/* Información del Camión */}
                 <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-border">
                   <div>
-                    <p className="text-xs text-muted">Productor</p>
-                    <p className="font-semibold text-foreground">{selectedTruck.productor}</p>
+                    <p className="text-xs text-muted">Chofer</p>
+                    <p className="font-semibold text-foreground">{selectedTruck.driver_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted">Chofer</p>
-                    <p className="font-semibold text-foreground">{selectedTruck.chofer_nombre}</p>
+                    <p className="text-xs text-muted">Empresa de Transporte</p>
+                    <p className="font-semibold text-foreground">{selectedTruck.carrier_company || '-'}</p>
                   </div>
-                  {selectedTruck.rut_chofer && (
+                  {selectedTruck.dispatch_guide && (
                     <div>
-                      <p className="text-xs text-muted">RUT</p>
-                      <p className="font-semibold text-foreground">{selectedTruck.rut_chofer}</p>
+                      <p className="text-xs text-muted">Guía de Despacho</p>
+                      <p className="font-semibold text-foreground">{selectedTruck.dispatch_guide}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Contenido según Estado */}
-                {selectedTruck.estado === 'ESPERA' && (
-                  <Button
-                    variant="primary"
-                    className="w-full"
-                    onClick={() => {
-                      setTrucks(trucks.map(t => 
-                        t.id === selectedTruck.id 
-                          ? { ...t, estado: 'PESANDO_BRUTO' }
-                          : t
-                      ));
-                    }}
-                  >
-                    Ir a Pesaje Bruto
-                  </Button>
-                )}
-
-                {selectedTruck.estado === 'PESANDO_BRUTO' && (
+                {selectedTruck.status === 'WEIGHING_GROSS' && (
                   <div className="space-y-4">
                     <div className="p-4 bg-info/10 border border-info rounded-lg">
                       <p className="text-sm text-info font-medium">
@@ -415,17 +400,17 @@ export default function WeighingPage() {
                     <TextField
                       label="Peso Bruto (kg)"
                       type="number"
-                      value={weighingForm.pesoBruto}
-                      onChange={(e) => setWeighingForm({ ...weighingForm, pesoBruto: e.target.value })}
+                      value={weighingForm.gross_weight}
+                      onChange={(e) => setWeighingForm({ ...weighingForm, gross_weight: e.target.value })}
                       placeholder="Ej: 2500"
                     />
                     <div className="flex gap-3">
                       <Button
                         variant="primary"
                         className="flex-1"
-                        onClick={handleConfirmBruto}
+                        onClick={handleRecordGrossWeight}
                       >
-                        Confirmar Peso Bruto
+                        Registrar Peso Bruto
                       </Button>
                       <Button
                         variant="secondary"
@@ -438,66 +423,32 @@ export default function WeighingPage() {
                   </div>
                 )}
 
-                {selectedTruck.estado === 'EN_DESCARGA' && (
+                {selectedTruck.status === 'WEIGHING_TARE' && (
                   <div className="space-y-4">
-                    <div className="p-4 bg-warning/10 border border-warning rounded-lg">
-                      <p className="text-sm text-foreground font-medium">
-                        Peso Bruto: <span className="font-bold">{selectedTruck.peso_bruto} kg</span>
-                      </p>
-                      <p className="text-xs text-muted mt-2">
-                        Tiempo descargando: {Math.floor((selectedTruck.tiempoDescarga || 0) / 60)}:{String((selectedTruck.tiempoDescarga || 0) % 60).padStart(2, '0')}
-                      </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      className="w-full"
-                      onClick={() => {
-                        setTrucks(trucks.map(t => 
-                          t.id === selectedTruck.id 
-                            ? { ...t, estado: 'PESANDO_TARA' }
-                            : t
-                        ));
-                      }}
-                    >
-                      Listo para Pesaje Tara
-                    </Button>
-                  </div>
-                )}
-
-                {selectedTruck.estado === 'PESANDO_TARA' && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-neutral rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-neutral rounded-lg">
                       <div>
                         <p className="text-xs text-muted">Peso Bruto</p>
-                        <p className="font-bold text-lg text-foreground">{selectedTruck.peso_bruto} kg</p>
+                        <p className="font-bold text-lg text-foreground">{selectedTruck.gross_weight} kg</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted">Peso Tara</p>
-                        <p className="font-bold text-lg text-foreground">{weighingForm.pesoTara || '0'} kg</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted">Peso Neto</p>
-                        <p className="font-bold text-lg text-success">
-                          {weighingForm.pesoTara 
-                            ? (selectedTruck.peso_bruto! - parseFloat(weighingForm.pesoTara)).toFixed(0) 
-                            : '0'} kg
-                        </p>
+                        <p className="font-bold text-lg text-foreground">{weighingForm.tare_weight || '0'} kg</p>
                       </div>
                     </div>
                     <TextField
                       label="Peso Tara (kg)"
                       type="number"
-                      value={weighingForm.pesoTara}
-                      onChange={(e) => setWeighingForm({ ...weighingForm, pesoTara: e.target.value })}
+                      value={weighingForm.tare_weight}
+                      onChange={(e) => setWeighingForm({ ...weighingForm, tare_weight: e.target.value })}
                       placeholder="Ej: 400"
                     />
                     <div className="flex gap-3">
                       <Button
                         variant="primary"
                         className="flex-1"
-                        onClick={handleConfirmTara}
+                        onClick={handleRecordTareWeight}
                       >
-                        Finalizar
+                        Finalizar Recepción
                       </Button>
                       <Button
                         variant="secondary"
@@ -510,7 +461,7 @@ export default function WeighingPage() {
                   </div>
                 )}
 
-                {selectedTruck.estado === 'FINALIZADO' && (
+                {selectedTruck.status === 'FINISHED' && (
                   <div className="space-y-4">
                     <Alert variant="success">
                       ✓ Recepción completada exitosamente
@@ -518,16 +469,16 @@ export default function WeighingPage() {
                     <div className="grid grid-cols-3 gap-4 p-4 bg-success/10 border border-success rounded-lg">
                       <div>
                         <p className="text-xs text-muted">Peso Bruto</p>
-                        <p className="font-bold text-foreground">{selectedTruck.peso_bruto} kg</p>
+                        <p className="font-bold text-foreground">{selectedTruck.gross_weight} kg</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted">Peso Tara</p>
-                        <p className="font-bold text-foreground">{selectedTruck.peso_tara} kg</p>
+                        <p className="font-bold text-foreground">{selectedTruck.tare_weight} kg</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted">Peso Neto</p>
                         <p className="font-bold text-foreground">
-                          {(selectedTruck.peso_bruto! - (selectedTruck.peso_tara || 0)).toFixed(0)} kg
+                          {selectedTruck.net_weight} kg
                         </p>
                       </div>
                     </div>
