@@ -20,9 +20,9 @@ Felicidades, has logrado crear un **Sistema de Gestión de Logística** profesio
 ```bash
 ls -la /Users/felipe/dev/paddy/paddy-tms/
 # Deberías ver:
-# backend/
-# frontend/
-# PROJECT_COMPLETE.md
+# src/
+# package.json
+# middleware.ts
 # COMIENZA_AQUI.md
 ```
 
@@ -33,10 +33,10 @@ ls -la /Users/felipe/dev/paddy/paddy-tms/
 ### 1️⃣ Backend - Iniciar MySQL
 
 ```bash
-cd /Users/felipe/dev/paddy/paddy-tms/backend
+cd /Users/felipe/dev/paddy/backend
 
-# Copiar configuración
-cp .env.example .env
+# Copiar configuración (si no existe .env)
+cp .env.example .env 2>/dev/null || echo "✅ .env ya existe"
 
 # Iniciar MySQL con Docker
 docker-compose up -d
@@ -48,7 +48,8 @@ docker-compose up -d
 ### 2️⃣ Backend - Instalar y Ejecutar
 
 ```bash
-# En la misma carpeta backend/
+# En la carpeta backend principal
+cd /Users/felipe/dev/paddy/backend
 
 # Instalar dependencias
 npm install
@@ -68,12 +69,9 @@ npm run start:dev
 ### 3️⃣ Frontend - Instalar y Ejecutar
 
 ```bash
-cd /Users/felipe/dev/paddy/paddy-tms/frontend
+cd /Users/felipe/dev/paddy/paddy-tms
 
-# Copiar configuración
-cp .env.local.example .env.local
-
-# Instalar dependencias
+# Instalar dependencias (si no está hecho)
 npm install
 
 # Iniciar servidor
@@ -91,22 +89,22 @@ Abre tu navegador y accede a:
 ### Pantalla Pública (Sin Login)
 ```
 📺 Monitor de Turnos (para choferes):
-   http://localhost:3001/paddy/logistics/monitor
+   http://localhost:3001/monitor
 ```
 
 ### Autenticación
 ```
 🔐 Login:
-   http://localhost:3001/paddy/auth/login
+   http://localhost:3001/login
 ```
 
 ### Pantalla Protegida (Requiere Login)
 ```
-📊 Dashboard:
-   http://localhost:3001/paddy/dashboard
-
 ⚖️ Panel de Pesaje:
-   http://localhost:3001/paddy/logistics/weighing
+   http://localhost:3001/weighing
+   
+📋 Detalles de Camión:
+   http://localhost:3001/weighing/[id]
 ```
 
 ---
@@ -182,18 +180,13 @@ npm start                  # Ejecutar en producción
 
 ### Frontend
 ```bash
-cd frontend
+cd /Users/felipe/dev/paddy/paddy-tms
 
 # Desarrollo
 npm run dev                # Iniciar en modo dev
 
 # Build
 npm run build              # Compilar
-npm start                  # Ejecutar compilado
-
-# Testing
-npm run test:e2e           # E2E tests
-npm run test:e2e:ui        # E2E con UI
 
 # Lint
 npm run lint               # Verificar código
@@ -229,16 +222,16 @@ npm run dev -- -p 3002
 # Asegúrate de que .env.local tiene:
 NEXTAUTH_SECRET=your-secret
 NEXTAUTH_URL=http://localhost:3001
-NEXT_PUBLIC_API_URL=http://localhost:3333
+NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
 ### ❌ Error: "Frontend cannot connect to backend"
 ```bash
-# Verifica que backend está corriendo en 3333
-curl http://localhost:3333
+# Verifica que backend está corriendo en 3000
+curl http://localhost:3000
 
 # Si no, inicia backend:
-cd backend && npm run start:dev
+cd /Users/felipe/dev/paddy/backend && npm run start:dev
 ```
 
 ---

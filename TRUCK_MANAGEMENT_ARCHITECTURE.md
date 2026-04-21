@@ -473,18 +473,18 @@ PADDY TMS - Rutas
 ═════════════════════════════════════════════════════════════════
 
 PÚBLICA (SIN LOGIN):
-├─ /paddy/logistics/monitor     ← 📺 Monitor de turnos (Choferes)
+├─ /monitor     ← 📺 Monitor de turnos (Choferes)
 │  └─ Pantalla grande, información clara, actualización RT
 │
 PROTEGIDA (CON LOGIN):
-├─ /paddy/auth/login            ← 🔐 Única entrada al sistema
+├─ /login            ← 🔐 Única entrada al sistema
 │
-├─ /paddy/logistics/weighing    ← ⚖️ Panel de pesaje (Admin)
+├─ /weighing    ← ⚖️ Panel de pesaje (Admin)
 │  ├─ Registro de camiones
 │  ├─ Control de pesajes (bruto/tara)
 │  └─ Generación de tickets
 │
-└─ /paddy/dashboard             ← 📊 Dashboard principal
+└─ /weighing             ← 📊 Dashboard principal
    ├─ Estadísticas
    ├─ Histórico
    └─ Reportes
@@ -1265,7 +1265,7 @@ mkdir -p backend/src/modules/logistics/{presentation,application,domain,infrastr
 - [ ] `MonitorDisplay.tsx`
 
 #### Paso 4.4: Pages
-- [ ] `frontend/src/app/paddy/logistics/weighing/page.tsx`
+- [ ] `frontend/src/app/weighing/page.tsx`
 - [ ] `frontend/src/app/paddy/logistics/dispatch/page.tsx`
 
 **Deliverable**: Dashboard visible en navegador con datos mockeados

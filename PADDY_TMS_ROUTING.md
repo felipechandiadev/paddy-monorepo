@@ -23,47 +23,47 @@
 ### Diagrama de Navegación
 
 ```
-                           ┌─────────────────────────────┐
-                           │   PADDY TMS - INICIO        │
-                           │  /paddy                     │
-                           └──────────┬──────────────────┘
-                                      │
-                ┌─────────────────────┴──────────────────────┐
-                │                                            │
-                ↓ (Público)                          ↓ (Requiere Login)
-       ┌──────────────────────┐              ┌─────────────────────┐
-       │  /paddy/logistics/   │              │  /paddy/auth/login  │
-       │  monitor             │              │                     │
-       │                      │              │  (NextAuth)         │
-       │  📺 PANTALLA PÚBLICA │              │  ✅ Autentica       │
-       │  (SIN LOGIN)         │              │                     │
-       │                      │              └────────┬────────────┘
-       │  - Turno actual      │                       │
-       │  - Próximos turnos   │                       ↓
-       │  - Información clara │            ┌─────────────────────┐
-       │  - Sin distracciones │            │ DASHBOARD PRINCIPAL │
-       │  - Actualización RT  │            │  /paddy/dashboard   │
-       └──────────────────────┘            │                     │
-                                           │  📊 Panel de Control│
-                                           │  - Estadísticas     │
-                                           │  - Histórico        │
-                                           │  - Reportes         │
-                                           └────────┬────────────┘
-                                                    │
-                                 ┌──────────────────┴──────────────────┐
-                                 │                                     │
-                                 ↓                                     ↓
-                        ┌──────────────────┐           ┌──────────────────┐
-                        │  WEIGHING PANEL  │           │  OTROS MÓDULOS   │
-                        │ /paddy/logistics/│           │  (Futuros)       │
-                        │  weighing        │           │                  │
-                        │                  │           │  - Reportes      │
-                        │  ⚖️ Pesajes     │           │  - Productores   │
-                        │  - Registro      │           │  - Usuarios      │
-                        │  - Pesaje bruto  │           │  - Auditoría     │
-                        │  - Pesaje tara   │           └──────────────────┘
-                        │  - Tickets       │
-                        └──────────────────┘
+                      ┌─────────────────────────┐
+                      │  PADDY TMS - INICIO     │
+                      │     (Raíz: /)           │
+                      └────────────┬────────────┘
+                                   │
+                ┌──────────────────┴──────────────────┐
+                │                                     │
+          ↓ (Público)                          ↓ (Login)
+   ┌──────────────────┐              ┌────────────────────┐
+   │   /monitor       │              │   /login           │
+   │                  │              │                    │
+   │  📺 MONITOR      │              │  🔐 Autenticación  │
+   │  PÚBLICO         │              │  (NextAuth)        │
+   │  (SIN LOGIN)     │              │                    │
+   │                  │              └─────────┬──────────┘
+   │  - Turno actual  │                        │
+   │  - Próximos      │                        ↓
+   │  - Información   │              ┌────────────────────┐
+   │  - Tiempo real   │              │  /weighing         │
+   │                  │              │                    │
+   └──────────────────┘              │  ⚖️ PANEL DE PESAJE│
+                                     │  (Protegido)       │
+                                     │                    │
+                                     │  - Registro        │
+                                     │  - Peso bruto      │
+                                     │  - Peso tara       │
+                                     │  - Tickets         │
+                                     │  - Próximos camiones
+                                     │                    │
+                                     └─────────┬──────────┘
+                                               │
+                                               ↓
+                                     ┌────────────────────┐
+                                     │  /weighing/[id]    │
+                                     │                    │
+                                     │  📋 DETALLES       │
+                                     │  (Protegido)       │
+                                     │                    │
+                                     │  - Info del camión │
+                                     │  - Histórico       │
+                                     └────────────────────┘
 ```
 
 ---
@@ -73,7 +73,7 @@
 ### 1. Monitor de Turnos (SIN LOGIN)
 
 ```
-Ruta: /paddy/logistics/monitor
+Ruta: /monitor
 Método: GET
 Autenticación: ❌ NO REQUERIDA
 Descripción: Pantalla grande para choferes
@@ -93,6 +93,9 @@ Componentes:
   - CurrentTruckDisplay.tsx
   - QueueList.tsx
   - TimerDisplay.tsx
+
+URL de acceso:
+  http://localhost:3001/monitor
 ```
 
 ---
@@ -102,7 +105,7 @@ Componentes:
 ### 1. Login
 
 ```
-Ruta: /paddy/auth/login
+Ruta: /login
 Método: GET/POST
 Autenticación: ❌ NO REQUERIDA (es el punto de entrada)
 Descripción: Formulario de autenticación
@@ -111,69 +114,64 @@ Características:
   ✅ Usa NextAuth.js (OAuth/JWT)
   ✅ Valida credenciales contra backend
   ✅ Genera sesión JWT
-  ✅ Redirige a /paddy/dashboard tras login exitoso
+  ✅ Redirige a /weighing tras login exitoso
 
 Componentes:
   - LoginForm.tsx
   - AuthService.ts
 
 Flujo:
-  1. Usuario accede a /paddy/auth/login
+  1. Usuario accede a /login
   2. Ingresa credenciales
   3. Se valida contra backend (NestJS)
   4. Se genera JWT y sesión
-  5. Se redirige a /paddy/dashboard
+  5. Se redirige a /weighing
+
+URL de acceso:
+  http://localhost:3001/login
 ```
 
-### 2. Dashboard Principal
+### 2. Panel de Pesaje
 
 ```
-Ruta: /paddy/dashboard
-Método: GET
-Autenticación: ✅ REQUERIDA (Middleware)
-Rol Requerido: LOGISTICS_OPERATOR
-Descripción: Panel de control principal
-Características:
-  ✅ Vista general del sistema
-  ✅ Estadísticas del día
-  ✅ Histórico de recepciones
-  ✅ Enlaces a módulos específicos
-
-Componentes:
-  - DashboardLayout.tsx
-  - StatisticsPanel.tsx
-  - HistoryTable.tsx
-```
-
-### 3. Panel de Pesaje
-
-```
-Ruta: /paddy/logistics/weighing
+Ruta: /weighing
 Método: GET/POST
 Autenticación: ✅ REQUERIDA (Middleware)
 Rol Requerido: LOGISTICS_OPERATOR
-Descripción: Centro de operaciones para pesajes
+Descripción: Panel principal de pesaje de camiones
 Características:
-  ✅ Registro de nuevos camiones
-  ✅ Control de pesaje bruto
-  ✅ Control de pesaje tara
+  ✅ Interfaz operativa para pesaje
+  ✅ Registro de entrada y salida
+  ✅ Cálculo automático de peso neto
   ✅ Generación de tickets
-  ✅ Validaciones en tiempo real
-
-Sub-rutas:
-  - /paddy/logistics/weighing        → Listado y entrada
-  - /paddy/logistics/weighing/[id]   → Detalles y control
+  ✅ Visualización de próximos camiones
+  ✅ Actualización en tiempo real
 
 Componentes:
-  - AdminDashboard.tsx
-  - TruckInputForm.tsx
   - WeighingForm.tsx
-  - TruckCard.tsx
+  - CurrentTruckDisplay.tsx
+  - QueueList.tsx
 
-Server Actions:
-  - registerTruck()
-  - registerWeighing()
-  - finalizeTruck()
+URL de acceso:
+  http://localhost:3001/weighing
+```
+
+### 3. Detalles de Camión
+
+```
+Ruta: /weighing/[id]
+Método: GET
+Autenticación: ✅ REQUERIDA (Middleware)
+Rol Requerido: LOGISTICS_OPERATOR
+Descripción: Vista detallada de camión y su histórico
+Características:
+  ✅ Información completa del camión
+  ✅ Histórico de recepciones
+  ✅ Detalles de cada pesaje
+  ✅ Información del chofer
+
+URL de acceso:
+  http://localhost:3001/weighing/123456
 ```
 
 ---
@@ -223,7 +221,7 @@ export const authOptions = {
   ],
 
   pages: {
-    signIn: '/paddy/auth/login',
+    signIn: '/login',
     error: '/paddy/auth/error',
   },
 
@@ -319,14 +317,14 @@ export async function middleware(request: NextRequest) {
 
   // Rutas públicas (sin login)
   const publicRoutes = [
-    '/paddy/logistics/monitor',
-    '/paddy/auth/login',
+    '/monitor',
+    '/login',
   ];
 
   // Rutas protegidas (con login)
   const protectedRoutes = [
-    '/paddy/dashboard',
-    '/paddy/logistics/weighing',
+    '/weighing',
+    '/weighing',
   ];
 
   // Si es ruta pública, permitir
@@ -343,7 +341,7 @@ export async function middleware(request: NextRequest) {
 
     if (!token) {
       // No hay sesión, redirigir a login
-      return NextResponse.redirect(new URL('/paddy/auth/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     // Validar rol
@@ -507,7 +505,7 @@ export class PermissionsGuard implements CanActivate {
 
 ```
 1. Chofer llega a la planta
-2. Ve pantalla en /paddy/logistics/monitor
+2. Ve pantalla en /monitor
    - SIN necesidad de login
    - Información clara (patente, turno actual)
    - Actualización RT cada 2-3 segundos
@@ -519,14 +517,14 @@ export class PermissionsGuard implements CanActivate {
 ### Escenario 2: Operador (Panel Protegido)
 
 ```
-1. Operador accede a /paddy/auth/login
+1. Operador accede a /login
 2. Ingresa credenciales (email + password)
 3. Backend valida en DB (tabla users + roles)
 4. NextAuth genera JWT con role='LOGISTICS_OPERATOR'
-5. Se redirige a /paddy/dashboard
+5. Se redirige a /weighing
 6. Puede acceder a:
-   - /paddy/dashboard (estadísticas)
-   - /paddy/logistics/weighing (control de pesajes)
+   - /weighing (estadísticas)
+   - /weighing (control de pesajes)
 7. Todos los datos están protegidos por middleware
 8. Socket.io mantiene sincronización RT
 ```
@@ -558,9 +556,9 @@ export class PermissionsGuard implements CanActivate {
 
 | Ruta | Autenticación | Rol | Descripción |
 |------|---------------|-----|-------------|
-| `/paddy/logistics/monitor` | ❌ No | - | Pantalla pública para choferes |
-| `/paddy/auth/login` | ❌ No | - | Formulario de login |
-| `/paddy/dashboard` | ✅ Sí | LOGISTICS_OPERATOR | Dashboard principal |
-| `/paddy/logistics/weighing` | ✅ Sí | LOGISTICS_OPERATOR | Panel de pesajes |
-| `/paddy/logistics/weighing/[id]` | ✅ Sí | LOGISTICS_OPERATOR | Detalles del camión |
+| `/monitor` | ❌ No | - | Pantalla pública para choferes |
+| `/login` | ❌ No | - | Formulario de login |
+| `/weighing` | ✅ Sí | LOGISTICS_OPERATOR | Dashboard principal |
+| `/weighing` | ✅ Sí | LOGISTICS_OPERATOR | Panel de pesajes |
+| `/weighing/[id]` | ✅ Sí | LOGISTICS_OPERATOR | Detalles del camión |
 

@@ -24,7 +24,7 @@
 ### 📺 PANTALLA PÚBLICA (Sin Login)
 
 ```
-/paddy/logistics/monitor
+/monitor
 │
 ├─ Acceso: 100% LIBRE (sin autenticación)
 ├─ Audiencia: Choferes
@@ -42,7 +42,7 @@
 ### 🔐 PUNTO DE ACCESO (Login)
 
 ```
-/paddy/auth/login
+/login
 │
 ├─ Acceso: PÚBLICO (sin sesión previa)
 ├─ Audiencia: Operadores logísticos
@@ -53,13 +53,13 @@
    2. Backend valida contra DB
    3. Se genera JWT
    4. Se crea sesión NextAuth.js
-   5. Se redirige a /paddy/dashboard
+   5. Se redirige a /weighing
 ```
 
 ### 📊 PANEL PROTEGIDO (Dashboard)
 
 ```
-/paddy/dashboard
+/weighing
 │
 ├─ Acceso: ✅ REQUIERE LOGIN
 ├─ Rol: LOGISTICS_OPERATOR
@@ -74,15 +74,15 @@
 ### ⚖️ PANEL DE PESAJE (Main)
 
 ```
-/paddy/logistics/weighing
+/weighing
 │
 ├─ Acceso: ✅ REQUIERE LOGIN
 ├─ Rol: LOGISTICS_OPERATOR
 ├─ Función: Control de pesajes y registro de camiones
 │
 ├─ Sub-rutas:
-│  ├─ /paddy/logistics/weighing (listado + entrada)
-│  └─ /paddy/logistics/weighing/[id] (detalles del camión)
+│  ├─ /weighing (listado + entrada)
+│  └─ /weighing/[id] (detalles del camión)
 │
 └─ Funcionalidades:
    ✅ Registrar nuevo camión
@@ -163,7 +163,7 @@ Duración sesión: 24 horas
 Almacenamiento: JWT token en sesión
 
 Flujo:
-1. Usuario accede /paddy/auth/login
+1. Usuario accede /login
 2. Ingresa credenciales
 3. Backend (NestJS) valida en DB
 4. Retorna usuario + JWT
@@ -173,7 +173,7 @@ Flujo:
 
 Middleware:
 - Valida token en rutas protegidas
-- Redirige a /paddy/auth/login si no hay sesión
+- Redirige a /login si no hay sesión
 - Valida rol LOGISTICS_OPERATOR
 ```
 
@@ -185,7 +185,7 @@ Middleware:
 
 ```
 1. Chofer llega a la planta
-   └─ Accede a /paddy/logistics/monitor (SIN login)
+   └─ Accede a /monitor (SIN login)
 
 2. Ve la pantalla
    └─ Turno actual: "ABC-1234"
@@ -204,9 +204,9 @@ Middleware:
 ### Escenario 2: Operador (Panel Protegido)
 
 ```
-1. Operador accede a /paddy/auth/login
+1. Operador accede a /login
    └─ Ingresa email + password
-   └─ Se redirige a /paddy/dashboard
+   └─ Se redirige a /weighing
 
 2. Ve panel de control
    └─ Estadísticas del día
