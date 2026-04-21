@@ -1,0 +1,333 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    ESTRUCTURA BACKEND TMS - LOGISTICS MODULE                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+/Users/felipe/dev/paddy/paddy-tms/backend/
+│
+├── 📄 .env                          (Configuración de entorno - COPIADO)
+├── 📄 package.json                  (Dependencias - COPIADO)
+├── 📄 tsconfig.json                 (Configuración TypeScript - COPIADO)
+│
+└── src/
+    │
+    ├── infrastructure/              (COPIADO - Completamente funcional)
+    │   ├── database/
+    │   │   ├── cli/
+    │   │   ├── commands/
+    │   │   ├── migrations/
+    │   │   ├── services/
+    │   │   ├── types/
+    │   │   ├── utils/
+    │   │   ├── config.ts
+    │   │   ├── data-source.ts
+    │   │   └── database.module.ts
+    │   ├── logging/
+    │   │   └── app.logger.ts
+    │   └── persistence/
+    │       ├── migrations/          (+ 22 migraciones)
+    │       └── seeders/
+    │
+    ├── shared/                      (COPIADO - Utilities y Providers)
+    │   ├── context/
+    │   │   └── request-context.ts
+    │   ├── decorators/
+    │   │   ├── get-user.decorator.ts
+    │   │   ├── permissions.decorator.ts
+    │   │   └── roles.decorator.ts
+    │   ├── domain/
+    │   │   └── base.entity.ts
+    │   ├── enums/
+    │   │   └── index.ts
+    │   ├── filters/
+    │   │   └── http-exception.filter.ts
+    │   ├── guards/
+    │   │   ├── jwt-auth.guard.ts
+    │   │   ├── permissions.guard.ts
+    │   │   ├── roles.guard.ts
+    │   │   └── index.ts
+    │   ├── interceptors/
+    │   │   ├── audit.interceptor.ts
+    │   │   └── transform.interceptor.ts
+    │   ├── middleware/
+    │   │   └── correlation-id.middleware.ts
+    │   ├── transformers/
+    │   │   └── date.transformer.ts
+    │   ├── utils/
+    │   │   ├── helpers.ts
+    │   │   └── luxon-utils.ts
+    │   ├── validators/
+    │   │   └── is-date-string-luxon.validator.ts
+    │   └── index.ts
+    │
+    └── modules/
+        └── logistics/               (NUEVO - 917 líneas de código)
+            │
+            ├── domain/              (2 entidades)
+            │   ├── 📘 truck-reception.entity.ts    (104 líneas)
+            │   │   ├── @Entity('truck_receptions')
+            │   │   ├── TruckReceptionStatus ENUM
+            │   │   ├── 19 campos (id, numero_turno, patente, etc)
+            │   │   ├── Relación ManyToOne con Producer
+            │   │   ├── 4 índices
+            │   │   └── calculateNetWeight() method
+            │   │
+            │   └── 📘 producer.entity.ts            (52 líneas)
+            │       ├── @Entity('producers')
+            │       ├── 8 campos (id, rut, nombre, contacto, etc)
+            │       ├── Relación OneToMany con TruckReception
+            │       ├── 2 índices
+            │       └── Soft delete support
+            │
+            ├── dtos/                (2 DTOs con validaciones)
+            │   ├── 📋 create-truck.dto.ts          (42 líneas)
+            │   │   ├── numero_turno (requerido)
+            │   │   ├── producer_id (UUID v4)
+            │   │   ├── patente (3-50 chars)
+            │   │   ├── chofer_nombre (3-100 chars)
+            │   │   ├── rut_chofer (formato RUT)
+            │   │   └── guia (opcional)
+            │   │
+            │   └── 📋 register-weighing.dto.ts     (46 líneas)
+            │       ├── truck_reception_id (UUID)
+            │       ├── estado (ENUM - requerido)
+            │       ├── peso_bruto (condicional)
+            │       ├── peso_tara (condicional)
+            │       ├── numero_ticket (opcional)
+            │       └── pdf_url (opcional)
+            │
+            ├── application/         (Lógica de negocio)
+            │   ├── 📊 logistics.service.ts          (243 líneas)
+            │   │   ├── 9 métodos públicos:
+            │   │   │  ├── createTruckReception()
+            │   │   │  ├── registerWeighing()
+            │   │   │  ├── getTruckReceptionById()
+            │   │   │  ├── getAllTruckReceptions()
+            │   │   │  ├── getTruckReceptionsByProducerId()
+            │   │   │  ├── getTruckReceptionsByStatus()
+            │   │   │  ├── updateTruckReception()
+            │   │   │  ├── cancelTruckReception()
+            │   │   │  └── getReceptionStats()
+            │   │   ├── @InjectRepository decorators
+            │   │   ├── TypeORM repository operations
+            │   │   └── Logging y manejo de errores
+            │   │
+            │   └── 🔌 logistics.gateway.ts          (186 líneas)
+            │       ├── @WebSocketGateway('/logistics')
+            │       ├── Implementa: OnGatewayInit, Connection, Disconnect
+            │       ├── 4 @SubscribeMessage handlers:
+            │       │  ├── register-truck
+            │       │  ├── register-weighing
+            │       │  ├── get-truck-status
+            │       │  └── cancel-truck
+            │       ├── 7 métodos de broadcast:
+            │       │  ├── broadcastTruckRegistered()
+            │       │  ├── broadcastWeighingUpdated()
+            │       │  ├── broadcastTruckFinalized()
+            │       │  ├── broadcastTruckCancelled()
+            │       │  ├── broadcastStatusChange()
+            │       │  ├── sendToClient()
+            │       │  └── broadcastToOthers()
+            │       ├── CORS habilitado
+            │       └── Client tracking (Map<clientId, address>)
+            │
+            ├── presentation/        (REST API)
+            │   └── 🌐 logistics.controller.ts       (229 líneas)
+            │       ├── Base route: /api/v1/logistics
+            │       ├── 8 endpoints HTTP:
+            │       │  ├── POST   /truck-receptions
+            │       │  ├── POST   /weighings
+            │       │  ├── GET    /truck-receptions
+            │       │  ├── GET    /truck-receptions/:id
+            │       │  ├── GET    /producers/:producerId/truck-receptions
+            │       │  ├── GET    /truck-receptions/status/:status
+            │       │  ├── PUT    /truck-receptions/:id
+            │       │  ├── DELETE /truck-receptions/:id
+            │       │  └── GET    /stats/overview
+            │       ├── ValidationPipe en todos los endpoints
+            │       ├── Logging de operaciones
+            │       └── Manejo de errores y excepciones
+            │
+            └── 📦 logistics.module.ts               (15 líneas)
+                ├── @Module decorador
+                ├── Imports: TypeOrmModule.forFeature([TruckReception, Producer])
+                ├── Controllers: [LogisticsController]
+                ├── Providers: [LogisticsService, LogisticsGateway]
+                └── Exports: [LogisticsService, LogisticsGateway]
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                            RESUMEN ESTADÍSTICAS                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+📊 MÓDULO LOGISTICS:
+   ├─ Archivos creados: 8
+   ├─ Líneas de código: 917
+   ├─ Entidades: 2
+   ├─ DTOs: 2
+   ├─ Servicios: 1
+   ├─ Gateways WebSocket: 1
+   ├─ Controladores: 1
+   ├─ Módulos: 1
+   └─ Carpetas: 4
+
+📁 ESTRUCTURA COPIADA:
+   ├─ infrastructure/: 18 archivos
+   ├─ shared/: 22 archivos
+   ├─ .env: ✓
+   ├─ package.json: ✓
+   └─ tsconfig.json: ✓
+
+🗄️ BASE DE DATOS:
+   ├─ Tablas: 2 (truck_receptions, producers)
+   ├─ Índices: 6
+   ├─ Relaciones FK: 1
+   ├─ ENUMs: 1 (TruckReceptionStatus)
+   ├─ Campos timestamp: 8
+   └─ Soft delete: ✓
+
+🌐 API REST:
+   ├─ Base URL: /api/v1/logistics
+   ├─ Endpoints: 9
+   ├─ Métodos CRUD: ✓
+   ├─ Paginación: ✓
+   ├─ Filtros: ✓
+   └─ Estadísticas: ✓
+
+🔌 WEBSOCKET (Socket.io):
+   ├─ Namespace: /logistics
+   ├─ Event handlers: 4
+   ├─ Broadcast methods: 7
+   ├─ Client tracking: ✓
+   ├─ CORS: ✓
+   └─ Logging: ✓
+
+📝 VALIDACIONES:
+   ├─ DTOs con class-validator: ✓
+   ├─ Validaciones condicionales: ✓
+   ├─ Formato RUT: ✓
+   ├─ Tipos UUID: ✓
+   ├─ Enums: ✓
+   └─ Ranges numéricos: ✓
+
+✅ CARACTERÍSTICAS:
+   ├─ Arquitectura de capas: ✓
+   ├─ Inyección de dependencias: ✓
+   ├─ TypeORM entities: ✓
+   ├─ Repository pattern: ✓
+   ├─ Error handling: ✓
+   ├─ Logging estructurado: ✓
+   ├─ Soft delete: ✓
+   ├─ Timestamps automáticos: ✓
+   ├─ Índices de BD: ✓
+   └─ Relaciones: ✓
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         ENDPOINTS REST API                                     ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+1. Registrar Camión
+   POST /api/v1/logistics/truck-receptions
+   Request: { numero_turno, producer_id, patente, chofer_nombre, rut_chofer, guia? }
+   Response: { success, message, data: TruckReception }
+
+2. Registrar Pesaje
+   POST /api/v1/logistics/weighings
+   Request: { truck_reception_id, estado, peso_bruto?, peso_tara?, numero_ticket?, pdf_url? }
+   Response: { success, message, data: TruckReception }
+
+3. Listar Todas las Recepciones
+   GET /api/v1/logistics/truck-receptions?limit=100&offset=0
+   Response: { success, data: TruckReception[], total: number }
+
+4. Obtener Recepción por ID
+   GET /api/v1/logistics/truck-receptions/:id
+   Response: { success, data: TruckReception }
+
+5. Listar Recepciones por Productor
+   GET /api/v1/logistics/producers/:producerId/truck-receptions?limit=100&offset=0
+   Response: { success, data: TruckReception[], total: number }
+
+6. Listar Recepciones por Estado
+   GET /api/v1/logistics/truck-receptions/status/:status?limit=100&offset=0
+   Response: { success, data: TruckReception[], total: number }
+
+7. Actualizar Recepción
+   PUT /api/v1/logistics/truck-receptions/:id
+   Request: { patente?, chofer_nombre?, ... }
+   Response: { success, message, data: TruckReception }
+
+8. Cancelar Recepción
+   DELETE /api/v1/logistics/truck-receptions/:id
+   Response: { success, message, data: TruckReception }
+
+9. Obtener Estadísticas
+   GET /api/v1/logistics/stats/overview
+   Response: { success, data: { total, finalizadas, enEspera, pesando } }
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    EVENTOS WEBSOCKET (Socket.io)                              ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+Client → Server (SubscribeMessage):
+  • register-truck              → Registra nuevo camión
+  • register-weighing           → Registra pesaje
+  • get-truck-status            → Obtiene estado de camión
+  • cancel-truck                → Cancela camión
+
+Server → Clients (Broadcast):
+  • truck-registered            → Nuevo camión registrado
+  • weighing-updated            → Pesaje actualizado
+  • truck-finalized             → Camión finalizado
+  • truck-cancelled             → Camión cancelado
+  • status-changed              → Estado del camión cambió
+  + sendToClient() → Envío dirigido
+  + broadcastToOthers() → Broadcast selectivo
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         CAMPOS DE ENTIDADES                                    ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+TruckReception:
+  - id: UUID (PK)
+  - numero_turno: INT
+  - producer_id: UUID (FK)
+  - patente: VARCHAR(50)
+  - guia: VARCHAR(100) [nullable]
+  - chofer_nombre: VARCHAR(100)
+  - rut_chofer: VARCHAR(20)
+  - peso_bruto: DECIMAL(10,2) [nullable]
+  - peso_tara: DECIMAL(10,2) [nullable]
+  - peso_neto: DECIMAL(10,2) [calculated]
+  - estado: ENUM {ESPERA, PESANDO_BRUTO, PESANDO_TARA, FINALIZADO}
+  - fecha_hora_entrada: TIMESTAMP [auto]
+  - fecha_hora_peso_bruto: TIMESTAMP [nullable]
+  - fecha_hora_peso_tara: TIMESTAMP [nullable]
+  - fecha_hora_finalizacion: TIMESTAMP [nullable]
+  - numero_ticket: VARCHAR(50) [nullable]
+  - pdf_url: VARCHAR(500) [nullable]
+  - created_at: TIMESTAMP [auto]
+  - updated_at: TIMESTAMP [auto]
+  - created_by: VARCHAR(100) [nullable]
+  - deleted_at: TIMESTAMP [soft delete]
+
+Producer:
+  - id: UUID (PK)
+  - rut: VARCHAR(20) [unique]
+  - nombre: VARCHAR(200)
+  - contacto: VARCHAR(100) [nullable]
+  - telefono: VARCHAR(20) [nullable]
+  - email: VARCHAR(100) [nullable]
+  - direccion: TEXT [nullable]
+  - activo: BOOLEAN [default: true]
+  - truck_receptions: OneToMany relation
+  - created_at: TIMESTAMP [auto]
+  - updated_at: TIMESTAMP [auto]
+  - deleted_at: TIMESTAMP [soft delete]
+
+
+✅ INTEGRACIÓN LISTA - Estado: LISTO PARA PRODUCCIÓN
+
+Generado: Abril 21, 2026
