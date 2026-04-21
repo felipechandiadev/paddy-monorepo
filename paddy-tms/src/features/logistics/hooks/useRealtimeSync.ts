@@ -1,18 +1,25 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useLogistics } from './useLogistics';
 import { ACTION_TYPES } from '../context/actions';
 import { Truck } from '../types/logistics.types';
 
-export const useRealtimeSync = (enabled = true) => {
+export const useRealtimeSync = (enabled = false) => {
   const { dispatch, setError } = useLogistics();
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const connectSocket = useCallback(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      console.log('WebSocket sync disabled');
+      return null;
+    }
 
     try {
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+      console.log('Attempting WebSocket connection to:', wsUrl);
+      
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
@@ -45,39 +52,47 @@ export const useRealtimeSync = (enabled = true) => {
       };
 
       socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setError('Connection error with real-time updates');
+        console.warn('WebSocket error - Real-time updates disabled:', error);
+        // No mostrar error en UI - es esperado si el backend no tiene WebSocket configurado
       };
 
       socket.onclose = () => {
         console.log('WebSocket disconnected');
+        socketRef.current = null;
+        
         if (enabled) {
-          setTimeout(connectSocket, 3000);
+          // Intentar reconectar después de 5 segundos
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connectSocket();
+          }, 5000);
         }
       };
 
+      socketRef.current = socket;
       return socket;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'WebSocket connection failed';
-      setError(message);
+      console.warn('WebSocket connection error - falling back to polling:', error);
+      // No mostrar error - es opcional si el backend no tiene WebSocket
+      return null;
     }
-  }, [dispatch, setError, enabled]);
+  }, [dispatch, enabled]);
 
   useEffect(() => {
-    let socket: WebSocket | undefined;
-
     if (enabled) {
-      socket = connectSocket();
+      connectSocket();
     }
 
     return () => {
-      if (socket) {
-        socket.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (socketRef.current) {
+        socketRef.current.close();
       }
     };
   }, [connectSocket, enabled]);
 
   return {
-    isConnected: true,
+    isConnected: socketRef.current?.readyState === WebSocket.OPEN,
   };
 };

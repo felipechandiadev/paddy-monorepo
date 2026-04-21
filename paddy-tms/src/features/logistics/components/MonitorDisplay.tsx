@@ -15,7 +15,8 @@ export const MonitorDisplay: React.FC<MonitorDisplayProps> = ({
   publicView = true 
 }) => {
   const { trucks, loading, error, refetch } = useLogisticsData(true);
-  const { isConnected } = useRealtimeSync(true);
+  // Solo habilitar WebSocket en monitor view (comentado por ahora ya que no hay WS server)
+  const { isConnected } = useRealtimeSync(false);
 
   useEffect(() => {
     if (!publicView) return;
