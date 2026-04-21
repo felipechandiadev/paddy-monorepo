@@ -7,7 +7,7 @@ import { login } from '@/features/logistics/services/authService';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
-import { validateEmail, validatePassword } from '@/features/logistics/utils/validation';
+import { validateEmail } from '@/features/logistics/utils/validation';
 
 interface LoginValues {
   email: string;
@@ -25,32 +25,22 @@ export default function LoginPage() {
   const { setUser, setError: setContextError } = useLogistics();
   
   const [values, setValues] = useState<LoginValues>(initialValues);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const redirect = searchParams.get('redirect') || '/weighing';
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!values.email || !validateEmail(values.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!values.password) {
-      newErrors.password = 'Password is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!validateForm()) {
+    if (!values.email || !validateEmail(values.email)) {
+      setSubmitError('Por favor ingresa un email válido');
+      return;
+    }
+
+    if (!values.password) {
+      setSubmitError('Por favor ingresa tu contraseña');
       return;
     }
 
@@ -99,14 +89,7 @@ export default function LoginPage() {
               label="Email"
               type="email"
               value={values.email}
-              onChange={(event) => {
-                setValues((prev) => ({ ...prev, email: event.target.value }));
-                if (errors.email) {
-                  setErrors((prev) => ({ ...prev, email: '' }));
-                }
-              }}
-              error={!!errors.email}
-              helperText={errors.email}
+              onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
               required
               name="tms_login_email"
               autoComplete="email"
@@ -122,14 +105,7 @@ export default function LoginPage() {
               label="Contraseña"
               type="password"
               value={values.password}
-              onChange={(event) => {
-                setValues((prev) => ({ ...prev, password: event.target.value }));
-                if (errors.password) {
-                  setErrors((prev) => ({ ...prev, password: '' }));
-                }
-              }}
-              error={!!errors.password}
-              helperText={errors.password}
+              onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
               required
               name="tms_login_password"
               autoComplete="current-password"
