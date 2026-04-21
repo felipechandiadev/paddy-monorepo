@@ -7,8 +7,8 @@ import { useLogistics } from '@/features/logistics/hooks/useLogistics';
 import { logout } from '@/features/logistics/services/authService';
 import { Button } from '@/shared/components/ui/Button/Button';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
-import { Select } from '@/shared/components/ui/Select/Select';
-import { Badge } from '@/shared/components/ui/Badge/Badge';
+import Select from '@/shared/components/ui/Select/Select';
+import Badge from '@/shared/components/ui/Badge/Badge';
 import Alert from '@/shared/components/ui/Alert/Alert';
 
 interface TruckReceptionUI {
