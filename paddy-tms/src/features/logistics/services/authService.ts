@@ -34,10 +34,16 @@ const clearAuthToken = (): void => {
 
 export const validateAuth = async (): Promise<AuthUser | null> => {
   try {
+    const token = getAuthToken();
+    if (!token) {
+      return null;
+    }
+
     const response = await fetch(`${API_URL}/auth/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       credentials: 'include',
     });
