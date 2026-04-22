@@ -230,12 +230,12 @@ export const TruckList: React.FC<TruckListProps> = ({
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
                   <button
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="p-1.5 rounded hover:bg-neutral/20 transition-colors disabled:opacity-50"
+                    className="p-1.5 rounded hover:bg-primary/20 transition-all duration-200 disabled:opacity-50"
                     title="Arrastrar para reordenar"
                     disabled={isUpdating}
                   >
                     <svg
-                      className="w-4 h-4 text-muted-foreground"
+                      className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors duration-200"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
