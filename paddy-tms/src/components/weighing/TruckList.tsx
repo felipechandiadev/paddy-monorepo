@@ -74,6 +74,11 @@ export const TruckList: React.FC<TruckListProps> = ({
     const newList = [...orderedTrucks];
     [newList[draggedIndex], newList[targetIndex]] = [newList[targetIndex], newList[draggedIndex]];
 
+    // Actualizar los números de turno en los objetos
+    newList.forEach((truck, index) => {
+      truck.numero_turno = index + 1;
+    });
+
     setOrderedTrucks(newList);
     setDraggedId(null);
     setDragOverId(null);
@@ -87,7 +92,7 @@ export const TruckList: React.FC<TruckListProps> = ({
       );
       
       await Promise.all(updatePromises);
-      console.log('Turnos actualizados exitosamente');
+      console.log('Turnos actualizados exitosamente:', newList.map(t => ({ id: t.id, turno: t.numero_turno })));
     } catch (error) {
       console.error('Error actualizando turnos:', error);
       // Revertir a la lista original en caso de error
