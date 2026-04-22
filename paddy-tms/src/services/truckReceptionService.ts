@@ -48,14 +48,24 @@ export class TruckReceptionService {
     payload: CreateTruckWithGrossWeightPayload,
   ): Promise<TruckReception> {
     try {
+      // Obtener el token
+      const { getAuthToken } = await import('@/features/logistics/services/authService');
+      const token = getAuthToken();
+
       // Crear en el backend
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         `${API_URL}/logistics/truck-receptions/with-gross-weight`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           credentials: 'include',
           body: JSON.stringify(payload),
         },
@@ -121,12 +131,22 @@ export class TruckReceptionService {
     payload: RegisterTareWeightPayload,
   ): Promise<TruckReception> {
     try {
+      // Obtener el token
+      const { getAuthToken } = await import('@/features/logistics/services/authService');
+      const token = getAuthToken();
+
       // Registrar en backend
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/logistics/weighings/tare`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(payload),
       });
@@ -181,7 +201,18 @@ export class TruckReceptionService {
    */
   async getNextTurnoForToday(): Promise<number> {
     try {
+      // Obtener el token
+      const { getAuthToken } = await import('@/features/logistics/services/authService');
+      const token = getAuthToken();
+
+      const headers: HeadersInit = {};
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/logistics/turnos/next-today`, {
+        headers,
         credentials: 'include',
       });
 
@@ -205,7 +236,18 @@ export class TruckReceptionService {
    */
   async getTurnosToday(): Promise<TruckReception[]> {
     try {
+      // Obtener el token
+      const { getAuthToken } = await import('@/features/logistics/services/authService');
+      const token = getAuthToken();
+
+      const headers: HeadersInit = {};
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/logistics/turnos/today`, {
+        headers,
         credentials: 'include',
       });
 
@@ -250,7 +292,18 @@ export class TruckReceptionService {
     }
 
     try {
+      // Obtener el token
+      const { getAuthToken } = await import('@/features/logistics/services/authService');
+      const token = getAuthToken();
+
+      const headers: HeadersInit = {};
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
+        headers,
         credentials: 'include',
       });
 
@@ -281,6 +334,18 @@ export class TruckReceptionService {
       return true;
     }
 
+    // Obtener el token una sola vez
+    const { getAuthToken } = await import('@/features/logistics/services/authService');
+    const token = getAuthToken();
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     let successCount = 0;
 
     for (let i = 0; i < queue.length; i++) {
@@ -292,9 +357,7 @@ export class TruckReceptionService {
             `${API_URL}/logistics/truck-receptions/with-gross-weight`,
             {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
               credentials: 'include',
               body: JSON.stringify(item.data),
             },
@@ -309,9 +372,7 @@ export class TruckReceptionService {
           if (item.data.tare_weight) {
             const response = await fetch(`${API_URL}/logistics/weighings/tare`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers,
               credentials: 'include',
               body: JSON.stringify({
                 truck_reception_id: item.id,

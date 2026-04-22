@@ -664,12 +664,19 @@ class TruckReceptionService {
    * Crear recepción con peso bruto y asignar turno
    */ async createWithGrossWeight(payload) {
         try {
+            // Obtener el token
+            const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+            const token = getAuthToken();
             // Crear en el backend
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             const response = await fetch(`${API_URL}/logistics/truck-receptions/with-gross-weight`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify(payload)
             });
@@ -720,12 +727,19 @@ class TruckReceptionService {
    * Registrar peso tara y finalizar recepción
    */ async recordTareWeight(payload) {
         try {
+            // Obtener el token
+            const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+            const token = getAuthToken();
             // Registrar en backend
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             const response = await fetch(`${API_URL}/logistics/weighings/tare`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify(payload)
             });
@@ -765,7 +779,15 @@ class TruckReceptionService {
    * Obtener próximo turno para hoy
    */ async getNextTurnoForToday() {
         try {
+            // Obtener el token
+            const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+            const token = getAuthToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             const response = await fetch(`${API_URL}/logistics/turnos/next-today`, {
+                headers,
                 credentials: 'include'
             });
             if (!response.ok) {
@@ -784,7 +806,15 @@ class TruckReceptionService {
    * Obtener todos los turnos de hoy
    */ async getTurnosToday() {
         try {
+            // Obtener el token
+            const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+            const token = getAuthToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             const response = await fetch(`${API_URL}/logistics/turnos/today`, {
+                headers,
                 credentials: 'include'
             });
             if (!response.ok) {
@@ -818,7 +848,15 @@ class TruckReceptionService {
             return cache[id];
         }
         try {
+            // Obtener el token
+            const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+            const token = getAuthToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
+                headers,
                 credentials: 'include'
             });
             if (!response.ok) {
@@ -841,6 +879,15 @@ class TruckReceptionService {
         if (queue.length === 0) {
             return true;
         }
+        // Obtener el token una sola vez
+        const { getAuthToken } = await __turbopack_context__.A("[project]/paddy/paddy-tms/src/features/logistics/services/authService.ts [app-client] (ecmascript, async loader)");
+        const token = getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         let successCount = 0;
         for(let i = 0; i < queue.length; i++){
             const item = queue[i];
@@ -848,9 +895,7 @@ class TruckReceptionService {
                 if (item.action === 'create') {
                     const response = await fetch(`${API_URL}/logistics/truck-receptions/with-gross-weight`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers,
                         credentials: 'include',
                         body: JSON.stringify(item.data)
                     });
@@ -863,9 +908,7 @@ class TruckReceptionService {
                     if (item.data.tare_weight) {
                         const response = await fetch(`${API_URL}/logistics/weighings/tare`, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
+                            headers,
                             credentials: 'include',
                             body: JSON.stringify({
                                 truck_reception_id: item.id,
