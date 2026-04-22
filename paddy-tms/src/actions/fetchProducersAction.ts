@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@/auth.config';
+import { cookies } from 'next/headers';
 
 export interface ProducerOption {
   id: number;
@@ -33,20 +33,18 @@ export async function fetchProducersAction(
   params?: FetchProducersParams,
 ): Promise<FetchProducersResult> {
   try {
-    const session = await auth();
-
-    if (!session?.user) {
-      throw new Error('No autenticado');
-    }
-
     const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/producers`;
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
 
-    if (session.user.accessToken) {
-      headers['Authorization'] = `Bearer ${session.user.accessToken}`;
+    // Obtener token de las cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     // Fetch desde el backend
