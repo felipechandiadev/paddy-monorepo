@@ -147,12 +147,12 @@ export const TruckList: React.FC<TruckListProps> = ({
                     e.stopPropagation();
                     onSelectTruck(truck.id);
                   }}
-                  className="p-3 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
+                  className="p-2 rounded-full hover:bg-primary/30 hover:scale-110 transition-all duration-200 disabled:opacity-50 group/btn"
                   title="Seleccionar para pesar"
                   disabled={isUpdating}
                 >
                   <svg
-                    className="w-6 h-6 text-primary"
+                    className="w-8 h-8 text-primary group-hover/btn:text-primary group-hover/btn:drop-shadow-lg transition-all duration-200"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
