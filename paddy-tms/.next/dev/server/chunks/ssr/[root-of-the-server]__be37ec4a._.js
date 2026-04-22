@@ -270,7 +270,7 @@ const authOptions = {
 "[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-/* __next_internal_action_entry_do_not_use__ [{"0058bf6fa1bb2d34d98b2adb0dac6c98985b479206":"getNextTurnoAction","00e974fb0515369ecf82dada3ac5abce0639296144":"getTurnosTodayAction","4050d7ab117902baaf6257f90e6439786adcc08baa":"createTruckReceptionAction","408705be56ab210b83bde4817c26730e6db571ee8a":"getTruckReceptionByIdAction","40ebb88ba80441a75112e8cdf2a13620b182de3ab6":"recordTareWeightAction"},"",""] */ __turbopack_context__.s([
+/* __next_internal_action_entry_do_not_use__ [{"0058bf6fa1bb2d34d98b2adb0dac6c98985b479206":"getNextTurnoAction","00e974fb0515369ecf82dada3ac5abce0639296144":"getTurnosTodayAction","4050d7ab117902baaf6257f90e6439786adcc08baa":"createTruckReceptionAction","408705be56ab210b83bde4817c26730e6db571ee8a":"getTruckReceptionByIdAction","40ebb88ba80441a75112e8cdf2a13620b182de3ab6":"recordTareWeightAction","60b1c6f4f3ede8e97388a43447f378cfab1b572bae":"updateTruckStatusAction"},"",""] */ __turbopack_context__.s([
     "createTruckReceptionAction",
     ()=>createTruckReceptionAction,
     "getNextTurnoAction",
@@ -280,7 +280,9 @@ const authOptions = {
     "getTurnosTodayAction",
     ()=>getTurnosTodayAction,
     "recordTareWeightAction",
-    ()=>recordTareWeightAction
+    ()=>recordTareWeightAction,
+    "updateTruckStatusAction",
+    ()=>updateTruckStatusAction
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/node_modules/next/dist/build/webpack/loaders/next-flight-loader/server-reference.js [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/node_modules/next-auth/index.js [app-rsc] (ecmascript)");
@@ -422,19 +424,47 @@ async function getTruckReceptionByIdAction(id) {
         return null;
     }
 }
+async function updateTruckStatusAction(id, status) {
+    try {
+        const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$lib$2f$auth$2e$config$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["authOptions"]);
+        if (!session?.user?.accessToken) {
+            throw new Error('No autenticado');
+        }
+        const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.user.accessToken}`
+            },
+            body: JSON.stringify({
+                status
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const result = await response.json();
+        return result.data;
+    } catch (error) {
+        console.error('Error actualizando estado del camion:', error);
+        throw error;
+    }
+}
 ;
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ensureServerEntryExports"])([
     createTruckReceptionAction,
     recordTareWeightAction,
     getNextTurnoAction,
     getTurnosTodayAction,
-    getTruckReceptionByIdAction
+    getTruckReceptionByIdAction,
+    updateTruckStatusAction
 ]);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(createTruckReceptionAction, "4050d7ab117902baaf6257f90e6439786adcc08baa", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(recordTareWeightAction, "40ebb88ba80441a75112e8cdf2a13620b182de3ab6", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getNextTurnoAction, "0058bf6fa1bb2d34d98b2adb0dac6c98985b479206", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getTurnosTodayAction, "00e974fb0515369ecf82dada3ac5abce0639296144", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getTruckReceptionByIdAction, "408705be56ab210b83bde4817c26730e6db571ee8a", null);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(updateTruckStatusAction, "60b1c6f4f3ede8e97388a43447f378cfab1b572bae", null);
 }),
 "[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
@@ -539,6 +569,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src
 ;
 ;
 ;
+;
 }),
 "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)", ((__turbopack_context__) => {
 "use strict";
@@ -549,7 +580,9 @@ __turbopack_context__.s([
     "4050d7ab117902baaf6257f90e6439786adcc08baa",
     ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["createTruckReceptionAction"],
     "40943fe0fc99eb8d9cea89841d7ec7102a5dd85eac",
-    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$fetchProducersAction$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchProducersAction"]
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$fetchProducersAction$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchProducersAction"],
+    "60b1c6f4f3ede8e97388a43447f378cfab1b572bae",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["updateTruckStatusAction"]
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f2e$next$2d$internal$2f$server$2f$app$2f$weighing$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$fetchProducersAction$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => "[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)");

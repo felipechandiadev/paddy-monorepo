@@ -17,6 +17,7 @@ import { LogisticsService } from '../application/logistics.service';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
+import { UpdateTruckStatusDto } from '../dtos/update-truck-status.dto';
 import { TruckReceptionStatus } from '../domain/truck-reception.entity';
 
 @Controller('logistics')
@@ -65,6 +66,22 @@ export class LogisticsController {
       return result;
     } catch (error) {
       this.logger.error(`Error al registrar peso tara: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Put('truck-receptions/:id/status')
+  @HttpCode(HttpStatus.OK)
+  async updateTruckStatus(
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body(ValidationPipe) updateStatusDto: UpdateTruckStatusDto,
+  ) {
+    this.logger.log(`PUT /truck-receptions/:id/status - ID: ${id}, Status: ${updateStatusDto.status}`);
+    try {
+      const result = await this.logisticsService.updateTruckStatus(id, updateStatusDto.status);
+      return result;
+    } catch (error) {
+      this.logger.error(`Error al actualizar estado: ${error.message}`);
       throw error;
     }
   }

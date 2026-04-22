@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TruckReception } from '@/actions/truckReceptionActions';
+import { TruckReception, updateTruckStatusAction } from '@/actions/truckReceptionActions';
 import Badge from '@/shared/components/ui/Badge/Badge';
 
 interface TruckListProps {
@@ -16,6 +16,7 @@ export const TruckList: React.FC<TruckListProps> = ({
   onSelectTruck,
 }) => {
   const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
   const trucksByStatus = {
     ESPERA: trucks.filter(t => t.status === 'ESPERA'),
@@ -31,6 +32,34 @@ export const TruckList: React.FC<TruckListProps> = ({
     setDraggedId(null);
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggedId) return;
+
+    // Determinar el nuevo estado basado en la zona donde se soltó
+    const newStatus = 'FINISHED' as const;
+    
+    if (isUpdating) return;
+    
+    setIsUpdating(draggedId);
+    
+    try {
+      await updateTruckStatusAction(draggedId, newStatus);
+      // La UI se actualizará automáticamente cuando el padre recarga la lista
+      console.log(`Camion ${draggedId} movido a estado ${newStatus}`);
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+    } finally {
+      setIsUpdating(null);
+      setDraggedId(null);
+    }
+  };
+
   return (
     <div className="bg-background rounded-lg border border-border p-4 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
@@ -40,7 +69,7 @@ export const TruckList: React.FC<TruckListProps> = ({
         </Badge>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3" onDragOver={handleDragOver} onDrop={handleDrop}>
         {trucksByStatus.ESPERA.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">Sin camiones en espera</p>
@@ -54,7 +83,9 @@ export const TruckList: React.FC<TruckListProps> = ({
               onDragEnd={handleDragEnd}
               onClick={() => onSelectTruck(truck.id)}
               className={`group relative flex items-center rounded-lg border transition-all cursor-move overflow-hidden ${
-                selectedTruckId === truck.id
+                isUpdating === truck.id
+                  ? 'opacity-50'
+                  : selectedTruckId === truck.id
                   ? 'bg-primary/10 border-primary shadow-lg'
                   : draggedId === truck.id
                   ? 'bg-neutral/20 border-primary/50 opacity-60'
@@ -68,8 +99,9 @@ export const TruckList: React.FC<TruckListProps> = ({
                     e.stopPropagation();
                     onSelectTruck(truck.id);
                   }}
-                  className="p-3 rounded-full hover:bg-primary/20 transition-colors"
+                  className="p-3 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
                   title="Seleccionar para pesar"
+                  disabled={isUpdating === truck.id}
                 >
                   {/* Icono de flecha izquierda en cuadrado */}
                   <svg

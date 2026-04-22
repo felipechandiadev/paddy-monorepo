@@ -208,3 +208,35 @@ export async function getTruckReceptionByIdAction(id: number): Promise<TruckRece
     return null;
   }
 }
+
+export async function updateTruckStatusAction(
+  id: number,
+  status: 'ESPERA' | 'FINISHED',
+): Promise<TruckReception> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.accessToken) {
+      throw new Error('No autenticado');
+    }
+
+    const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.user.accessToken}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.data as TruckReception;
+  } catch (error) {
+    console.error('Error actualizando estado del camion:', error);
+    throw error;
+  }
+}

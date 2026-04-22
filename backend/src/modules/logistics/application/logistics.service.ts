@@ -175,6 +175,27 @@ export class LogisticsService {
   }
 
   /**
+   * Actualizar estado de camión
+   */
+  async updateTruckStatus(
+    id: number,
+    status: TruckReceptionStatus,
+  ): Promise<TruckReception> {
+    const truckReception = await this.getTruckReceptionById(id);
+    
+    truckReception.status = status;
+    
+    if (status === TruckReceptionStatus.FINISHED) {
+      truckReception.finished_at = new Date();
+    }
+
+    const saved = await this.truckReceptionRepository.save(truckReception);
+    this.logger.log(`Estado actualizado: ${id} - Nuevo estado: ${status}`);
+    
+    return saved;
+  }
+
+  /**
    * Obtener todas las recepciones de camiones
    */
   async getAllTruckReceptions(
