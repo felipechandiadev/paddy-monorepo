@@ -1,0 +1,9 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/monitor/page": "/monitor",
+  "/page": "/",
+  "/weighing/[id]/page": "/weighing/[id]",
+  "/weighing/page": "/weighing"
+}

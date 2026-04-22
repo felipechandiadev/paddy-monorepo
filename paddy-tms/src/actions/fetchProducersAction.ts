@@ -1,6 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth.config';
 
 export interface ProducerOption {
   id: number;
@@ -28,24 +29,31 @@ interface FetchProducersResult {
 /**
  * Server action para cargar productores desde el backend
  * Similar a fetchProducersAction del frontend principal
+ * Utiliza NextAuth para obtener el token del servidor
  */
 export async function fetchProducersAction(
   params?: FetchProducersParams,
 ): Promise<FetchProducersResult> {
   try {
+    // Obtener la sesión del servidor usando NextAuth
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.accessToken) {
+      console.warn('No access token available in server session');
+      return {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+      };
+    }
+
     const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/producers`;
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.user.accessToken}`,
     };
-
-    // Obtener token de las cookies
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
 
     // Fetch desde el backend
     const response = await fetch(API_BASE_URL, {

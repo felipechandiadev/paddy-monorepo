@@ -12,6 +12,7 @@ async function bootstrap() {
   // Habilitar CORS - Permitir múltiples orígenes según el ambiente
   const allowedOrigins = [
     'http://localhost:3001',
+    'http://localhost:3002',
     'http://localhost:3000',
     process.env.FRONTEND_URL,
     'https://paddy-frontend-omega.vercel.app',

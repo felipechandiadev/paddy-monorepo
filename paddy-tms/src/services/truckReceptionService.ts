@@ -1,6 +1,7 @@
 'use client';
 
 import { localStorageService } from '@/services/localStorage.service';
+import { getAuthTokenAction } from '@/actions/authActions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -48,9 +49,8 @@ export class TruckReceptionService {
     payload: CreateTruckWithGrossWeightPayload,
   ): Promise<TruckReception> {
     try {
-      // Obtener el token
-      const { getAuthToken } = await import('@/features/logistics/services/authService');
-      const token = getAuthToken();
+      // Obtener el token del servidor usando Server Action
+      const token = await getAuthTokenAction();
 
       // Crear en el backend
       const headers: HeadersInit = {
@@ -131,9 +131,8 @@ export class TruckReceptionService {
     payload: RegisterTareWeightPayload,
   ): Promise<TruckReception> {
     try {
-      // Obtener el token
-      const { getAuthToken } = await import('@/features/logistics/services/authService');
-      const token = getAuthToken();
+      // Obtener el token del servidor usando Server Action
+      const token = await getAuthTokenAction();
 
       // Registrar en backend
       const headers: HeadersInit = {
@@ -201,9 +200,8 @@ export class TruckReceptionService {
    */
   async getNextTurnoForToday(): Promise<number> {
     try {
-      // Obtener el token
-      const { getAuthToken } = await import('@/features/logistics/services/authService');
-      const token = getAuthToken();
+      // Obtener el token del servidor usando Server Action
+      const token = await getAuthTokenAction();
 
       const headers: HeadersInit = {};
 
@@ -236,9 +234,8 @@ export class TruckReceptionService {
    */
   async getTurnosToday(): Promise<TruckReception[]> {
     try {
-      // Obtener el token
-      const { getAuthToken } = await import('@/features/logistics/services/authService');
-      const token = getAuthToken();
+      // Obtener el token del servidor usando Server Action
+      const token = await getAuthTokenAction();
 
       const headers: HeadersInit = {};
 
@@ -256,6 +253,13 @@ export class TruckReceptionService {
       }
 
       const result = await response.json();
+
+      // Asegurar que result.data es un array
+      if (!Array.isArray(result.data)) {
+        console.warn('Backend response data is not an array:', result.data);
+        throw new Error('Invalid response format from backend');
+      }
+
       const trucks = result.data as TruckReception[];
 
       // Actualizar cache local
@@ -292,9 +296,8 @@ export class TruckReceptionService {
     }
 
     try {
-      // Obtener el token
-      const { getAuthToken } = await import('@/features/logistics/services/authService');
-      const token = getAuthToken();
+      // Obtener el token del servidor usando Server Action
+      const token = await getAuthTokenAction();
 
       const headers: HeadersInit = {};
 
@@ -334,9 +337,8 @@ export class TruckReceptionService {
       return true;
     }
 
-    // Obtener el token una sola vez
-    const { getAuthToken } = await import('@/features/logistics/services/authService');
-    const token = getAuthToken();
+    // Obtener el token una sola vez usando Server Action
+    const token = await getAuthTokenAction();
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',

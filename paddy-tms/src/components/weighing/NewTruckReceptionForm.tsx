@@ -102,11 +102,15 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
         gross_weight: weight,
       });
       
+      console.log('newTruck created:', newTruck);
+      
       // Agregar a la lista local
       addTruck(newTruck);
 
       // Recargar la lista completa desde el servidor para sincronizar turnos
+      console.log('Calling loadTrucksToday...');
       await loadTrucksToday();
+      console.log('loadTrucksToday completed');
 
       setSuccessMessage(`Recepción creada: Turno #${newTruck.numero_turno}`);
       

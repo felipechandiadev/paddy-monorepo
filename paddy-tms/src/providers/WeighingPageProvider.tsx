@@ -33,7 +33,9 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setIsLoading(true);
     setError(null);
     try {
+      console.log('loadTrucksToday called - fetching turnos...');
       const turnos = await getTurnosTodayAction();
+      console.log('loadTrucksToday result:', turnos);
       setTrucks(turnos);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';

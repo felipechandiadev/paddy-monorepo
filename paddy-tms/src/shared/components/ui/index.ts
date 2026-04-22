@@ -1,38 +1,38 @@
 // Button
-export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
+export { Button, type ButtonVariant, type ButtonSize } from './Button/Button';
 
 // TextField
-export { TextField, type TextFieldProps, type TextFieldVariant } from './TextField';
+export { TextField } from './TextField/TextField';
 
 // Select
-export { Select, type SelectProps, type SelectOption } from './Select';
+export { default as Select } from './Select/Select';
 
 // Alert
-export { Alert, type AlertProps, type AlertVariant, type AlertSeverity } from './Alert';
+export { default as Alert } from './Alert/Alert';
 
 // Dialog
-export { Dialog, type DialogProps } from './Dialog';
+export { default as Dialog } from './Dialog/Dialog';
 
 // Badge
-export { Badge, type BadgeProps, type BadgeVariant } from './Badge';
+export { default as Badge } from './Badge/Badge';
 
 // Switch
-export { Switch, type SwitchProps } from './Switch';
+export { default as Switch } from './Switch/Switch';
 
 // IconButton
-export { IconButton, type IconButtonProps, type IconButtonVariant } from './IconButton';
+export { default as IconButton } from './IconButton/IconButton';
 
 // AutoComplete
-export { AutoComplete, type AutoCompleteProps, type AutoCompleteOption } from './AutoComplete';
+export { default as AutoComplete } from './AutoComplete/AutoComplete';
 
 // RangeSlider
-export { RangeSlider, type RangeSliderProps } from './RangeSlider';
+export { default as RangeSlider } from './RangeSlider/RangeSlider';
 
 // Tabs
-export { Tabs, type TabsProps, type TabItem } from './Tabs';
+export { default as Tabs } from './Tabs/Tabs';
 
 // NumberStepper
-export { NumberStepper, type NumberStepperProps } from './NumberStepper';
+export { default as NumberStepper } from './NumberStepper/NumberStepper';
 
 // DropdownList
-export { DropdownList, type DropdownListProps, type DropdownItem } from './DropdownList';
+export { default as DropdownList } from './DropdownList/DropdownList';

@@ -81,16 +81,19 @@ export async function createTruckReceptionAction(
     // Log para debugging de la respuesta
     console.log('Response from createTruckReceptionAction:', result);
     
-    // El backend puede devolver { data: {...} } o { success, data, timestamp }
-    // O incluso anidado: { data: { data: {...}, success, total } }
+    // El backend devuelve una respuesta con estructura anidada compleja
+    // { success, data: { success, message, data: { id, numero_turno, ... } }, timestamp }
     let truckData: TruckReception;
     
     if (result.data && result.data.numero_turno !== undefined) {
       // Respuesta normal: { data: { id, numero_turno, ... } }
       truckData = result.data as TruckReception;
     } else if (result.data && result.data.data && result.data.data.numero_turno !== undefined) {
-      // Respuesta anidada: { data: { data: { id, numero_turno, ... }, success, total } }
+      // Respuesta anidada nivel 1: { data: { data: { id, numero_turno, ... } } }
       truckData = result.data.data as TruckReception;
+    } else if (result.data && result.data.data && result.data.data.data && result.data.data.data.numero_turno !== undefined) {
+      // Respuesta anidada nivel 2: { data: { data: { data: { id, numero_turno, ... } } } }
+      truckData = result.data.data.data as TruckReception;
     } else {
       console.warn('Estructura de respuesta inesperada:', result);
       // Intentar usar result.data como fallback
@@ -201,8 +204,10 @@ export async function getTurnosTodayAction(): Promise<TruckReception[]> {
     }
 
     const result = await response.json();
+    
+    console.log('Response from getTurnosTodayAction:', result);
 
-    // El backend devuelve: { success: true, data: { data: [], success: true, total: 0 } }
+    // El backend devuelve: { success: true, data: {...} } o { success: true, data: { data: [...], success, total } }
     // Necesitamos extraer el array correcto
     let dataArray: TruckReception[] = [];
 
@@ -217,6 +222,7 @@ export async function getTurnosTodayAction(): Promise<TruckReception[]> {
       console.warn('Estructura de respuesta especial:', result);
     }
 
+    console.log('Extracted turnos:', dataArray);
     return dataArray;
   } catch (error) {
     console.error('Error obteniendo turnos:', error);

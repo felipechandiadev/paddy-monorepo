@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { getAuthToken } from '@/features/logistics/services/authService';
+import { signOut } from 'next-auth/react';
+import { getAuthTokenAction } from '@/actions/authActions';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
@@ -24,7 +25,7 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
     setIsLoading(true);
 
     try {
-      const token = getAuthToken();
+      const token = await getAuthTokenAction();
       const response = await fetch('http://localhost:3001/auth/change-password', {
         method: 'POST',
         headers: {
@@ -45,9 +46,8 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
 
       // Close modal and logout
       onClose();
-      const { logout } = await import('@/features/logistics/services/authService');
-      await logout();
-      window.location.href = '/login';
+      await signOut({ redirect: false });
+      window.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {

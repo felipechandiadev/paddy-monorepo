@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import React from 'react';
 import './globals.css';
 import { LogisticsProvider } from '@/features/logistics/context/LogisticsContext';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 export const metadata: Metadata = {
   title: 'Paddy TMS - Truck Management System',
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="bg-background text-foreground">
-        <LogisticsProvider>
-          {children}
-        </LogisticsProvider>
+        <AuthProvider>
+          <LogisticsProvider>
+            {children}
+          </LogisticsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

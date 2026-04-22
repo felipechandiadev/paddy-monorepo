@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useActiveTab } from "@/shared/providers/ActiveTabProvider";
 
 export interface TabItem {
   url: string; // Updated href to url
@@ -10,11 +9,10 @@ export interface TabItem {
 
 interface TabsProps {
   items: TabItem[];
+  activeTab?: string;
 }
 
-const Tabs: React.FC<TabsProps> = ({ items }) => {
-  const { activeTab } = useActiveTab();
-
+const Tabs: React.FC<TabsProps> = ({ items, activeTab }) => {
   return (
     <nav className="flex" data-test-id="tabs-root">
       {items.map((tab) => {

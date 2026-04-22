@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import { TruckReception } from '@/actions/truckReceptionActions';
 import Badge from '@/shared/components/ui/Badge/Badge';
-import { TruckReception } from '@/services/truckReceptionService';
 
 interface TruckListProps {
   trucks: TruckReception[];
@@ -15,93 +15,93 @@ export const TruckList: React.FC<TruckListProps> = ({
   selectedTruckId,
   onSelectTruck,
 }) => {
-  // Agrupar camiones por estado
   const trucksByStatus = {
-    ESPERA: trucks.filter((t) => t.status === 'ESPERA'),
-    FINISHED: trucks.filter((t) => t.status === 'FINISHED'),
+    ESPERA: trucks.filter(t => t.status === 'ESPERA'),
+    FINISHED: trucks.filter(t => t.status === 'FINISHED'),
   };
 
-  const renderTruckButton = (truck: TruckReception) => (
-    <button
-      key={truck.id}
-      onClick={() => onSelectTruck(truck.id)}
-      className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 ${
-        selectedTruckId === truck.id
-          ? 'bg-primary text-white shadow-md'
-          : 'bg-neutral text-foreground hover:bg-border'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className={`font-mono font-bold text-sm truncate ${selectedTruckId === truck.id ? '' : ''}`}>
-            {truck.license_plate}
-          </div>
-          <div className="text-xs opacity-75 truncate">
-            {truck.driver_name}
-          </div>
-        </div>
-        {truck.numero_turno && (
-          <Badge
-            variant={selectedTruckId === truck.id ? 'primary' : 'secondary'}
-            className="text-xs whitespace-nowrap"
-          >
-            #{truck.numero_turno}
+  const renderTruckGroup = (status: 'ESPERA' | 'FINISHED', statusLabel: string) => {
+    const groupTrucks = trucksByStatus[status];
+
+    return (
+      <div key={status} className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-foreground">{statusLabel}</h3>
+          <Badge variant="secondary" className="text-xs">
+            {groupTrucks.length}
           </Badge>
-        )}
+        </div>
+
+        <div className="space-y-2">
+          {groupTrucks.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">Sin camiones</p>
+          ) : (
+            groupTrucks.map((truck) => (
+              <button
+                key={truck.id}
+                onClick={() => onSelectTruck(truck.id)}
+                className={`w-full text-left p-3 rounded-md border transition-colors ${
+                  selectedTruckId === truck.id
+                    ? 'bg-primary/10 border-primary'
+                    : 'bg-background border-border hover:bg-neutral'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground text-sm truncate">
+                      {truck.license_plate}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {truck.driver_name}
+                    </p>
+                  </div>
+                  <Badge variant="primary" className="text-xs whitespace-nowrap">
+                    #{truck.numero_turno}
+                  </Badge>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
       </div>
-    </button>
-  );
+    );
+  };
 
   return (
-    <div className="bg-white border-l border-border h-full flex flex-col p-4 space-y-4 overflow-y-auto">
-      {/* En Espera */}
+    <div className="bg-background rounded-lg border border-border p-4 h-full overflow-y-auto">
+      <h2 className="text-lg font-bold text-foreground mb-6">En Espera para Tara</h2>
+
       <div className="space-y-2">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-            En Espera
-          </h3>
-          <Badge variant="primary" className="text-xs">
-            {trucksByStatus.ESPERA.length}
-          </Badge>
-        </div>
-
-        {trucksByStatus.ESPERA.length > 0 ? (
-          <div className="space-y-1">
-            {trucksByStatus.ESPERA.map((truck) => renderTruckButton(truck))}
-          </div>
+        {trucksByStatus.ESPERA.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-2">Sin camiones en espera</p>
         ) : (
-          <p className="text-xs text-muted italic px-2 py-2">Sin camiones</p>
+          trucksByStatus.ESPERA.map((truck) => (
+            <button
+              key={truck.id}
+              onClick={() => onSelectTruck(truck.id)}
+              className={`w-full text-left p-3 rounded-md border transition-colors ${
+                selectedTruckId === truck.id
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-background border-border hover:bg-neutral'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground text-sm truncate">
+                    {truck.license_plate}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {truck.driver_name}
+                  </p>
+                </div>
+                <Badge variant="primary" className="text-xs whitespace-nowrap">
+                  #{truck.numero_turno}
+                </Badge>
+              </div>
+            </button>
+          ))
         )}
       </div>
-
-      {/* Finalizados */}
-      <div className="space-y-2 border-t border-border pt-4">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-            Finalizados
-          </h3>
-          <Badge variant="success" className="text-xs">
-            {trucksByStatus.FINISHED.length}
-          </Badge>
-        </div>
-
-        {trucksByStatus.FINISHED.length > 0 ? (
-          <div className="space-y-1 max-h-48 overflow-y-auto">
-            {trucksByStatus.FINISHED.map((truck) => renderTruckButton(truck))}
-          </div>
-        ) : (
-          <p className="text-xs text-muted italic px-2 py-2">Sin camiones</p>
-        )}
-      </div>
-
-      {/* Stats */}
-      {trucks.length > 0 && (
-        <div className="border-t border-border pt-4 mt-auto">
-          <p className="text-xs text-muted text-center">
-            Total: <span className="font-semibold text-foreground">{trucks.length}</span> camiones
-          </p>
-        </div>
-      )}
     </div>
   );
 };

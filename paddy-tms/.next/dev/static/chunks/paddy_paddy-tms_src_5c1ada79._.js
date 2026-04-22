@@ -836,6 +836,11 @@ class TruckReceptionService {
                 throw new Error(`HTTP ${response.status}`);
             }
             const result = await response.json();
+            // Asegurar que result.data es un array
+            if (!Array.isArray(result.data)) {
+                console.warn('Backend response data is not an array:', result.data);
+                throw new Error('Invalid response format from backend');
+            }
             const trucks = result.data;
             // Actualizar cache local
             trucks.forEach((truck)=>{
