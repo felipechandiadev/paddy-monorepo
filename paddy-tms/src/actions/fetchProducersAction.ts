@@ -44,7 +44,7 @@ export async function fetchProducersAction(
         data: [],
         total: 0,
         page: 1,
-        limit: 10,
+        limit: 5000,
       };
     }
 
@@ -90,7 +90,7 @@ export async function fetchProducersAction(
       );
     }
 
-    // Ordenamiento
+    // Ordenamiento (por defecto: nombre ascendente, para autocompletado en báscula)
     if (params?.sortField) {
       const field = params.sortField as keyof ProducerOption;
       const isAsc = params.sort === 'ASC';
@@ -100,11 +100,15 @@ export async function fetchProducersAction(
         const comparison = String(aVal).localeCompare(String(bVal), 'es');
         return isAsc ? comparison : -comparison;
       });
+    } else {
+      filtered.sort((a: ProducerOption, b: ProducerOption) =>
+        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
+      );
     }
 
-    // Paginación
+    // Paginación (límite alto por defecto para cargar catálogo completo en TMS)
     const page = params?.page || 1;
-    const limit = params?.limit || 10;
+    const limit = params?.limit ?? 5000;
     const start = (page - 1) * limit;
     const paginatedData = filtered.slice(start, start + limit);
 
@@ -120,7 +124,7 @@ export async function fetchProducersAction(
       data: [],
       total: 0,
       page: 1,
-      limit: 10,
+      limit: 5000,
     };
   }
 }

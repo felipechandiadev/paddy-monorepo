@@ -56,9 +56,9 @@ export const TmsAppLayout: React.FC<TmsAppLayoutProps> = ({
         <header className="bg-background border-b border-border px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
             <Link href="/weighing" className="flex items-center gap-4 hover:opacity-90 transition-opacity">
-              <img src="/logo.svg" alt="Paddy Logo" className="h-8 w-auto" />
+              <img src="/logo.svg" alt="Paddy AyG" className="h-8 w-auto" />
               <div className="flex flex-col">
-                <span className="text-3xl font-bold text-primary">Paddy</span>
+                <span className="text-3xl font-bold text-primary">Paddy AyG</span>
                 <span className="text-xs text-muted-foreground -mt-1">Recepción de carga</span>
               </div>
             </Link>

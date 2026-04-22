@@ -17,6 +17,7 @@ export const ALWAYS_GRANTED_PERMISSIONS: Record<RoleEnum, PermissionEnum[]> = {
   ],
   // CONSULTANT: sin permisos "siempre otorgados" - solo los de la lista explícita
   [RoleEnum.CONSULTANT]: [],
+  [RoleEnum.TRUCK_RECEPTION]: [],
 };
 
 /**
@@ -59,5 +60,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleEnum, PermissionEnum[]> = {
 
     // Analíticas: ver reportes
     PermissionEnum.ANALYTICS_VIEW,
+  ],
+
+  /**
+   * Operador de recepción / báscula: listar productores (autocomplete TMS) y crear productores nuevos.
+   * El resto de operaciones TMS usa rutas del módulo Logistics (muchas sin RolesGuard).
+   */
+  [RoleEnum.TRUCK_RECEPTION]: [
+    PermissionEnum.PRODUCERS_VIEW,
+    PermissionEnum.PRODUCERS_CREATE,
   ],
 };

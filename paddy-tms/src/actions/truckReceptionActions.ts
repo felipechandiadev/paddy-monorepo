@@ -23,11 +23,20 @@ export interface RegisterTareWeightPayload {
   created_by?: string;
 }
 
+/** Productor embebido cuando el backend devuelve la relación (p. ej. turnos hoy, tara). */
+export interface TruckReceptionProducerRef {
+  id?: number;
+  rut: string;
+  name: string;
+}
+
 export interface TruckReception {
   id: number;
   numero_turno: number;
   status: 'ESPERA' | 'FINISHED';
   producer_id: number;
+  /** Presente cuando la API incluye `relations: ['producer']`. */
+  producer?: TruckReceptionProducerRef;
   license_plate: string;
   driver_name: string;
   carrier_company?: string;

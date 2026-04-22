@@ -1,4 +1,11 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TruckReception, TruckReceptionStatus } from '../domain/truck-reception.entity';
@@ -6,6 +13,7 @@ import { Producer } from '@modules/producers/domain/producer.entity';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
+import { LogisticsGateway } from './logistics.gateway';
 
 @Injectable()
 export class LogisticsService {
@@ -16,6 +24,8 @@ export class LogisticsService {
     private readonly truckReceptionRepository: Repository<TruckReception>,
     @InjectRepository(Producer)
     private readonly producerRepository: Repository<Producer>,
+    @Inject(forwardRef(() => LogisticsGateway))
+    private readonly logisticsGateway: LogisticsGateway,
   ) {}
 
   /**
@@ -89,6 +99,8 @@ export class LogisticsService {
         `Camión registrado: ${saved.id} - Patente: ${saved.license_plate} - Turno: ${saved.numero_turno}`,
       );
 
+      void this.logisticsGateway.broadcastMonitorState();
+
       return saved;
     } catch (error) {
       this.logger.error(`Error al registrar camión: ${error.message}`);
@@ -146,12 +158,19 @@ export class LogisticsService {
       truckReception.status = TruckReceptionStatus.FINISHED;
       truckReception.finished_at = new Date();
 
-      const saved = await this.truckReceptionRepository.save(truckReception);
+      await this.truckReceptionRepository.save(truckReception);
       this.logger.log(
-        `Recepción finalizada: ${truck_reception_id} - Turno: ${saved.numero_turno}`,
+        `Recepción finalizada: ${truck_reception_id} - Turno: ${truckReception.numero_turno}`,
       );
 
-      return saved;
+      this.logisticsGateway.clearWeighingIfMatches(truck_reception_id);
+      void this.logisticsGateway.broadcastMonitorState();
+
+      const withProducer = await this.truckReceptionRepository.findOne({
+        where: { id: truck_reception_id },
+        relations: ['producer'],
+      });
+      return withProducer ?? truckReception;
     } catch (error) {
       this.logger.error(`Error al registrar peso tara: ${error.message}`);
       throw error;

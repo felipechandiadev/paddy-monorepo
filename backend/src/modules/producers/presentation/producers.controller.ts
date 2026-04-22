@@ -44,7 +44,7 @@ export class ProducersController {
   }
 
   @Post()
-  @Roles(RoleEnum.ADMIN)
+  @Roles(RoleEnum.ADMIN, RoleEnum.CONSULTANT, RoleEnum.TRUCK_RECEPTION)
   async createProducer(@Body() createProducerDto: any) {
     this.logger.log(`Creating producer: ${createProducerDto.name}`);
     return this.producersService.createProducer(createProducerDto);

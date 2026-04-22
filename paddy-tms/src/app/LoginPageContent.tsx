@@ -54,8 +54,8 @@ export default function LoginPageContent() {
       <div className="w-full max-w-md bg-background rounded-lg shadow-2xl p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Paddy TMS</h1>
-          <p className="text-sm text-foreground font-medium">Truck Management System</p>
+          <h1 className="text-3xl font-bold text-primary mb-2">Paddy AyG</h1>
+          <p className="text-sm text-muted-foreground font-medium">Recepción de carga</p>
         </div>
 
         {/* Subtitle */}

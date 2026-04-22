@@ -237,5 +237,6 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
   },
+  // Debe ser estable: si cambia, las cookies JWT existentes fallan con JWEDecryptionFailed hasta borrar cookies o volver a login.
   secret: process.env.NEXTAUTH_SECRET || "ayg-sales-secret-key-2026",
 };

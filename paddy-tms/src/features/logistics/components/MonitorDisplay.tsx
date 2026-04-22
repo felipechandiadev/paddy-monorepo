@@ -1,93 +1,163 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useLogisticsData } from '../hooks/useLogisticsData';
-import { useRealtimeSync } from '../hooks/useRealtimeSync';
-import { TruckCard } from './TruckCard';
+import React from 'react';
+import type { MonitorQueueItem, MonitorState } from '../hooks/useMonitorQueueSocket';
 
-interface MonitorDisplayProps {
-  refreshInterval?: number;
-  publicView?: boolean;
+function formatEntryTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  } catch {
+    return '—';
+  }
 }
 
-export const MonitorDisplay: React.FC<MonitorDisplayProps> = ({ 
-  refreshInterval = 5000,
-  publicView = true 
-}) => {
-  const { trucks, loading, error, refetch } = useLogisticsData(true);
-  // Solo habilitar WebSocket en monitor view (comentado por ahora ya que no hay WS server)
-  const { isConnected } = useRealtimeSync(false);
+function QueueCard({
+  item,
+  variant,
+}: {
+  item: MonitorQueueItem;
+  variant: 'weighing' | 'next' | 'queue';
+}) {
+  const isWeighing = variant === 'weighing';
+  const isNext = variant === 'next';
 
-  useEffect(() => {
-    if (!publicView) return;
+  const metaClass = isWeighing
+    ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+    : isNext
+      ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
+      : 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
 
-    const interval = setInterval(() => {
-      refetch();
-    }, refreshInterval);
+  const plateClass = isWeighing
+    ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-primary'
+    : isNext
+      ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-foreground'
+      : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl text-foreground/90';
 
-    return () => clearInterval(interval);
-  }, [refreshInterval, refetch, publicView]);
+  return (
+    <div
+      className={[
+        'rounded-2xl border-2 w-full transition-shadow',
+        'px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10',
+        isWeighing
+          ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary/30'
+          : isNext
+            ? 'border-amber-500/70 bg-amber-500/5 shadow-md'
+            : 'border-border bg-card/80',
+      ].join(' ')}
+    >
+      <div
+        className={[
+          'grid w-full grid-cols-3 items-center gap-3 sm:gap-6 md:gap-8',
+          'min-h-[1.2em]',
+        ].join(' ')}
+      >
+        <span
+          className={[
+            'justify-self-start text-left tabular-nums font-semibold text-foreground',
+            metaClass,
+          ].join(' ')}
+        >
+          <span className="font-medium text-muted-foreground">Turno</span>{' '}
+          {item.numero_turno}
+        </span>
+        <span
+          className={[
+            'justify-self-center text-center font-bold tracking-wide min-w-0 px-1',
+            plateClass,
+          ].join(' ')}
+        >
+          {item.license_plate}
+        </span>
+        <span
+          className={[
+            'justify-self-end text-right tabular-nums font-semibold text-foreground',
+            metaClass,
+          ].join(' ')}
+        >
+          <span className="font-medium text-muted-foreground">Ingreso</span>{' '}
+          {formatEntryTime(item.entry_at)}
+        </span>
+      </div>
+      {isWeighing && (
+        <p className="text-center text-base sm:text-lg md:text-xl font-semibold text-primary mt-4 md:mt-5 uppercase tracking-wide">
+          En balanza
+        </p>
+      )}
+      {isNext && !isWeighing && (
+        <p className="text-center text-sm sm:text-base md:text-lg font-semibold text-amber-700 dark:text-amber-400 mt-3 md:mt-4">
+          Siguiente
+        </p>
+      )}
+    </div>
+  );
+}
+
+export interface MonitorDisplayProps {
+  state: MonitorState | null;
+  error: string | null;
+}
+
+export const MonitorDisplay: React.FC<MonitorDisplayProps> = ({ state, error }) => {
+
+  const weighingId = state?.weighingTruckReceptionId ?? null;
+  const waiting = state?.waiting ?? [];
+
+  const weighingItem = weighingId
+    ? waiting.find((w) => w.id === weighingId) ?? null
+    : null;
+
+  const orderedRest = [...waiting]
+    .filter((w) => w.id !== weighingId)
+    .sort((a, b) => a.numero_turno - b.numero_turno);
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <p className="text-red-700 font-medium">Error loading data</p>
-        <p className="text-red-600 text-sm mt-1">{error}</p>
+      <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center">
+        <p className="text-destructive font-medium">Error de conexión en tiempo real</p>
+        <p className="text-destructive/80 text-sm mt-2">{error}</p>
+        <p className="text-muted-foreground text-xs mt-4">
+          Compruebe que el backend esté en ejecución y que CORS permita este origen.
+        </p>
       </div>
     );
   }
 
-  const activeTrucks = trucks.filter(t => t.status !== 'completed');
-  const completedTrucks = trucks.filter(t => t.status === 'completed').slice(0, 5);
-
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <p className="text-sm text-blue-600 font-medium">Active</p>
-          <p className="text-3xl font-bold text-blue-900 mt-1">{activeTrucks.length}</p>
-        </div>
-        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <p className="text-sm text-green-600 font-medium">Completed Today</p>
-          <p className="text-3xl font-bold text-green-900 mt-1">{completedTrucks.length}</p>
-        </div>
-        <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-          <p className="text-sm text-purple-600 font-medium">Real-time</p>
-          <p className={`text-3xl font-bold mt-1 ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
-            {isConnected ? 'Connected' : 'Offline'}
-          </p>
-        </div>
-      </div>
-
-      {loading && (
-        <div className="space-y-2">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>
+      {!state && (
+        <div className="flex flex-col gap-4 w-full">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-40 sm:h-48 md:h-56 rounded-2xl bg-muted animate-pulse w-full"
+            />
           ))}
         </div>
       )}
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Active Trucks</h3>
-        {activeTrucks.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No active trucks</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeTrucks.map(truck => (
-              <TruckCard key={truck.id} truck={truck} />
-            ))}
-          </div>
-        )}
-      </div>
+      {state && waiting.length === 0 && (
+        <p className="text-center text-muted-foreground py-16 text-lg">
+          No hay turnos registrados para hoy.
+        </p>
+      )}
 
-      {completedTrucks.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recently Completed</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {completedTrucks.map(truck => (
-              <TruckCard key={truck.id} truck={truck} />
-            ))}
-          </div>
+      {state && waiting.length > 0 && (
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
+          {weighingItem && (
+            <QueueCard item={weighingItem} variant="weighing" />
+          )}
+          {orderedRest.map((item, idx) => (
+            <QueueCard
+              key={item.id}
+              item={item}
+              variant={idx === 0 ? 'next' : 'queue'}
+            />
+          ))}
         </div>
       )}
     </div>

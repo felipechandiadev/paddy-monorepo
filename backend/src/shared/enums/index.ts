@@ -1,10 +1,14 @@
 /**
  * Roles available en el sistema
  * Admin: Acceso total
+ * Consultor: lectura y subset operativo
+ * Truck reception: operador báscula / TMS logístico (recepción de camiones); permisos acotados en permissions.constants
  */
 export enum RoleEnum {
   ADMIN = 'ADMIN',
   CONSULTANT = 'CONSULTANT',
+  /** Recepción de camiones y pesaje (TMS); por defecto solo catálogo mínimo + alta de productores en API. */
+  TRUCK_RECEPTION = 'TRUCK_RECEPTION',
 }
 
 /**

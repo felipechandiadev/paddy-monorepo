@@ -529,6 +529,10 @@ export class ConfigurationService {
         label: 'Consultor',
         description: 'Acceso de solo lectura',
       },
+      [RoleEnum.TRUCK_RECEPTION]: {
+        label: 'Recepción de camión',
+        description: 'Operador de báscula / TMS logístico (recepción y pesaje)',
+      },
     };
 
     return Object.values(RoleEnum).map((role) => ({

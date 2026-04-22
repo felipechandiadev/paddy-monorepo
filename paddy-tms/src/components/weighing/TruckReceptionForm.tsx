@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import AutoComplete from '@/shared/components/ui/AutoComplete/AutoComplete';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
 import { fetchProducersAction, ProducerOption } from '@/actions/fetchProducersAction';
+import type { CreatedProducer } from '@/actions/producerActions';
 import {
   createTruckReceptionAction,
   recordTareWeightAction,
@@ -13,6 +14,23 @@ import {
   RegisterTareWeightPayload,
 } from '@/actions/truckReceptionActions';
 import { useWeighingPage } from '@/hooks/useWeighingPage';
+import CreateProducerDialog from '@/components/producers/CreateProducerDialog';
+
+const CREATE_PRODUCER_OPTION_ID = '__create_new_producer__' as const;
+
+interface CreateProducerOption {
+  id: typeof CREATE_PRODUCER_OPTION_ID;
+  query: string;
+  isCreateOption: true;
+}
+
+type ProducerAutoCompleteOption = ProducerOption | CreateProducerOption;
+
+function isCreateProducerOption(
+  option: ProducerAutoCompleteOption | null,
+): option is CreateProducerOption {
+  return Boolean(option && 'isCreateOption' in option && option.isCreateOption);
+}
 
 type FormMode = 'create' | 'tare';
 
@@ -51,24 +69,55 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   });
 
   const [producers, setProducers] = useState<ProducerOption[]>([]);
+  const [producerSearch, setProducerSearch] = useState('');
+  const [createProducerDialogOpen, setCreateProducerDialogOpen] = useState(false);
+  const [producerAutocompleteResetKey, setProducerAutocompleteResetKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Cargar productores
-  const loadProducers = useCallback(async (search?: string) => {
+  const loadProducers = useCallback(async () => {
     try {
-      const result = await fetchProducersAction({ search });
+      const result = await fetchProducersAction({
+        page: 1,
+        limit: 5000,
+        sortField: 'name',
+        sort: 'ASC',
+      });
       setProducers(result.data);
     } catch (err) {
       console.error('Error cargando productores:', err);
     }
   }, []);
 
-  // Cargar productores al montar
   useEffect(() => {
-    loadProducers();
+    void loadProducers();
   }, [loadProducers]);
+
+  const producerAutocompleteOptions = useMemo<ProducerAutoCompleteOption[]>(() => {
+    const normalizedQuery = producerSearch.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return producers;
+    }
+    const hasMatches = producers.some(
+      (producer) =>
+        producer.name.toLowerCase().includes(normalizedQuery) ||
+        producer.rut.toLowerCase().includes(normalizedQuery) ||
+        (producer.city || '').toLowerCase().includes(normalizedQuery) ||
+        (producer.email || '').toLowerCase().includes(normalizedQuery),
+    );
+    if (hasMatches) {
+      return producers;
+    }
+    return [
+      ...producers,
+      {
+        id: CREATE_PRODUCER_OPTION_ID,
+        query: producerSearch.trim(),
+        isCreateOption: true,
+      },
+    ];
+  }, [producers, producerSearch]);
 
   // Sincronizar peso serial en modo create
   useEffect(() => {
@@ -99,11 +148,24 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     }
   }, [mode]);
 
-  const handleProducerSearch = useCallback(
-    (searchValue: string) => {
-      loadProducers(searchValue);
+  const handleProducerCreated = useCallback(
+    (producer: CreatedProducer) => {
+      const normalized: ProducerOption = {
+        id: producer.id,
+        name: producer.name || '',
+        rut: producer.rut || '',
+        email: producer.email,
+        city: producer.city,
+      };
+      setFormData((prev) => ({ ...prev, producer_id: normalized.id }));
+      setProducers((current) => {
+        const next = [normalized, ...current.filter((p) => p.id !== normalized.id)];
+        return next.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+      });
+      setProducerSearch('');
+      setProducerAutocompleteResetKey((k) => k + 1);
     },
-    [loadProducers]
+    [],
   );
 
   // Calcular peso neto en modo tara
@@ -168,10 +230,14 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
         gross_weight: '',
         tare_weight: '',
       });
+      setProducerSearch('');
+      setProducerAutocompleteResetKey((k) => k + 1);
 
       if (onTruckCreated) {
         onTruckCreated(newTruck);
       }
+
+      void loadProducers();
 
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
@@ -235,10 +301,11 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   // Renderizar modo CREATE
   if (mode === 'create') {
     return (
-      <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
-        <h2 className="text-xl font-bold text-foreground mb-6">Nueva Recepción</h2>
+      <>
+        <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
+          <h2 className="text-xl font-bold text-foreground mb-6">Nueva Recepción</h2>
 
-        <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <form onSubmit={handleCreateSubmit} className="space-y-4">
           {/* Success Alert */}
           {successMessage && (
             <Alert variant="success" className="mb-4">
@@ -254,24 +321,47 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
           )}
 
           {/* Productor - AutoComplete */}
-          <AutoComplete
-            options={producers}
+          <AutoComplete<ProducerAutoCompleteOption>
+            key={producerAutocompleteResetKey}
+            options={producerAutocompleteOptions}
             value={producers.find((p) => p.id === formData.producer_id) || null}
-            onChange={(option) => setFormData((prev) => ({ ...prev, producer_id: option?.id || null }))}
-            onInputChange={handleProducerSearch}
-            getOptionLabel={(option: any) => `${option.name} · ${option.rut}`}
-            getOptionValue={(option: any) => option.id}
-            filterOption={(option: any, searchValue: string) => {
-              const searchLower = searchValue.toLowerCase();
+            onChange={(option) => {
+              if (!option) {
+                setFormData((prev) => ({ ...prev, producer_id: null }));
+                return;
+              }
+              if (isCreateProducerOption(option)) {
+                setCreateProducerDialogOpen(true);
+                setProducerAutocompleteResetKey((k) => k + 1);
+                return;
+              }
+              setFormData((prev) => ({ ...prev, producer_id: option.id }));
+            }}
+            onInputChange={setProducerSearch}
+            getOptionLabel={(option) =>
+              isCreateProducerOption(option)
+                ? `+ Nuevo productor "${option.query}"`
+                : `${option.name} · ${option.rut}`
+            }
+            getOptionValue={(option) => option.id}
+            filterOption={(option, searchValue) => {
+              if (isCreateProducerOption(option)) {
+                return true;
+              }
+              const q = searchValue.trim().toLowerCase();
+              if (!q) {
+                return true;
+              }
               return (
-                option.name.toLowerCase().includes(searchLower) ||
-                option.rut.toLowerCase().includes(searchLower) ||
-                option.email?.toLowerCase().includes(searchLower) ||
-                option.city?.toLowerCase().includes(searchLower)
+                option.name.toLowerCase().includes(q) ||
+                option.rut.toLowerCase().includes(q) ||
+                (option.email || '').toLowerCase().includes(q) ||
+                (option.city || '').toLowerCase().includes(q)
               );
             }}
-            placeholder="Busca productor"
+            placeholder="Buscar por nombre o RUT"
             disabled={isLoading}
+            label="Productor"
             labelAlwaysVisible
           />
 
@@ -338,7 +428,14 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
             {isLoading ? 'Guardando...' : 'Guardar Recepción'}
           </Button>
         </form>
-      </div>
+        </div>
+
+        <CreateProducerDialog
+          open={createProducerDialogOpen}
+          onClose={() => setCreateProducerDialogOpen(false)}
+          onSuccess={handleProducerCreated}
+        />
+      </>
     );
   }
 

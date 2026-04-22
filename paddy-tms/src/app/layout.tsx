@@ -5,8 +5,8 @@ import { LogisticsProvider } from '@/features/logistics/context/LogisticsContext
 import { AuthProvider } from '@/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Paddy TMS - Truck Management System',
-  description: 'Sistema de Gestión de Logística en Tiempo Real',
+  title: 'Paddy AyG',
+  description: 'Recepción de carga',
 };
 
 export default function RootLayout({

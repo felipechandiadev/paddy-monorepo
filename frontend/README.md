@@ -98,6 +98,17 @@ NEXTAUTH_URL=http://localhost:3001
 NEXTAUTH_SECRET=your-secret-key
 ```
 
+En desarrollo, define un `NEXTAUTH_SECRET` **fijo** (por ejemplo `openssl rand -base64 32`) y no lo cambies entre arranques; si falta, la app usa un valor por defecto en código y cualquier cookie creada con otro secret dejará de valer.
+
+### Auth: `JWEDecryptionFailed` / `decryption operation failed`
+
+Eso aparece cuando NextAuth no puede descifrar la cookie de sesión (JWT). Suele pasar si:
+
+1. Cambiaste `NEXTAUTH_SECRET` o quitaste `.env.local` y ahora el servidor usa otro secret.
+2. Quedó una cookie vieja del mismo `localhost` pero de otra app o de un build anterior.
+
+**Qué hacer:** borra las cookies del sitio para el origen del frontend (p. ej. `localhost:3001`), o usa una ventana de incógnito. Luego vuelve a iniciar sesión. Mantén el mismo `NEXTAUTH_SECRET` en `frontend/.env.local` mientras desarrollas.
+
 ## � Progressive Web App (PWA)
 
 Esta aplicación está configurada como PWA para permitir instalación en dispositivos móviles y escritorio.

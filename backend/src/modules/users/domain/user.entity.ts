@@ -24,7 +24,7 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 100, nullable: true })
   lastName?: string;
 
-  @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.ADMIN })
+  @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.TRUCK_RECEPTION })
   role: RoleEnum;
 
   @Column({ type: 'boolean', default: true })
