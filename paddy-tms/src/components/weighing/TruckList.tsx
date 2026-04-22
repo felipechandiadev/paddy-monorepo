@@ -172,12 +172,12 @@ export const TruckList: React.FC<TruckListProps> = ({
                 <div className="flex-1 min-w-0 space-y-1">
                   {/* Patente + Turno */}
                   <div className="flex items-baseline gap-3">
-                    <p className="text-lg font-bold text-foreground truncate">
-                      {truck.license_plate}
-                    </p>
                     <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
                       #{truck.numero_turno}
                     </Badge>
+                    <p className="text-lg font-bold text-foreground truncate">
+                      {truck.license_plate}
+                    </p>
                   </div>
 
                   {/* Chofer */}
