@@ -171,6 +171,7 @@ export const TruckList: React.FC<TruckListProps> = ({
                       {new Date(truck.entry_at).toLocaleTimeString('es-CL', {
                         hour: '2-digit',
                         minute: '2-digit',
+                        hour12: false,
                       })}
                     </p>
                   </div>
