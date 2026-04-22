@@ -1,289 +1,237 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import AutoComplete from '@/shared/components/ui/AutoComplete/AutoComplete';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
-import { truckReceptionService, TruckReception } from '@/services/truckReceptionService';
 import { fetchProducersAction, ProducerOption } from '@/actions/fetchProducersAction';
+import { createTruckReceptionAction, TruckReception } from '@/actions/truckReceptionActions';
+import { useWeighingPage } from '@/hooks/useWeighingPage';
 
 interface NewTruckReceptionFormProps {
-  onSuccess: (truck: TruckReception) => void;
   serialWeight: number | null;
   isSerialConnected: boolean;
 }
 
 export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
-  onSuccess,
   serialWeight,
   isSerialConnected,
 }) => {
-  // Estado del formulario
+  const { addTruck, loadTrucksToday } = useWeighingPage();
+  
   const [formData, setFormData] = useState({
-    producer_id: '',
+    producer_id: null as number | null,
     license_plate: '',
     driver_name: '',
     carrier_company: '',
     dispatch_guide: '',
-    gross_weight: '',
+    gross_weight: '' as string,
   });
 
-  // Estado de UI
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  // Estado de productores
   const [producers, setProducers] = useState<ProducerOption[]>([]);
-  const [producersLoading, setProducersLoading] = useState(false);
-  const [producerSearch, setProducerSearch] = useState('');
-  const [selectedProducer, setSelectedProducer] = useState<ProducerOption | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Cargar productores al montar
-  useEffect(() => {
-    const loadProducers = async () => {
-      setProducersLoading(true);
-      try {
-        const result = await fetchProducersAction({
-          page: 1,
-          limit: 1000,
-          sortField: 'name',
-          sort: 'ASC',
-        });
-        setProducers(result.data);
-      } catch (err) {
-        console.error('Error cargando productores:', err);
-      } finally {
-        setProducersLoading(false);
-      }
-    };
-
-    loadProducers();
+  // Cargar productores
+  const loadProducers = useCallback(async (search?: string) => {
+    try {
+      const result = await fetchProducersAction({ search });
+      setProducers(result.data);
+    } catch (err) {
+      console.error('Error cargando productores:', err);
+    }
   }, []);
 
-  // Generar opciones del autocomplete con opción de crear nuevo
-  const producerOptions = useMemo<ProducerOption[]>(() => {
-    const normalizedQuery = producerSearch.trim().toLowerCase();
+  // Cargar productores al montar
+  React.useEffect(() => {
+    loadProducers();
+  }, [loadProducers]);
 
-    if (!normalizedQuery) {
-      return producers;
+  // Sincronizar peso serial
+  React.useEffect(() => {
+    if (serialWeight && isSerialConnected) {
+      setFormData(prev => ({ ...prev, gross_weight: String(serialWeight) }));
     }
+  }, [serialWeight, isSerialConnected]);
 
-    const hasMatches = producers.some((producer) => {
-      return (
-        producer.name.toLowerCase().includes(normalizedQuery) ||
-        producer.rut.toLowerCase().includes(normalizedQuery) ||
-        producer.email?.toLowerCase().includes(normalizedQuery) ||
-        producer.city?.toLowerCase().includes(normalizedQuery)
-      );
-    });
+  const handleProducerSearch = useCallback(
+    (searchValue: string) => {
+      loadProducers(searchValue);
+    },
+    [loadProducers]
+  );
 
-    return producers;
-  }, [producers, producerSearch]);
-
-  // Manejar cambio en formulario
-  const handleFormChange = (field: keyof typeof formData, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setError(null);
-  };
-
-  // Manejar selección de productor
-  const handleProducerChange = (producer: ProducerOption | null) => {
-    setSelectedProducer(producer);
-    if (producer) {
-      handleFormChange('producer_id', producer.id.toString());
-    }
-  };
-
-  // Validar formulario
-  const validateForm = (): boolean => {
-    const errors: string[] = [];
-
-    if (!selectedProducer || !selectedProducer.id) {
-      errors.push('Selecciona un productor');
-    }
-
-    if (!formData.license_plate.trim()) {
-      errors.push('Ingresa la patente del camión');
-    }
-
-    if (!formData.driver_name.trim()) {
-      errors.push('Ingresa el nombre del chofer');
-    }
-
-    const grossWeight = parseFloat(formData.gross_weight);
-    if (!formData.gross_weight || isNaN(grossWeight) || grossWeight <= 0) {
-      errors.push('Ingresa un peso bruto válido (mayor a 0)');
-    }
-
-    if (errors.length > 0) {
-      setError(errors.join('\n'));
-      return false;
-    }
-
-    return true;
-  };
-
-  // Manejar envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
 
-    if (!validateForm()) {
+    // Validación
+    if (!formData.producer_id) {
+      setError('Selecciona un productor');
       return;
     }
 
-    setIsSaving(true);
-    setError(null);
+    if (!formData.license_plate.trim()) {
+      setError('La patente es requerida');
+      return;
+    }
+
+    if (!formData.driver_name.trim()) {
+      setError('El nombre del chofer es requerido');
+      return;
+    }
+
+    const weight = Number(formData.gross_weight);
+    if (!weight || weight <= 0) {
+      setError('El peso bruto debe ser mayor a 0');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      const newTruck = await truckReceptionService.createWithGrossWeight({
-        producer_id: parseInt(formData.producer_id),
+      const newTruck = await createTruckReceptionAction({
+        producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
         driver_name: formData.driver_name.trim(),
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
-        gross_weight: parseFloat(formData.gross_weight),
+        gross_weight: weight,
       });
+      
+      // Agregar a la lista local
+      addTruck(newTruck);
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      // Recargar la lista completa desde el servidor para sincronizar turnos
+      await loadTrucksToday();
 
+      setSuccessMessage(`Recepción creada: Turno #${newTruck.numero_turno}`);
+      
       // Limpiar formulario
       setFormData({
-        producer_id: '',
+        producer_id: null,
         license_plate: '',
         driver_name: '',
         carrier_company: '',
         dispatch_guide: '',
         gross_weight: '',
       });
-      setSelectedProducer(null);
-      setProducerSearch('');
 
-      // Callback al padre
-      onSuccess(newTruck);
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error desconocido';
-      setError(`Error creando recepción: ${message}`);
-      console.error('Error:', err);
+      const message = err instanceof Error ? err.message : 'Error al crear recepción';
+      setError(message);
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white border-r border-border h-full flex flex-col p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-foreground">Nueva Recepción</h2>
-        <p className="text-sm text-muted">Registra un nuevo camión para pesaje</p>
-      </div>
+    <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
+      <h2 className="text-xl font-bold text-foreground mb-6">Nueva Recepción</h2>
 
-      {/* Alertas */}
-      {error && (
-        <Alert variant="error" className="whitespace-pre-line">
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert variant="success">
-          ✓ Recepción creada exitosamente
-        </Alert>
-      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Success Alert */}
+        {successMessage && (
+          <Alert variant="success" className="mb-4">
+            {successMessage}
+          </Alert>
+        )}
 
-      {/* Formulario */}
-      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="error" className="mb-4">
+            {error}
+          </Alert>
+        )}
+
         {/* Productor - AutoComplete */}
-        <AutoComplete<ProducerOption>
-          label="Productor *"
-          placeholder={producersLoading ? 'Cargando productores...' : 'Buscar por nombre o RUT'}
-          options={producerOptions}
-          value={selectedProducer}
-          onChange={handleProducerChange}
-          onInputChange={setProducerSearch}
-          getOptionLabel={(option) => `${option.name} · ${option.rut}`}
-          getOptionValue={(option) => option.id}
-          filterOption={(option, inputValue) => {
-            const searchLower = inputValue.toLowerCase();
-            return !!(
-              option.name.toLowerCase().includes(searchLower) ||
-              option.rut.toLowerCase().includes(searchLower) ||
-              (option.email?.toLowerCase().includes(searchLower)) ||
-              (option.city?.toLowerCase().includes(searchLower))
-            );
-          }}
-          disabled={producersLoading}
-          required
-        />
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Productor *
+          </label>
+          <AutoComplete
+            options={producers}
+            value={producers.find(p => p.id === formData.producer_id) || null}
+            onChange={(option) => setFormData(prev => ({ ...prev, producer_id: option?.id || null }))}
+            onInputChange={handleProducerSearch}
+            getOptionLabel={(option: any) => `${option.name} · ${option.rut}`}
+            getOptionValue={(option: any) => option.id}
+            filterOption={(option: any, searchValue: string) => {
+              const searchLower = searchValue.toLowerCase();
+              return (
+                option.name.toLowerCase().includes(searchLower) ||
+                option.rut.toLowerCase().includes(searchLower) ||
+                option.email?.toLowerCase().includes(searchLower) ||
+                option.city?.toLowerCase().includes(searchLower)
+              );
+            }}
+            placeholder="Busca productor"
+            disabled={isLoading}
+          />
+        </div>
 
         {/* Patente */}
         <TextField
           label="Patente *"
           value={formData.license_plate}
-          onChange={(e) => handleFormChange('license_plate', e.target.value.toUpperCase())}
-          placeholder="ABC-1234"
-          required
+          onChange={(e) => setFormData(prev => ({ ...prev, license_plate: e.target.value }))}
+          placeholder="Ej: ABC-1234"
+          disabled={isLoading}
         />
 
-        {/* Chofer */}
+        {/* Nombre del Chofer */}
         <TextField
-          label="Chofer *"
+          label="Nombre del Chofer *"
           value={formData.driver_name}
-          onChange={(e) => handleFormChange('driver_name', e.target.value)}
-          placeholder="Nombre del chofer"
-          required
+          onChange={(e) => setFormData(prev => ({ ...prev, driver_name: e.target.value }))}
+          placeholder="Ej: Juan Pérez"
+          disabled={isLoading}
         />
 
         {/* Empresa de Transporte */}
         <TextField
           label="Empresa de Transporte"
           value={formData.carrier_company}
-          onChange={(e) => handleFormChange('carrier_company', e.target.value)}
-          placeholder="Opcional"
+          onChange={(e) => setFormData(prev => ({ ...prev, carrier_company: e.target.value }))}
+          placeholder="Ej: Transporte XYZ"
+          disabled={isLoading}
         />
 
         {/* Guía de Despacho */}
         <TextField
           label="Guía de Despacho"
           value={formData.dispatch_guide}
-          onChange={(e) => handleFormChange('dispatch_guide', e.target.value)}
-          placeholder="Opcional"
+          onChange={(e) => setFormData(prev => ({ ...prev, dispatch_guide: e.target.value }))}
+          placeholder="Ej: DG-2024-001"
+          disabled={isLoading}
         />
 
         {/* Peso Bruto */}
         <TextField
           label="Peso Bruto (kg) *"
           type="number"
-          value={formData.gross_weight || (isSerialConnected && serialWeight ? serialWeight.toString() : '')}
-          onChange={(e) => handleFormChange('gross_weight', e.target.value)}
-          placeholder={isSerialConnected ? `Balanza: ${serialWeight || '—'} kg` : 'Ingresa peso manualmente'}
-          inputMode="decimal"
+          value={formData.gross_weight}
+          onChange={(e) => setFormData(prev => ({ ...prev, gross_weight: e.target.value }))}
+          placeholder={isSerialConnected ? `${serialWeight || 0} kg (serial)` : 'Ingresa peso manualmente'}
+          disabled={isLoading}
+          min="0"
           step="0.01"
-          required
         />
 
-        {/* Botones */}
-        <div className="flex gap-2 pt-4">
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSaving || producersLoading}
-            className="flex-1"
-          >
-            {isSaving ? 'Guardando...' : 'Guardar'}
-          </Button>
-        </div>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full mt-6"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Guardando...' : 'Guardar Recepción'}
+        </Button>
       </form>
-
-      {/* Footer info */}
-      <div className="border-t border-border pt-4 text-xs text-muted">
-        <p>Campos requeridos marcados con *</p>
-        {isSerialConnected && (
-          <p className="text-success mt-1">✓ Balanza conectada</p>
-        )}
-      </div>
     </div>
   );
 };

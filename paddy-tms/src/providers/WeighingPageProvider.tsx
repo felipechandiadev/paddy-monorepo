@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { TruckReception } from '@/services/truckReceptionService';
-import { truckReceptionService } from '@/services/truckReceptionService';
+import { getTurnosTodayAction, TruckReception } from '@/actions/truckReceptionActions';
 
 interface WeighingPageContextType {
   // Estado
@@ -34,7 +33,7 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setIsLoading(true);
     setError(null);
     try {
-      const turnos = await truckReceptionService.getTurnosToday();
+      const turnos = await getTurnosTodayAction();
       setTrucks(turnos);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
@@ -77,11 +76,9 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const syncInterval = setInterval(async () => {
       setSyncStatus('syncing');
       try {
-        const success = await truckReceptionService.syncPendingQueue();
-        setSyncStatus(success ? 'synced' : 'error');
-        if (success) {
-          await loadTrucksToday();
-        }
+        // Recargar la lista de turnos (esto es la sincronización)
+        await loadTrucksToday();
+        setSyncStatus('synced');
       } catch (err) {
         setSyncStatus('error');
         console.error('Error sincronizando:', err);
