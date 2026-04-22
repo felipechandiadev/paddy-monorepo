@@ -1,0 +1,8 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/paddy/paddy-tms/src/app/monitor/page": []
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

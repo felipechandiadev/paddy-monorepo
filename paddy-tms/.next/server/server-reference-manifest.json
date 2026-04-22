@@ -1,0 +1,36 @@
+{
+  "node": {
+    "405761a7dbc4f7d696d8556cdd05877a772f2bbba8": {
+      "workers": {
+        "app/weighing/page": {
+          "moduleId": 32766,
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/paddy-tms/src/actions/fetchProducersAction.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/paddy-tms/src/actions/fetchProducersAction.ts",
+      "exportedName": "fetchProducersAction"
+    },
+    "40d2c67a2b73aea92a54079316d6b081004e3ece70": {
+      "workers": {
+        "app/weighing/[id]/page": {
+          "moduleId": 57660,
+          "async": false,
+          "exportedName": "fetchTruckReceptions",
+          "filename": "paddy/paddy-tms/src/features/logistics/actions/truck.action.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/[id]/page": "action-browser"
+      },
+      "filename": "paddy/paddy-tms/src/features/logistics/actions/truck.action.ts",
+      "exportedName": "fetchTruckReceptions"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "AK3Oo5SmzP8y6jFWWRqfotIRx7JL0KIuN03npOIvSRI="
+}

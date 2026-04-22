@@ -207,11 +207,11 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           getOptionValue={(option) => option.id}
           filterOption={(option, inputValue) => {
             const searchLower = inputValue.toLowerCase();
-            return (
+            return !!(
               option.name.toLowerCase().includes(searchLower) ||
               option.rut.toLowerCase().includes(searchLower) ||
-              option.email?.toLowerCase().includes(searchLower) ||
-              option.city?.toLowerCase().includes(searchLower)
+              (option.email?.toLowerCase().includes(searchLower)) ||
+              (option.city?.toLowerCase().includes(searchLower))
             );
           }}
           disabled={producersLoading}

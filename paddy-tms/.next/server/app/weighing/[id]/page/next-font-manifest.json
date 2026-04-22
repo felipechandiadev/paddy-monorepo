@@ -1,0 +1,8 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/paddy/paddy-tms/src/app/weighing/[id]/page": []
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}
