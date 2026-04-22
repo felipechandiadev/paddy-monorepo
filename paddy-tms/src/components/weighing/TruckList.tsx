@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { TruckReception, updateTruckStatusAction } from '@/actions/truckReceptionActions';
+import React, { useState, useEffect } from 'react';
+import { TruckReception } from '@/actions/truckReceptionActions';
 import Badge from '@/shared/components/ui/Badge/Badge';
 
 interface TruckListProps {
@@ -15,21 +15,25 @@ export const TruckList: React.FC<TruckListProps> = ({
   selectedTruckId,
   onSelectTruck,
 }) => {
+  const [orderedTrucks, setOrderedTrucks] = useState<TruckReception[]>([]);
   const [draggedId, setDraggedId] = useState<number | null>(null);
-  const [isUpdating, setIsUpdating] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const trucksByStatus = {
-    ESPERA: trucks.filter(t => t.status === 'ESPERA'),
-    FINISHED: trucks.filter(t => t.status === 'FINISHED'),
-  };
+  useEffect(() => {
+    // Filtrar solo los camiones en espera
+    const espera = trucks.filter(t => t.status === 'ESPERA');
+    setOrderedTrucks(espera);
+  }, [trucks]);
 
   const handleDragStart = (e: React.DragEvent, truckId: number) => {
     setDraggedId(truckId);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', truckId.toString());
   };
 
   const handleDragEnd = () => {
     setDraggedId(null);
+    setDragOverId(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -37,27 +41,40 @@ export const TruckList: React.FC<TruckListProps> = ({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    if (!draggedId) return;
+  const handleDragEnter = (truckId: number) => {
+    setDragOverId(truckId);
+  };
 
-    // Determinar el nuevo estado basado en la zona donde se soltó
-    const newStatus = 'FINISHED' as const;
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTruckId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    if (isUpdating) return;
-    
-    setIsUpdating(draggedId);
-    
-    try {
-      await updateTruckStatusAction(draggedId, newStatus);
-      // La UI se actualizará automáticamente cuando el padre recarga la lista
-      console.log(`Camion ${draggedId} movido a estado ${newStatus}`);
-    } catch (error) {
-      console.error('Error al actualizar estado:', error);
-    } finally {
-      setIsUpdating(null);
+    if (!draggedId || draggedId === targetTruckId) {
       setDraggedId(null);
+      setDragOverId(null);
+      return;
     }
+
+    // Encontrar los índices
+    const draggedIndex = orderedTrucks.findIndex(t => t.id === draggedId);
+    const targetIndex = orderedTrucks.findIndex(t => t.id === targetTruckId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    // Crear nueva lista reordenada
+    const newList = [...orderedTrucks];
+    const [draggedTruck] = newList.splice(draggedIndex, 1);
+    newList.splice(targetIndex, 0, draggedTruck);
+
+    setOrderedTrucks(newList);
+    setDraggedId(null);
+    setDragOverId(null);
   };
 
   return (
@@ -65,30 +82,33 @@ export const TruckList: React.FC<TruckListProps> = ({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-foreground">En Espera para Tara</h2>
         <Badge variant="secondary" className="text-sm">
-          {trucksByStatus.ESPERA.length}
+          {orderedTrucks.length}
         </Badge>
       </div>
 
-      <div className="space-y-3" onDragOver={handleDragOver} onDrop={handleDrop}>
-        {trucksByStatus.ESPERA.length === 0 ? (
+      <div className="space-y-3">
+        {orderedTrucks.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">Sin camiones en espera</p>
           </div>
         ) : (
-          trucksByStatus.ESPERA.map((truck) => (
+          orderedTrucks.map((truck) => (
             <div
               key={truck.id}
               draggable
               onDragStart={(e) => handleDragStart(e, truck.id)}
               onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDragEnter={() => handleDragEnter(truck.id)}
+              onDragLeave={handleDragLeave}
               onClick={() => onSelectTruck(truck.id)}
-              className={`group relative flex items-center rounded-lg border transition-all cursor-move overflow-hidden ${
-                isUpdating === truck.id
-                  ? 'opacity-50'
+              className={`group relative flex items-center rounded-lg border-2 transition-all cursor-move overflow-hidden ${
+                draggedId === truck.id
+                  ? 'opacity-50 border-dashed border-primary/50'
+                  : dragOverId === truck.id
+                  ? 'bg-primary/5 border-primary border-dashed shadow-md'
                   : selectedTruckId === truck.id
                   ? 'bg-primary/10 border-primary shadow-lg'
-                  : draggedId === truck.id
-                  ? 'bg-neutral/20 border-primary/50 opacity-60'
                   : 'bg-card border-border hover:border-primary/50 hover:shadow-md'
               }`}
             >
@@ -99,9 +119,8 @@ export const TruckList: React.FC<TruckListProps> = ({
                     e.stopPropagation();
                     onSelectTruck(truck.id);
                   }}
-                  className="p-3 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
+                  className="p-3 rounded-full hover:bg-primary/20 transition-colors"
                   title="Seleccionar para pesar"
-                  disabled={isUpdating === truck.id}
                 >
                   {/* Icono de flecha izquierda en cuadrado */}
                   <svg
@@ -182,7 +201,7 @@ export const TruckList: React.FC<TruckListProps> = ({
                   <button
                     onMouseDown={(e) => e.stopPropagation()}
                     className="p-1.5 rounded hover:bg-neutral/20 transition-colors"
-                    title="Arrastrar"
+                    title="Arrastrar para reordenar"
                   >
                     <svg
                       className="w-4 h-4 text-muted-foreground"
