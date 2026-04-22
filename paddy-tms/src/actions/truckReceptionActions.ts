@@ -38,9 +38,6 @@ export interface TruckReception {
   created_by?: string;
 }
 
-/**
- * Server action para crear recepción con peso bruto
- */
 export async function createTruckReceptionAction(
   payload: CreateTruckWithGrossWeightPayload,
 ): Promise<TruckReception> {
@@ -71,34 +68,16 @@ export async function createTruckReceptionAction(
           errorMessage = errorBody.message;
         }
       } catch {
-        // Si no se puede parsear el error, usar el mensaje genérico
+        // Si no se puede parsear el error, usar el mensaje generico
       }
       throw new Error(errorMessage);
     }
 
     const result = await response.json();
     
-    // Log para debugging de la respuesta
     console.log('Response from createTruckReceptionAction:', result);
     
-    // El backend devuelve una respuesta con estructura anidada compleja
-    // { success, data: { success, message, data: { id, numero_turno, ... } }, timestamp }
-    let truckData: TruckReception;
-    
-    if (result.data && result.data.numero_turno !== undefined) {
-      // Respuesta normal: { data: { id, numero_turno, ... } }
-      truckData = result.data as TruckReception;
-    } else if (result.data && result.data.data && result.data.data.numero_turno !== undefined) {
-      // Respuesta anidada nivel 1: { data: { data: { id, numero_turno, ... } } }
-      truckData = result.data.data as TruckReception;
-    } else if (result.data && result.data.data && result.data.data.data && result.data.data.data.numero_turno !== undefined) {
-      // Respuesta anidada nivel 2: { data: { data: { data: { id, numero_turno, ... } } } }
-      truckData = result.data.data.data as TruckReception;
-    } else {
-      console.warn('Estructura de respuesta inesperada:', result);
-      // Intentar usar result.data como fallback
-      truckData = result.data as TruckReception;
-    }
+    const truckData: TruckReception = result.data;
     
     if (!truckData.numero_turno) {
       console.warn('Warning: numero_turno no definido en respuesta:', truckData);
@@ -106,14 +85,11 @@ export async function createTruckReceptionAction(
     
     return truckData;
   } catch (error) {
-    console.error('Error creando recepción:', error);
+    console.error('Error creando recepcion:', error);
     throw error;
   }
 }
 
-/**
- * Server action para registrar peso tara
- */
 export async function recordTareWeightAction(
   payload: RegisterTareWeightPayload,
 ): Promise<TruckReception> {
@@ -138,12 +114,6 @@ export async function recordTareWeightAction(
     }
 
     const result = await response.json();
-    
-    // Manejar respuesta anidada si es necesario
-    if (result.data && result.data.data) {
-      return result.data.data as TruckReception;
-    }
-    
     return result.data as TruckReception;
   } catch (error) {
     console.error('Error registrando peso tara:', error);
@@ -151,9 +121,6 @@ export async function recordTareWeightAction(
   }
 }
 
-/**
- * Server action para obtener próximo turno
- */
 export async function getNextTurnoAction(): Promise<number> {
   try {
     const session = await getServerSession(authOptions);
@@ -180,9 +147,6 @@ export async function getNextTurnoAction(): Promise<number> {
   }
 }
 
-/**
- * Server action para obtener turnos de hoy
- */
 export async function getTurnosTodayAction(): Promise<TruckReception[]> {
   try {
     const session = await getServerSession(authOptions);
@@ -207,20 +171,9 @@ export async function getTurnosTodayAction(): Promise<TruckReception[]> {
     
     console.log('Response from getTurnosTodayAction:', result);
 
-    // El backend devuelve: { success: true, data: {...} } o { success: true, data: { data: [...], success, total } }
-    // Necesitamos extraer el array correcto
-    let dataArray: TruckReception[] = [];
-
-    if (Array.isArray(result.data)) {
-      // Si result.data es directamente un array
-      dataArray = result.data as TruckReception[];
-    } else if (result.data && Array.isArray(result.data.data)) {
-      // Si result.data es un objeto con un campo 'data' que es un array
-      dataArray = result.data.data as TruckReception[];
-    } else if (result.data && result.data.length !== undefined) {
-      // Si result.data tiene alguna estructura especial
-      console.warn('Estructura de respuesta especial:', result);
-    }
+    // El backend ahora retorna: { success, data: [...], timestamp }
+    // Donde data es directamente el array de turnos
+    const dataArray = (result.data || []) as TruckReception[];
 
     console.log('Extracted turnos:', dataArray);
     return dataArray;
@@ -230,9 +183,6 @@ export async function getTurnosTodayAction(): Promise<TruckReception[]> {
   }
 }
 
-/**
- * Server action para obtener recepción por ID
- */
 export async function getTruckReceptionByIdAction(id: number): Promise<TruckReception | null> {
   try {
     const session = await getServerSession(authOptions);
@@ -252,15 +202,9 @@ export async function getTruckReceptionByIdAction(id: number): Promise<TruckRece
     }
 
     const result = await response.json();
-    
-    // Manejar respuesta anidada si es necesario
-    if (result.data && result.data.data && !result.data.id) {
-      return result.data.data as TruckReception;
-    }
-    
     return result.data as TruckReception;
   } catch (error) {
-    console.error('Error obteniendo recepción:', error);
+    console.error('Error obteniendo recepcion:', error);
     return null;
   }
 }
