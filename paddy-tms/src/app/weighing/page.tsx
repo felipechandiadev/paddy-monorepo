@@ -33,6 +33,11 @@ const WeighingPageContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold text-primary">Paddy TMS</h1>
+            <img 
+              src="/logo.svg" 
+              alt="Paddy Logo" 
+              className="h-8 w-auto"
+            />
             <div className="flex items-center gap-2">
               <div
                 className={`w-3 h-3 rounded-full ${serialConnected ? 'bg-success' : 'bg-muted'}`}
