@@ -42,7 +42,7 @@ export const TruckList: React.FC<TruckListProps> = ({
         </div>
         {truck.numero_turno && (
           <Badge
-            variant={selectedTruckId === truck.id ? 'default' : 'secondary'}
+            variant={selectedTruckId === truck.id ? 'primary' : 'secondary'}
             className="text-xs whitespace-nowrap"
           >
             #{truck.numero_turno}
