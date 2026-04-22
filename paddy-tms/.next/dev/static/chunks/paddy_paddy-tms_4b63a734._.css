@@ -2037,6 +2037,10 @@ input::placeholder, textarea::placeholder {
   z-index: 50;
 }
 
+.m-0 {
+  margin: 0;
+}
+
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
@@ -2111,6 +2115,10 @@ input::placeholder, textarea::placeholder {
   margin-top: 2rem;
 }
 
+.ml-3 {
+  margin-left: .75rem;
+}
+
 .block {
   display: block;
 }
@@ -2157,10 +2165,6 @@ input::placeholder, textarea::placeholder {
 
 .h-24 {
   height: 6rem;
-}
-
-.h-3 {
-  height: .75rem;
 }
 
 .h-4 {
@@ -2231,10 +2235,6 @@ input::placeholder, textarea::placeholder {
   width: 66.6667%;
 }
 
-.w-3 {
-  width: .75rem;
-}
-
 .w-3\/4 {
   width: 75%;
 }
@@ -2271,6 +2271,14 @@ input::placeholder, textarea::placeholder {
   width: 100%;
 }
 
+.w-72 {
+  width: 18rem;
+}
+
+.w-96 {
+  width: 24rem;
+}
+
 .min-w-\[20px\] {
   min-width: 20px;
 }
@@ -2297,6 +2305,10 @@ input::placeholder, textarea::placeholder {
 
 .flex-1 {
   flex: 1;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
 }
 
 .\!shrink {
@@ -2639,10 +2651,6 @@ input::placeholder, textarea::placeholder {
   border-color: #0000;
 }
 
-.border-warning {
-  border-color: var(--color-warning);
-}
-
 .border-white {
   --tw-border-opacity: 1;
   border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
@@ -2651,6 +2659,10 @@ input::placeholder, textarea::placeholder {
 .border-yellow-500 {
   --tw-border-opacity: 1;
   border-color: rgb(234 179 8 / var(--tw-border-opacity, 1));
+}
+
+.border-error {
+  border-color: var(--color-error);
 }
 
 .bg-black {
@@ -3166,10 +3178,6 @@ input::placeholder, textarea::placeholder {
   color: rgb(153 27 27 / var(--tw-text-opacity, 1));
 }
 
-.text-success {
-  color: var(--color-success);
-}
-
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
@@ -3183,6 +3191,10 @@ input::placeholder, textarea::placeholder {
 .text-yellow-800 {
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity, 1));
+}
+
+.underline {
+  text-decoration-line: underline;
 }
 
 .opacity-0 {
@@ -3564,6 +3576,10 @@ body {
 
 .hover\:opacity-90:hover {
   opacity: .9;
+}
+
+.hover\:opacity-75:hover {
+  opacity: .75;
 }
 
 .focus\:border-none:focus {

@@ -1,6 +1,7 @@
 {
   "app": {
     "[project]/paddy/paddy-tms/src/app/login/page": [],
+    "[project]/paddy/paddy-tms/src/app/page": [],
     "[project]/paddy/paddy-tms/src/app/weighing/page": []
   },
   "appUsingSizeAdjust": true,
