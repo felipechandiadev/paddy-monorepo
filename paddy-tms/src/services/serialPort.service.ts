@@ -185,7 +185,7 @@ export class SerialPortService {
   /**
    * Listar puertos seriales disponibles
    */
-  async listAvailablePorts(): Promise<SerialPort[]> {
+  async listAvailablePorts(): Promise<any[]> {
     try {
       if (!this.isAvailable()) return [];
       return await (navigator as any).serial.getPorts();
