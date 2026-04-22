@@ -77,7 +77,31 @@ export async function createTruckReceptionAction(
     }
 
     const result = await response.json();
-    return result.data as TruckReception;
+    
+    // Log para debugging de la respuesta
+    console.log('Response from createTruckReceptionAction:', result);
+    
+    // El backend puede devolver { data: {...} } o { success, data, timestamp }
+    // O incluso anidado: { data: { data: {...}, success, total } }
+    let truckData: TruckReception;
+    
+    if (result.data && result.data.numero_turno !== undefined) {
+      // Respuesta normal: { data: { id, numero_turno, ... } }
+      truckData = result.data as TruckReception;
+    } else if (result.data && result.data.data && result.data.data.numero_turno !== undefined) {
+      // Respuesta anidada: { data: { data: { id, numero_turno, ... }, success, total } }
+      truckData = result.data.data as TruckReception;
+    } else {
+      console.warn('Estructura de respuesta inesperada:', result);
+      // Intentar usar result.data como fallback
+      truckData = result.data as TruckReception;
+    }
+    
+    if (!truckData.numero_turno) {
+      console.warn('Warning: numero_turno no definido en respuesta:', truckData);
+    }
+    
+    return truckData;
   } catch (error) {
     console.error('Error creando recepción:', error);
     throw error;
@@ -111,6 +135,12 @@ export async function recordTareWeightAction(
     }
 
     const result = await response.json();
+    
+    // Manejar respuesta anidada si es necesario
+    if (result.data && result.data.data) {
+      return result.data.data as TruckReception;
+    }
+    
     return result.data as TruckReception;
   } catch (error) {
     console.error('Error registrando peso tara:', error);
@@ -216,6 +246,12 @@ export async function getTruckReceptionByIdAction(id: number): Promise<TruckRece
     }
 
     const result = await response.json();
+    
+    // Manejar respuesta anidada si es necesario
+    if (result.data && result.data.data && !result.data.id) {
+      return result.data.data as TruckReception;
+    }
+    
     return result.data as TruckReception;
   } catch (error) {
     console.error('Error obteniendo recepción:', error);
