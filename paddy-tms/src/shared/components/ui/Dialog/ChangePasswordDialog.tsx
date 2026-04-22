@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { getAuthToken } from '@/features/logistics/services/authService';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
@@ -12,7 +12,6 @@ interface ChangePasswordDialogProps {
 }
 
 export default function ChangePasswordDialog({ isOpen, onClose }: ChangePasswordDialogProps) {
-  const { data: session } = useSession();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,11 +24,12 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
     setIsLoading(true);
 
     try {
+      const token = getAuthToken();
       const response = await fetch('http://localhost:3001/auth/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.user?.accessToken}`,
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({
           currentPassword,
@@ -45,7 +45,9 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
 
       // Close modal and logout
       onClose();
-      await signOut({ callbackUrl: '/' });
+      const { logout } = await import('@/features/logistics/services/authService');
+      await logout();
+      window.location.href = '/login';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
