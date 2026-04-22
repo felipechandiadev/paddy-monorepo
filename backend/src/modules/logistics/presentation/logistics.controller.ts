@@ -19,7 +19,7 @@ import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-w
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 import { TruckReceptionStatus } from '../domain/truck-reception.entity';
 
-@Controller('api/v1/logistics')
+@Controller('logistics')
 export class LogisticsController {
   private readonly logger = new Logger(LogisticsController.name);
 
