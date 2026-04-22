@@ -5,7 +5,7 @@
  * Nota: Serial API solo funciona en contextos seguros (HTTPS o localhost)
  */
 export class SerialPortService {
-  private port: SerialPort | null = null;
+  private port: any | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private isConnected = false;
   private lastWeight: number | null = null;
