@@ -45,12 +45,12 @@
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts",
       "exportedName": "createTruckReceptionAction"
     },
-    "60b1c6f4f3ede8e97388a43447f378cfab1b572bae": {
+    "60bad2f729042d2e500828f3b11a9d08742469b1d9": {
       "workers": {
         "app/weighing/page": {
           "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
-          "exportedName": "updateTruckStatusAction",
+          "exportedName": "updateTruckTurnoAction",
           "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
         }
       },
@@ -58,7 +58,7 @@
         "app/weighing/page": "action-browser"
       },
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts",
-      "exportedName": "updateTruckStatusAction"
+      "exportedName": "updateTruckTurnoAction"
     }
   },
   "edge": {},

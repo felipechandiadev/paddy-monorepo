@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { TruckReception } from '@/actions/truckReceptionActions';
+import { TruckReception, updateTruckTurnoAction } from '@/actions/truckReceptionActions';
 import Badge from '@/shared/components/ui/Badge/Badge';
 
 interface TruckListProps {
@@ -18,6 +18,7 @@ export const TruckList: React.FC<TruckListProps> = ({
   const [orderedTrucks, setOrderedTrucks] = useState<TruckReception[]>([]);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const espera = trucks.filter(t => t.status === 'ESPERA');
@@ -25,14 +26,12 @@ export const TruckList: React.FC<TruckListProps> = ({
   }, [trucks]);
 
   const handleDragStart = (e: React.DragEvent, truckId: number) => {
-    console.log('Drag start:', truckId);
     setDraggedId(truckId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('truckId', truckId.toString());
   };
 
   const handleDragEnd = () => {
-    console.log('Drag end');
     setDraggedId(null);
     setDragOverId(null);
   };
@@ -44,21 +43,17 @@ export const TruckList: React.FC<TruckListProps> = ({
 
   const handleDragEnter = (e: React.DragEvent, truckId: number) => {
     e.preventDefault();
-    console.log('Drag enter:', truckId);
     setDragOverId(truckId);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    console.log('Drag leave');
     setDragOverId(null);
   };
 
-  const handleDrop = (e: React.DragEvent, targetTruckId: number) => {
+  const handleDrop = async (e: React.DragEvent, targetTruckId: number) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log('Drop on:', targetTruckId, 'dragged:', draggedId);
     
     if (!draggedId || draggedId === targetTruckId) {
       setDraggedId(null);
@@ -69,22 +64,39 @@ export const TruckList: React.FC<TruckListProps> = ({
     const draggedIndex = orderedTrucks.findIndex(t => t.id === draggedId);
     const targetIndex = orderedTrucks.findIndex(t => t.id === targetTruckId);
 
-    console.log('Indices:', draggedIndex, targetIndex);
-
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedId(null);
       setDragOverId(null);
       return;
     }
 
+    // Crear nueva lista reordenada
     const newList = [...orderedTrucks];
     const [draggedTruck] = newList.splice(draggedIndex, 1);
     newList.splice(targetIndex, 0, draggedTruck);
 
-    console.log('New order:', newList.map(t => t.id));
     setOrderedTrucks(newList);
     setDraggedId(null);
     setDragOverId(null);
+
+    // Actualizar turnos en el backend
+    setIsUpdating(true);
+    try {
+      // Actualizar todos los turnos con sus nuevas posiciones
+      const updatePromises = newList.map((truck, index) =>
+        updateTruckTurnoAction(truck.id, index + 1)
+      );
+      
+      await Promise.all(updatePromises);
+      console.log('Turnos actualizados exitosamente');
+    } catch (error) {
+      console.error('Error actualizando turnos:', error);
+      // Revertir a la lista original en caso de error
+      const espera = trucks.filter(t => t.status === 'ESPERA');
+      setOrderedTrucks(espera);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -114,6 +126,7 @@ export const TruckList: React.FC<TruckListProps> = ({
               onDrop={(e) => handleDrop(e, truck.id)}
               onClick={() => onSelectTruck(truck.id)}
               className={`group relative flex items-center rounded-lg border-2 transition-all cursor-move overflow-hidden ${
+                isUpdating ? 'opacity-50 cursor-wait' :
                 draggedId === truck.id
                   ? 'opacity-50 border-dashed border-primary/50'
                   : dragOverId === truck.id
@@ -130,8 +143,9 @@ export const TruckList: React.FC<TruckListProps> = ({
                     e.stopPropagation();
                     onSelectTruck(truck.id);
                   }}
-                  className="p-3 rounded-full hover:bg-primary/20 transition-colors"
+                  className="p-3 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
                   title="Seleccionar para pesar"
+                  disabled={isUpdating}
                 >
                   <svg
                     className="w-6 h-6 text-primary"
@@ -208,8 +222,9 @@ export const TruckList: React.FC<TruckListProps> = ({
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
                   <button
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="p-1.5 rounded hover:bg-neutral/20 transition-colors"
+                    className="p-1.5 rounded hover:bg-neutral/20 transition-colors disabled:opacity-50"
                     title="Arrastrar para reordenar"
+                    disabled={isUpdating}
                   >
                     <svg
                       className="w-4 h-4 text-muted-foreground"

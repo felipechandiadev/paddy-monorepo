@@ -240,3 +240,35 @@ export async function updateTruckStatusAction(
     throw error;
   }
 }
+
+export async function updateTruckTurnoAction(
+  id: number,
+  numeroTurno: number,
+): Promise<TruckReception> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.accessToken) {
+      throw new Error('No autenticado');
+    }
+
+    const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.user.accessToken}`,
+      },
+      body: JSON.stringify({ numero_turno: numeroTurno }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.data as TruckReception;
+  } catch (error) {
+    console.error('Error actualizando turno del camion:', error);
+    throw error;
+  }
+}

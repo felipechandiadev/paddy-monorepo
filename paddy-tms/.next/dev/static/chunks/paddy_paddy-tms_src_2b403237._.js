@@ -2116,17 +2116,70 @@ var _s = __turbopack_context__.k.signature();
 ;
 const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
     _s();
+    const [orderedTrucks, setOrderedTrucks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [draggedId, setDraggedId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
-    const trucksByStatus = {
-        ESPERA: trucks.filter((t)=>t.status === 'ESPERA'),
-        FINISHED: trucks.filter((t)=>t.status === 'FINISHED')
-    };
+    const [dragOverId, setDragOverId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "TruckList.useEffect": ()=>{
+            const espera = trucks.filter({
+                "TruckList.useEffect.espera": (t)=>t.status === 'ESPERA'
+            }["TruckList.useEffect.espera"]);
+            setOrderedTrucks(espera);
+        }
+    }["TruckList.useEffect"], [
+        trucks
+    ]);
     const handleDragStart = (e, truckId)=>{
+        console.log('Drag start:', truckId);
         setDraggedId(truckId);
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('truckId', truckId.toString());
     };
     const handleDragEnd = ()=>{
+        console.log('Drag end');
         setDraggedId(null);
+        setDragOverId(null);
+    };
+    const handleDragOver = (e)=>{
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+    const handleDragEnter = (e, truckId)=>{
+        e.preventDefault();
+        console.log('Drag enter:', truckId);
+        setDragOverId(truckId);
+    };
+    const handleDragLeave = (e)=>{
+        e.preventDefault();
+        console.log('Drag leave');
+        setDragOverId(null);
+    };
+    const handleDrop = (e, targetTruckId)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Drop on:', targetTruckId, 'dragged:', draggedId);
+        if (!draggedId || draggedId === targetTruckId) {
+            setDraggedId(null);
+            setDragOverId(null);
+            return;
+        }
+        const draggedIndex = orderedTrucks.findIndex((t)=>t.id === draggedId);
+        const targetIndex = orderedTrucks.findIndex((t)=>t.id === targetTruckId);
+        console.log('Indices:', draggedIndex, targetIndex);
+        if (draggedIndex === -1 || targetIndex === -1) {
+            setDraggedId(null);
+            setDragOverId(null);
+            return;
+        }
+        const newList = [
+            ...orderedTrucks
+        ];
+        const [draggedTruck] = newList.splice(draggedIndex, 1);
+        newList.splice(targetIndex, 0, draggedTruck);
+        console.log('New order:', newList.map((t)=>t.id));
+        setOrderedTrucks(newList);
+        setDraggedId(null);
+        setDragOverId(null);
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "bg-background rounded-lg border border-border p-4 h-full overflow-y-auto",
@@ -2139,46 +2192,51 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                         children: "En Espera para Tara"
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                        lineNumber: 37,
+                        lineNumber: 93,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Badge$2f$Badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                         variant: "secondary",
                         className: "text-sm",
-                        children: trucksByStatus.ESPERA.length
+                        children: orderedTrucks.length
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                        lineNumber: 38,
+                        lineNumber: 94,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                lineNumber: 36,
+                lineNumber: 92,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "space-y-3",
-                children: trucksByStatus.ESPERA.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                onDragOver: handleDragOver,
+                children: orderedTrucks.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "flex items-center justify-center py-12",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-sm text-muted-foreground",
                         children: "Sin camiones en espera"
                     }, void 0, false, {
                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                        lineNumber: 46,
+                        lineNumber: 102,
                         columnNumber: 13
                     }, ("TURBOPACK compile-time value", void 0))
                 }, void 0, false, {
                     fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                    lineNumber: 45,
+                    lineNumber: 101,
                     columnNumber: 11
-                }, ("TURBOPACK compile-time value", void 0)) : trucksByStatus.ESPERA.map((truck)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        draggable: true,
+                }, ("TURBOPACK compile-time value", void 0)) : orderedTrucks.map((truck)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        draggable: "true",
                         onDragStart: (e)=>handleDragStart(e, truck.id),
                         onDragEnd: handleDragEnd,
+                        onDragOver: handleDragOver,
+                        onDragEnter: (e)=>handleDragEnter(e, truck.id),
+                        onDragLeave: handleDragLeave,
+                        onDrop: (e)=>handleDrop(e, truck.id),
                         onClick: ()=>onSelectTruck(truck.id),
-                        className: `group relative flex items-center rounded-lg border transition-all cursor-move overflow-hidden ${selectedTruckId === truck.id ? 'bg-primary/10 border-primary shadow-lg' : draggedId === truck.id ? 'bg-neutral/20 border-primary/50 opacity-60' : 'bg-card border-border hover:border-primary/50 hover:shadow-md'}`,
+                        className: `group relative flex items-center rounded-lg border-2 transition-all cursor-move overflow-hidden ${draggedId === truck.id ? 'opacity-50 border-dashed border-primary/50' : dragOverId === truck.id ? 'bg-primary/5 border-primary border-dashed shadow-md' : selectedTruckId === truck.id ? 'bg-primary/10 border-primary shadow-lg' : 'bg-card border-border hover:border-primary/50 hover:shadow-md'}`,
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "w-[18%] flex items-center justify-center bg-gradient-to-r from-primary/5 to-transparent py-4 pl-3",
@@ -2206,30 +2264,30 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                 rx: "2"
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 85,
+                                                lineNumber: 145,
                                                 columnNumber: 21
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
                                                 d: "M 15 12 L 9 12 M 9 12 L 12 9 M 9 12 L 12 15"
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 87,
+                                                lineNumber: 146,
                                                 columnNumber: 21
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                        lineNumber: 75,
+                                        lineNumber: 136,
                                         columnNumber: 19
                                     }, ("TURBOPACK compile-time value", void 0))
                                 }, void 0, false, {
                                     fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                    lineNumber: 66,
+                                    lineNumber: 128,
                                     columnNumber: 17
                                 }, ("TURBOPACK compile-time value", void 0))
                             }, void 0, false, {
                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                lineNumber: 65,
+                                lineNumber: 127,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2246,7 +2304,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         children: truck.license_plate
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 98,
+                                                        lineNumber: 157,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$shared$2f$components$2f$ui$2f$Badge$2f$Badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2258,13 +2316,13 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 101,
+                                                        lineNumber: 160,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 97,
+                                                lineNumber: 156,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2272,7 +2330,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                 children: truck.driver_name
                                             }, void 0, false, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 107,
+                                                lineNumber: 166,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2282,7 +2340,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         children: truck.carrier_company
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 114,
+                                                        lineNumber: 173,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     truck.carrier_company && truck.dispatch_guide && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2290,26 +2348,26 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         children: "•"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 117,
+                                                        lineNumber: 176,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     truck.dispatch_guide && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                         children: truck.dispatch_guide
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 120,
+                                                        lineNumber: 179,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 112,
+                                                lineNumber: 171,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                        lineNumber: 95,
+                                        lineNumber: 154,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2323,7 +2381,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         children: "Bruto"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 129,
+                                                        lineNumber: 188,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2334,13 +2392,13 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 130,
+                                                        lineNumber: 189,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 128,
+                                                lineNumber: 187,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2351,30 +2409,31 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         children: "Entrada"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 137,
+                                                        lineNumber: 196,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                         className: "text-sm font-bold text-foreground",
                                                         children: new Date(truck.entry_at).toLocaleTimeString('es-CL', {
                                                             hour: '2-digit',
-                                                            minute: '2-digit'
+                                                            minute: '2-digit',
+                                                            hour12: false
                                                         })
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 138,
+                                                        lineNumber: 197,
                                                         columnNumber: 21
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 136,
+                                                lineNumber: 195,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                        lineNumber: 126,
+                                        lineNumber: 185,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2382,7 +2441,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                             onMouseDown: (e)=>e.stopPropagation(),
                                             className: "p-1.5 rounded hover:bg-neutral/20 transition-colors",
-                                            title: "Arrastrar",
+                                            title: "Arrastrar para reordenar",
                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
                                                 className: "w-4 h-4 text-muted-foreground",
                                                 fill: "currentColor",
@@ -2394,7 +2453,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 159,
+                                                        lineNumber: 219,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("circle", {
@@ -2403,7 +2462,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 160,
+                                                        lineNumber: 220,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("circle", {
@@ -2412,7 +2471,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 161,
+                                                        lineNumber: 221,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("circle", {
@@ -2421,7 +2480,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 162,
+                                                        lineNumber: 222,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("circle", {
@@ -2430,7 +2489,7 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 163,
+                                                        lineNumber: 223,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("circle", {
@@ -2439,50 +2498,50 @@ const TruckList = ({ trucks, selectedTruckId, onSelectTruck })=>{
                                                         r: "1.5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                        lineNumber: 164,
+                                                        lineNumber: 224,
                                                         columnNumber: 23
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                                lineNumber: 154,
+                                                lineNumber: 214,
                                                 columnNumber: 21
                                             }, ("TURBOPACK compile-time value", void 0))
                                         }, void 0, false, {
                                             fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                            lineNumber: 149,
+                                            lineNumber: 209,
                                             columnNumber: 19
                                         }, ("TURBOPACK compile-time value", void 0))
                                     }, void 0, false, {
                                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                        lineNumber: 148,
+                                        lineNumber: 208,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                                lineNumber: 93,
+                                lineNumber: 152,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, truck.id, true, {
                         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                        lineNumber: 50,
+                        lineNumber: 106,
                         columnNumber: 13
                     }, ("TURBOPACK compile-time value", void 0)))
             }, void 0, false, {
                 fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-                lineNumber: 43,
+                lineNumber: 99,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/paddy/paddy-tms/src/components/weighing/TruckList.tsx",
-        lineNumber: 35,
+        lineNumber: 91,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
-_s(TruckList, "/MPXpDs6cwhs86FmDzArSfs9tMQ=");
+_s(TruckList, "sZMRKPtRap5g3eC2PLNzmuIHZjI=");
 _c = TruckList;
 var _c;
 __turbopack_context__.k.register(_c, "TruckList");
