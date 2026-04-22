@@ -412,6 +412,7 @@ function useSerialPort(enabled = false) {
     const [isConnecting, setIsConnecting] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [lastWeight, setLastWeight] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const pollingIntervalRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     // Verificar disponibilidad de Serial API
     const isAvailable = __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$services$2f$serialPort$2e$service$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["serialPortService"].isAvailable();
     // Conectar
@@ -439,9 +440,7 @@ function useSerialPort(enabled = false) {
                             }
                         }
                     }["useSerialPort.useCallback[connect].interval"], 100);
-                    return ({
-                        "useSerialPort.useCallback[connect]": ()=>clearInterval(interval)
-                    })["useSerialPort.useCallback[connect]"];
+                    pollingIntervalRef.current = interval;
                 } else {
                     setError('No se pudo conectar al puerto serial');
                 }
@@ -461,6 +460,10 @@ function useSerialPort(enabled = false) {
     const disconnect = (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "useSerialPort.useCallback[disconnect]": async ()=>{
             try {
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
                 await __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$services$2f$serialPort$2e$service$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["serialPortService"].disconnect();
                 setIsConnected(false);
                 setLastWeight(null);
@@ -500,6 +503,18 @@ function useSerialPort(enabled = false) {
         isConnected,
         connect
     ]);
+    // Cleanup al desmontar
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "useSerialPort.useEffect": ()=>{
+            return ({
+                "useSerialPort.useEffect": ()=>{
+                    if (pollingIntervalRef.current) {
+                        clearInterval(pollingIntervalRef.current);
+                    }
+                }
+            })["useSerialPort.useEffect"];
+        }
+    }["useSerialPort.useEffect"], []);
     return {
         isConnected,
         isAvailable,
@@ -512,7 +527,7 @@ function useSerialPort(enabled = false) {
         sendCommand
     };
 }
-_s(useSerialPort, "G6pg1yjR/CQkhQvZOE0tMU/9ygI=");
+_s(useSerialPort, "MlBhO2dicUHVY2VAfdTOivAsarM=");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }

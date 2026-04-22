@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { serialPortService } from '@/services/serialPort.service';
 
 interface UseSerialPortReturn {
@@ -23,6 +23,7 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastWeight, setLastWeight] = useState<number | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Verificar disponibilidad de Serial API
   const isAvailable = serialPortService.isAvailable();
@@ -52,8 +53,8 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
             setLastWeight(weight);
           }
         }, 100);
-
-        return () => clearInterval(interval);
+        
+        pollingIntervalRef.current = interval;
       } else {
         setError('No se pudo conectar al puerto serial');
       }
@@ -69,6 +70,10 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
   // Desconectar
   const disconnect = useCallback(async () => {
     try {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
       await serialPortService.disconnect();
       setIsConnected(false);
       setLastWeight(null);
@@ -99,6 +104,15 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
       connect();
     }
   }, [enabled, isAvailable, isConnected, connect]);
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   return {
     isConnected,
