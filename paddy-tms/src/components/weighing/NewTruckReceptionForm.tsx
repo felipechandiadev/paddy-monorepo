@@ -175,6 +175,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
             }}
             placeholder="Busca productor"
             disabled={isLoading}
+            labelAlwaysVisible
           />
         </div>
 
@@ -185,6 +186,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           onChange={(e) => setFormData(prev => ({ ...prev, license_plate: e.target.value }))}
           placeholder="Ej: ABC-1234"
           disabled={isLoading}
+          labelAlwaysVisible
         />
 
         {/* Nombre del Chofer */}
@@ -194,6 +196,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           onChange={(e) => setFormData(prev => ({ ...prev, driver_name: e.target.value }))}
           placeholder="Ej: Juan Pérez"
           disabled={isLoading}
+          labelAlwaysVisible
         />
 
         {/* Empresa de Transporte */}
@@ -203,6 +206,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           onChange={(e) => setFormData(prev => ({ ...prev, carrier_company: e.target.value }))}
           placeholder="Ej: Transporte XYZ"
           disabled={isLoading}
+          labelAlwaysVisible
         />
 
         {/* Guía de Despacho */}
@@ -212,6 +216,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           onChange={(e) => setFormData(prev => ({ ...prev, dispatch_guide: e.target.value }))}
           placeholder="Ej: DG-2024-001"
           disabled={isLoading}
+          labelAlwaysVisible
         />
 
         {/* Peso Bruto */}
@@ -224,6 +229,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           disabled={isLoading}
           min="0"
           step="0.01"
+          labelAlwaysVisible
         />
 
         {/* Submit Button */}
