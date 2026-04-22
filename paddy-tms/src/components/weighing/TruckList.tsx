@@ -70,10 +70,9 @@ export const TruckList: React.FC<TruckListProps> = ({
       return;
     }
 
-    // Crear nueva lista reordenada
+    // Simple swap: intercambiar las posiciones
     const newList = [...orderedTrucks];
-    const [draggedTruck] = newList.splice(draggedIndex, 1);
-    newList.splice(targetIndex, 0, draggedTruck);
+    [newList[draggedIndex], newList[targetIndex]] = [newList[targetIndex], newList[draggedIndex]];
 
     setOrderedTrucks(newList);
     setDraggedId(null);
