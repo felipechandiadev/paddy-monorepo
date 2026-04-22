@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { TruckReception, TruckReceptionStatus } from '../domain/truck-reception.entity';
 import { Producer } from '@modules/producers/domain/producer.entity';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
+import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 
 @Injectable()
@@ -18,10 +19,46 @@ export class LogisticsService {
   ) {}
 
   /**
-   * Registrar un nuevo camión
+   * Obtener el próximo número de turno para hoy
    */
-  async createTruckReception(
-    createTruckDto: CreateTruckDto,
+  async getNextTurnoForToday(): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastTurno = await this.truckReceptionRepository.findOne({
+      where: {
+        turno_date: today,
+      },
+      order: { numero_turno: 'DESC' },
+    });
+
+    return (lastTurno?.numero_turno || 0) + 1;
+  }
+
+  /**
+   * Obtener todos los turnos de un día específico
+   */
+  async getTurnosByDate(date: Date): Promise<TruckReception[]> {
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    return this.truckReceptionRepository.find({
+      where: {
+        turno_date: date,
+      },
+      relations: ['producer'],
+      order: { numero_turno: 'ASC' },
+    });
+  }
+
+  /**
+   * Crear recepción con peso bruto + asignar turno + pasar a ESPERA
+   */
+  async createTruckWithGrossWeight(
+    createTruckDto: CreateTruckWithGrossWeightDto,
   ): Promise<TruckReception> {
     try {
       // Validar que el productor exista
@@ -35,16 +72,24 @@ export class LogisticsService {
         );
       }
 
+      // Obtener siguiente turno
+      const nextTurno = await this.getNextTurnoForToday();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       // Crear nueva recepción de camión
       const truckReception = this.truckReceptionRepository.create({
         ...createTruckDto,
-        status: TruckReceptionStatus.WEIGHING_GROSS,
+        status: TruckReceptionStatus.ESPERA,
+        numero_turno: nextTurno,
+        turno_date: today,
         entry_at: new Date(),
+        gross_weight: createTruckDto.gross_weight,
       });
 
       const saved = await this.truckReceptionRepository.save(truckReception);
       this.logger.log(
-        `Camión registrado: ${saved.id} - Patente: ${saved.license_plate}`,
+        `Camión registrado: ${saved.id} - Patente: ${saved.license_plate} - Turno: ${saved.numero_turno}`,
       );
 
       return saved;
@@ -55,14 +100,13 @@ export class LogisticsService {
   }
 
   /**
-   * Registrar pesaje (bruto o tara)
+   * Registrar peso tara y finalizar recepción
    */
-  async registerWeighing(
+  async registerTareWeight(
     registerWeighingDto: RegisterWeighingDto,
   ): Promise<TruckReception> {
     try {
-      const { truck_reception_id, status, gross_weight, tare_weight } =
-        registerWeighingDto;
+      const { truck_reception_id, tare_weight } = registerWeighingDto;
 
       // Buscar la recepción del camión
       const truckReception = await this.truckReceptionRepository.findOne({
@@ -75,36 +119,44 @@ export class LogisticsService {
         );
       }
 
-      // Actualizar estado y pesos según corresponda
-      if (status === TruckReceptionStatus.WEIGHING_GROSS && gross_weight) {
-        truckReception.gross_weight = gross_weight;
-        truckReception.status = TruckReceptionStatus.WEIGHING_GROSS;
-      } else if (status === TruckReceptionStatus.WEIGHING_TARE && tare_weight) {
-        truckReception.tare_weight = tare_weight;
-        truckReception.status = TruckReceptionStatus.WEIGHING_TARE;
-
-        // Calcular peso neto
-        truckReception.calculateNetWeight();
-
-        // Si ambos pesos están disponibles, cambiar a finalizado
-        if (
-          truckReception.gross_weight &&
-          truckReception.tare_weight &&
-          truckReception.net_weight > 0
-        ) {
-          truckReception.status = TruckReceptionStatus.FINISHED;
-          truckReception.finished_at = new Date();
-        }
+      if (truckReception.status !== TruckReceptionStatus.ESPERA) {
+        throw new BadRequestException(
+          `Solo se puede registrar tara en estado ESPERA, estado actual: ${truckReception.status}`,
+        );
       }
+
+      if (!truckReception.gross_weight) {
+        throw new BadRequestException(
+          `No hay peso bruto registrado para este camión`,
+        );
+      }
+
+      if (!tare_weight) {
+        throw new BadRequestException(`El peso tara es requerido`);
+      }
+
+      // Registrar peso tara
+      truckReception.tare_weight = tare_weight;
+
+      // Calcular peso neto
+      truckReception.calculateNetWeight();
+
+      if (truckReception.net_weight <= 0) {
+        throw new BadRequestException(`El peso neto debe ser mayor a 0`);
+      }
+
+      // Cambiar a FINISHED
+      truckReception.status = TruckReceptionStatus.FINISHED;
+      truckReception.finished_at = new Date();
 
       const saved = await this.truckReceptionRepository.save(truckReception);
       this.logger.log(
-        `Pesaje registrado para camión: ${truck_reception_id} - Estado: ${status}`,
+        `Recepción finalizada: ${truck_reception_id} - Turno: ${saved.numero_turno}`,
       );
 
       return saved;
     } catch (error) {
-      this.logger.error(`Error al registrar pesaje: ${error.message}`);
+      this.logger.error(`Error al registrar peso tara: ${error.message}`);
       throw error;
     }
   }
@@ -174,7 +226,7 @@ export class LogisticsService {
       relations: ['producer'],
       take: limit,
       skip: offset,
-      order: { entry_at: 'DESC' },
+      order: { numero_turno: 'ASC' },
     });
 
     return { data, total };
@@ -217,18 +269,14 @@ export class LogisticsService {
     const finished = await this.truckReceptionRepository.count({
       where: { status: TruckReceptionStatus.FINISHED },
     });
-    const weighingGross = await this.truckReceptionRepository.count({
-      where: { status: TruckReceptionStatus.WEIGHING_GROSS },
-    });
-    const weighingTare = await this.truckReceptionRepository.count({
-      where: { status: TruckReceptionStatus.WEIGHING_TARE },
+    const espera = await this.truckReceptionRepository.count({
+      where: { status: TruckReceptionStatus.ESPERA },
     });
 
     return {
       total,
       finished,
-      weighingGross,
-      weighingTare,
+      espera,
     };
   }
 }

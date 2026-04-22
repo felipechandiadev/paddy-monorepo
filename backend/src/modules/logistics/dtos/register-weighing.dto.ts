@@ -1,7 +1,6 @@
 import {
-  IsString,
-  IsNotEmpty,
   IsNumber,
+  IsNotEmpty,
   IsPositive,
   IsEnum,
   IsOptional,
@@ -20,16 +19,10 @@ export class RegisterWeighingDto {
   @IsNotEmpty({ message: 'El estado es requerido' })
   status: TruckReceptionStatus;
 
-  @ValidateIf((o) => o.status === TruckReceptionStatus.WEIGHING_GROSS)
+  @ValidateIf((o) => o.status === TruckReceptionStatus.FINISHED)
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El peso debe ser numérico' })
   @IsPositive({ message: 'El peso debe ser positivo' })
-  @IsNotEmpty({ message: 'El peso bruto es requerido para este estado' })
-  gross_weight?: number;
-
-  @ValidateIf((o) => o.status === TruckReceptionStatus.WEIGHING_TARE)
-  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El peso debe ser numérico' })
-  @IsPositive({ message: 'El peso debe ser positivo' })
-  @IsNotEmpty({ message: 'El peso tara es requerido para este estado' })
+  @IsNotEmpty({ message: 'El peso tara es requerido para finalizar' })
   tare_weight?: number;
 
   @IsOptional()

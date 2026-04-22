@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { LogisticsService } from '../application/logistics.service';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
+import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 import { TruckReceptionStatus } from '../domain/truck-reception.entity';
 
@@ -25,14 +26,38 @@ export class LogisticsController {
   constructor(private readonly logisticsService: LogisticsService) {}
 
   /**
-   * Registrar un nuevo camión
+   * Registrar un nuevo camión con peso bruto + asignar turno
+   */
+  @Post('truck-receptions/with-gross-weight')
+  @HttpCode(HttpStatus.CREATED)
+  async createTruckWithGrossWeight(@Body(ValidationPipe) createTruckDto: CreateTruckWithGrossWeightDto) {
+    this.logger.log(`POST /truck-receptions/with-gross-weight - Registrando camión: ${createTruckDto.license_plate}`);
+    try {
+      const result = await this.logisticsService.createTruckWithGrossWeight(createTruckDto);
+      return {
+        success: true,
+        message: 'Camión registrado exitosamente con turno asignado',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error(`Error al registrar camión: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Registrar un nuevo camión (sin peso bruto)
    */
   @Post('truck-receptions')
   @HttpCode(HttpStatus.CREATED)
   async createTruckReception(@Body(ValidationPipe) createTruckDto: CreateTruckDto) {
     this.logger.log(`POST /truck-receptions - Registrando camión: ${createTruckDto.license_plate}`);
     try {
-      const result = await this.logisticsService.createTruckReception(createTruckDto);
+      // Crear sin peso bruto (deprecated, usar /with-gross-weight)
+      const result = await this.logisticsService.createTruckWithGrossWeight({
+        ...createTruckDto,
+        gross_weight: 0,
+      });
       return {
         success: true,
         message: 'Camión registrado exitosamente',
@@ -45,31 +70,66 @@ export class LogisticsController {
   }
 
   /**
-   * Registrar pesaje
+   * Registrar peso tara y finalizar recepción
    */
-  @Post('weighings')
-  @HttpCode(HttpStatus.CREATED)
-  async registerWeighing(@Body(ValidationPipe) registerWeighingDto: RegisterWeighingDto) {
+  @Post('weighings/tare')
+  @HttpCode(HttpStatus.OK)
+  async registerTareWeight(@Body(ValidationPipe) registerWeighingDto: RegisterWeighingDto) {
     this.logger.log(
-      `POST /weighings - Registrando pesaje para camión: ${registerWeighingDto.truck_reception_id}`,
+      `POST /weighings/tare - Registrando tara para camión: ${registerWeighingDto.truck_reception_id}`,
     );
     try {
-      const result = await this.logisticsService.registerWeighing(registerWeighingDto);
+      const result = await this.logisticsService.registerTareWeight(registerWeighingDto);
       return {
         success: true,
-        message: 'Pesaje registrado exitosamente',
+        message: 'Peso tara registrado y recepción finalizada',
         data: result,
       };
     } catch (error) {
-      this.logger.error(`Error al registrar pesaje: ${error.message}`);
+      this.logger.error(`Error al registrar peso tara: ${error.message}`);
       throw error;
     }
   }
 
   /**
-   * Obtener todas las recepciones
+   * Obtener próximo turno para hoy
    */
-  @Get('truck-receptions')
+  @Get('turnos/next-today')
+  async getNextTurnoForToday() {
+    this.logger.log(`GET /turnos/next-today`);
+    try {
+      const nextTurno = await this.logisticsService.getNextTurnoForToday();
+      return {
+        success: true,
+        data: {
+          numero_turno: nextTurno,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error al obtener próximo turno: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener todos los turnos de hoy
+   */
+  @Get('turnos/today')
+  async getTurnosToday() {
+    this.logger.log(`GET /turnos/today`);
+    try {
+      const today = new Date();
+      const turnos = await this.logisticsService.getTurnosByDate(today);
+      return {
+        success: true,
+        data: turnos,
+        total: turnos.length,
+      };
+    } catch (error) {
+      this.logger.error(`Error al obtener turnos de hoy: ${error.message}`);
+      throw error;
+    }
+  }
   async getAllTruckReceptions(
     @Query('limit') limit: string = '100',
     @Query('offset') offset: string = '0',

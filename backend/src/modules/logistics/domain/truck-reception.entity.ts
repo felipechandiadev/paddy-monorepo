@@ -12,8 +12,7 @@ import {
 import { Producer } from '@modules/producers/domain/producer.entity';
 
 export enum TruckReceptionStatus {
-  WEIGHING_GROSS = 'WEIGHING_GROSS',
-  WEIGHING_TARE = 'WEIGHING_TARE',
+  ESPERA = 'ESPERA',
   FINISHED = 'FINISHED',
 }
 
@@ -21,6 +20,7 @@ export enum TruckReceptionStatus {
 @Index(['producer_id'])
 @Index(['status'])
 @Index(['entry_at'])
+@Index(['turno_date'])
 export class TruckReception {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -28,9 +28,15 @@ export class TruckReception {
   @Column({
     type: 'enum',
     enum: TruckReceptionStatus,
-    default: TruckReceptionStatus.WEIGHING_GROSS,
+    default: TruckReceptionStatus.ESPERA,
   })
   status: TruckReceptionStatus;
+
+  @Column({ type: 'int', nullable: true })
+  numero_turno: number;
+
+  @Column({ type: 'date', nullable: true })
+  turno_date: Date;
 
   @Column({ type: 'int', nullable: false })
   producer_id: number;
