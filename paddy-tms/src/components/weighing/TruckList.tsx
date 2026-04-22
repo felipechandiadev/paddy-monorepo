@@ -169,9 +169,9 @@ export const TruckList: React.FC<TruckListProps> = ({
               {/* Contenido Principal - 82% ancho */}
               <div className="flex-1 flex items-center justify-between p-4 pr-3 relative gap-4">
                 {/* Sección izquierda: Info principal */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 space-y-1">
                   {/* Patente + Turno */}
-                  <div className="flex items-baseline gap-3 mb-2">
+                  <div className="flex items-baseline gap-3">
                     <p className="text-lg font-bold text-foreground truncate">
                       {truck.license_plate}
                     </p>
@@ -180,23 +180,27 @@ export const TruckList: React.FC<TruckListProps> = ({
                     </Badge>
                   </div>
 
-                  {/* Chofer - Más pequeño */}
-                  <p className="text-xs text-muted-foreground truncate mb-1">
-                    {truck.driver_name}
-                  </p>
-
-                  {/* Empresa y Guía - Más pequeño, una sola línea */}
-                  <div className="text-xs text-muted-foreground truncate">
-                    {truck.carrier_company && (
-                      <span>{truck.carrier_company}</span>
-                    )}
-                    {truck.carrier_company && truck.dispatch_guide && (
-                      <span className="mx-1">•</span>
-                    )}
-                    {truck.dispatch_guide && (
-                      <span>{truck.dispatch_guide}</span>
-                    )}
+                  {/* Chofer */}
+                  <div className="text-xs">
+                    <span className="text-muted-foreground font-medium">Chofer:</span>
+                    <span className="text-foreground ml-1">{truck.driver_name}</span>
                   </div>
+
+                  {/* Empresa */}
+                  {truck.carrier_company && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground font-medium">Empresa:</span>
+                      <span className="text-foreground ml-1">{truck.carrier_company}</span>
+                    </div>
+                  )}
+
+                  {/* Guía */}
+                  {truck.dispatch_guide && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground font-medium">Guía:</span>
+                      <span className="text-foreground ml-1">{truck.dispatch_guide}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Sección derecha: Pesos y entrada */}
