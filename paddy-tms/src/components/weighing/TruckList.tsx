@@ -209,7 +209,7 @@ export const TruckList: React.FC<TruckListProps> = ({
                   <div className="text-center px-2 py-1.5 rounded-md bg-neutral/10">
                     <p className="text-xs text-muted-foreground font-medium">Bruto</p>
                     <p className="text-sm font-bold text-foreground">
-                      {Number(truck.gross_weight || 0).toFixed(0)} kg
+                      {Number(truck.gross_weight || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg
                     </p>
                   </div>
 
