@@ -20,18 +20,19 @@ export const TruckList: React.FC<TruckListProps> = ({
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Filtrar solo los camiones en espera
     const espera = trucks.filter(t => t.status === 'ESPERA');
     setOrderedTrucks(espera);
   }, [trucks]);
 
   const handleDragStart = (e: React.DragEvent, truckId: number) => {
+    console.log('Drag start:', truckId);
     setDraggedId(truckId);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', truckId.toString());
+    e.dataTransfer.setData('truckId', truckId.toString());
   };
 
   const handleDragEnd = () => {
+    console.log('Drag end');
     setDraggedId(null);
     setDragOverId(null);
   };
@@ -41,11 +42,15 @@ export const TruckList: React.FC<TruckListProps> = ({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDragEnter = (truckId: number) => {
+  const handleDragEnter = (e: React.DragEvent, truckId: number) => {
+    e.preventDefault();
+    console.log('Drag enter:', truckId);
     setDragOverId(truckId);
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    console.log('Drag leave');
     setDragOverId(null);
   };
 
@@ -53,25 +58,30 @@ export const TruckList: React.FC<TruckListProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('Drop on:', targetTruckId, 'dragged:', draggedId);
+    
     if (!draggedId || draggedId === targetTruckId) {
       setDraggedId(null);
       setDragOverId(null);
       return;
     }
 
-    // Encontrar los índices
     const draggedIndex = orderedTrucks.findIndex(t => t.id === draggedId);
     const targetIndex = orderedTrucks.findIndex(t => t.id === targetTruckId);
 
+    console.log('Indices:', draggedIndex, targetIndex);
+
     if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
       return;
     }
 
-    // Crear nueva lista reordenada
     const newList = [...orderedTrucks];
     const [draggedTruck] = newList.splice(draggedIndex, 1);
     newList.splice(targetIndex, 0, draggedTruck);
 
+    console.log('New order:', newList.map(t => t.id));
     setOrderedTrucks(newList);
     setDraggedId(null);
     setDragOverId(null);
@@ -86,7 +96,7 @@ export const TruckList: React.FC<TruckListProps> = ({
         </Badge>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3" onDragOver={handleDragOver}>
         {orderedTrucks.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">Sin camiones en espera</p>
@@ -95,12 +105,13 @@ export const TruckList: React.FC<TruckListProps> = ({
           orderedTrucks.map((truck) => (
             <div
               key={truck.id}
-              draggable
+              draggable="true"
               onDragStart={(e) => handleDragStart(e, truck.id)}
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
-              onDragEnter={() => handleDragEnter(truck.id)}
+              onDragEnter={(e) => handleDragEnter(e, truck.id)}
               onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, truck.id)}
               onClick={() => onSelectTruck(truck.id)}
               className={`group relative flex items-center rounded-lg border-2 transition-all cursor-move overflow-hidden ${
                 draggedId === truck.id
@@ -122,7 +133,6 @@ export const TruckList: React.FC<TruckListProps> = ({
                   className="p-3 rounded-full hover:bg-primary/20 transition-colors"
                   title="Seleccionar para pesar"
                 >
-                  {/* Icono de flecha izquierda en cuadrado */}
                   <svg
                     className="w-6 h-6 text-primary"
                     fill="none"
@@ -132,9 +142,7 @@ export const TruckList: React.FC<TruckListProps> = ({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    {/* Cuadrado */}
                     <rect x="3" y="3" width="18" height="18" rx="2" />
-                    {/* Flecha izquierda */}
                     <path d="M 15 12 L 9 12 M 9 12 L 12 9 M 9 12 L 12 15" />
                   </svg>
                 </button>
