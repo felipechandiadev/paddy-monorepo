@@ -118,18 +118,23 @@ export const TruckList: React.FC<TruckListProps> = ({
             <p className="text-sm text-muted-foreground">Sin camiones en espera</p>
           </div>
         ) : (
-          orderedTrucks.map((truck) => (
+          orderedTrucks.map((truck, index) => {
+            const isFirstTruck = index === 0;
+
+            return (
             <div
               key={truck.id}
-              draggable="true"
+              draggable={isFirstTruck}
               onDragStart={(e) => handleDragStart(e, truck.id)}
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
               onDragEnter={(e) => handleDragEnter(e, truck.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, truck.id)}
-              onClick={() => onSelectTruck(truck.id)}
-              className={`group relative flex items-center rounded-lg border-2 transition-all cursor-move overflow-hidden ${
+              onClick={() => isFirstTruck && onSelectTruck(truck.id)}
+              className={`group relative flex items-center rounded-lg border-2 transition-all ${
+                isFirstTruck ? 'cursor-move' : 'cursor-default'
+              } overflow-hidden ${
                 isUpdating ? 'opacity-50 cursor-wait' :
                 draggedId === truck.id
                   ? 'opacity-50 border-dashed border-primary/50'
@@ -140,41 +145,53 @@ export const TruckList: React.FC<TruckListProps> = ({
                   : 'bg-card border-border hover:border-primary/50 hover:shadow-md'
               }`}
             >
-              {/* Icono de Flecha - 18% ancho con padding izquierdo */}
-              <div className="w-[18%] flex items-center justify-center bg-gradient-to-r from-primary/5 to-transparent py-4 pl-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectTruck(truck.id);
-                  }}
-                  className="p-2 rounded-full hover:bg-primary/30 hover:scale-110 transition-all duration-200 disabled:opacity-50 group/btn"
-                  title="Seleccionar para pesar"
-                  disabled={isUpdating}
-                >
-                  <svg
-                    className="w-8 h-8 text-primary group-hover/btn:text-primary group-hover/btn:drop-shadow-lg transition-all duration-200"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+              {/* Icono de Flecha - Solo visible si es el primer truck */}
+              {isFirstTruck ? (
+                <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-primary/5 to-transparent py-4 pl-3">
+                  {/* Badge de Turno */}
+                  <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
+                    #{truck.numero_turno}
+                  </Badge>
+
+                  {/* Botón Flecha */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectTruck(truck.id);
+                    }}
+                    className="p-2 rounded-full hover:bg-primary/30 hover:scale-110 transition-all duration-200 disabled:opacity-50 group/btn"
+                    title="Seleccionar para pesar"
+                    disabled={isUpdating}
                   >
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="M 15 12 L 9 12 M 9 12 L 12 9 M 9 12 L 12 15" />
-                  </svg>
-                </button>
-              </div>
+                    <svg
+                      className="w-8 h-8 text-primary group-hover/btn:text-primary group-hover/btn:drop-shadow-lg transition-all duration-200"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M 15 12 L 9 12 M 9 12 L 12 9 M 9 12 L 12 15" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-muted/5 to-transparent py-4 pl-3">
+                  {/* Badge de Turno - Sin botón */}
+                  <Badge variant="secondary" className="text-xs font-semibold">
+                    #{truck.numero_turno}
+                  </Badge>
+                </div>
+              )}
 
               {/* Contenido Principal - 82% ancho */}
               <div className="flex-1 flex items-center justify-between p-4 pr-3 relative gap-4">
                 {/* Sección izquierda: Info principal */}
                 <div className="flex-1 min-w-0 space-y-1">
-                  {/* Patente + Turno */}
+                  {/* Patente */}
                   <div className="flex items-baseline gap-3">
-                    <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
-                      #{truck.numero_turno}
-                    </Badge>
                     <p className="text-lg font-bold text-foreground truncate">
                       {truck.license_plate}
                     </p>
@@ -250,7 +267,8 @@ export const TruckList: React.FC<TruckListProps> = ({
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

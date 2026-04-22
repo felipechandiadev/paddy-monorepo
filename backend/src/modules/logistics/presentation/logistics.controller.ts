@@ -12,7 +12,9 @@ import {
   Logger,
   ValidationPipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '@shared/guards/jwt-auth.guard';
 import { LogisticsService } from '../application/logistics.service';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
@@ -127,6 +129,27 @@ export class LogisticsController {
       return result;
     } catch (error) {
       this.logger.error(`Error al obtener recepciones: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Listado paginado para TMS (requiere JWT). Debe declararse antes de truck-receptions/:id
+   */
+  @Get('truck-receptions/grid')
+  @UseGuards(JwtAuthGuard)
+  async getTruckReceptionsForGrid(
+    @Query('limit') limit: string = '100',
+    @Query('offset') offset: string = '0',
+  ) {
+    this.logger.log(`GET /truck-receptions/grid - Limit: ${limit}, Offset: ${offset}`);
+    try {
+      return await this.logisticsService.getAllTruckReceptions(
+        parseInt(limit, 10),
+        parseInt(offset, 10),
+      );
+    } catch (error) {
+      this.logger.error(`Error al obtener recepciones (grid): ${error.message}`);
       throw error;
     }
   }

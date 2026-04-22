@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { formatChileanRut } from "@/lib/formatChileanRut";
 
 interface TextFieldProps {
   id?: string;
@@ -122,47 +123,6 @@ export const TextField: React.FC<TextFieldProps> = ({
     onChange(e);
   } 
 
-  // Función para formatear DNI chileno
-  const formatDNI = (value: string): string => {
-    // Remover todo lo que no sea número o 'k'/'K'
-    let cleanValue = value.replace(/[^0-9kK]/g, '');
-    
-    // Convertir 'K' a minúscula
-    cleanValue = cleanValue.toLowerCase();
-    
-    if (cleanValue.length === 0) return '';
-    if (cleanValue.length === 1) return cleanValue;
-    
-    // Formatos específicos para DNI chileno:
-    // • XX.XXX.XXX-X (9 dígitos: 8 números + 1 dígito verificador)
-    // • X.XXX.XXX-X (8 dígitos: 7 números + 1 dígito verificador) 
-    // • XX.XXX.XXX-k (8 dígitos + k: 8 números + 'k')
-    // • X.XXX.XXX-k (7 dígitos + k: 7 números + 'k')
-    
-    if (cleanValue.length === 9 && !cleanValue.includes('k')) {
-      // XX.XXX.XXX-X (8 dígitos + 1 DV)
-      const numbers = cleanValue.slice(0, 8);
-      const dv = cleanValue.slice(8);
-      return numbers.slice(0, 2) + '.' + numbers.slice(2, 5) + '.' + numbers.slice(5) + '-' + dv;
-    } else if (cleanValue.length === 8 && !cleanValue.includes('k')) {
-      // X.XXX.XXX-X (7 dígitos + 1 DV)
-      const numbers = cleanValue.slice(0, 7);
-      const dv = cleanValue.slice(7);
-      return numbers.slice(0, 1) + '.' + numbers.slice(1, 4) + '.' + numbers.slice(4) + '-' + dv;
-    } else if (cleanValue.length === 9 && cleanValue.endsWith('k')) {
-      // XX.XXX.XXX-k (8 dígitos + 'k')
-      const numbers = cleanValue.slice(0, 8);
-      return numbers.slice(0, 2) + '.' + numbers.slice(2, 5) + '.' + numbers.slice(5) + '-k';
-    } else if (cleanValue.length === 8 && cleanValue.endsWith('k')) {
-      // X.XXX.XXX-k (7 dígitos + 'k')
-      const numbers = cleanValue.slice(0, 7);
-      return numbers.slice(0, 1) + '.' + numbers.slice(1, 4) + '.' + numbers.slice(4) + '-k';
-    } else {
-      // Para otras longitudes, devolver sin formato especial
-      return cleanValue;
-    }
-  };
-
   // Función para formatear moneda con símbolo configurable
   const formatCurrency = (raw: string, symbol: string = "$" ): string => {
     if (!raw) return '';
@@ -209,7 +169,7 @@ export const TextField: React.FC<TextFieldProps> = ({
     if (isDisabled) return; // No procesar si está disabled
     
     const rawValue = e.target.value;
-    const formattedValue = formatDNI(rawValue);
+    const formattedValue = formatChileanRut(rawValue);
     
     // Crear un evento sintético con el valor formateado
     const syntheticEvent = {

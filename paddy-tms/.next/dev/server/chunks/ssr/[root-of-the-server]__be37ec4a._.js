@@ -270,13 +270,15 @@ const authOptions = {
 "[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-/* __next_internal_action_entry_do_not_use__ [{"0058bf6fa1bb2d34d98b2adb0dac6c98985b479206":"getNextTurnoAction","00e974fb0515369ecf82dada3ac5abce0639296144":"getTurnosTodayAction","4050d7ab117902baaf6257f90e6439786adcc08baa":"createTruckReceptionAction","408705be56ab210b83bde4817c26730e6db571ee8a":"getTruckReceptionByIdAction","40ebb88ba80441a75112e8cdf2a13620b182de3ab6":"recordTareWeightAction","60b1c6f4f3ede8e97388a43447f378cfab1b572bae":"updateTruckStatusAction","60bad2f729042d2e500828f3b11a9d08742469b1d9":"updateTruckTurnoAction"},"",""] */ __turbopack_context__.s([
+/* __next_internal_action_entry_do_not_use__ [{"0058bf6fa1bb2d34d98b2adb0dac6c98985b479206":"getNextTurnoAction","00e974fb0515369ecf82dada3ac5abce0639296144":"getTurnosTodayAction","4028bdcaafef50d4cfa9add8e7c0e3be6b012b148e":"getTruckReceptionsGridAction","4050d7ab117902baaf6257f90e6439786adcc08baa":"createTruckReceptionAction","408705be56ab210b83bde4817c26730e6db571ee8a":"getTruckReceptionByIdAction","40ebb88ba80441a75112e8cdf2a13620b182de3ab6":"recordTareWeightAction","60b1c6f4f3ede8e97388a43447f378cfab1b572bae":"updateTruckStatusAction","60bad2f729042d2e500828f3b11a9d08742469b1d9":"updateTruckTurnoAction"},"",""] */ __turbopack_context__.s([
     "createTruckReceptionAction",
     ()=>createTruckReceptionAction,
     "getNextTurnoAction",
     ()=>getNextTurnoAction,
     "getTruckReceptionByIdAction",
     ()=>getTruckReceptionByIdAction,
+    "getTruckReceptionsGridAction",
+    ()=>getTruckReceptionsGridAction,
     "getTurnosTodayAction",
     ()=>getTurnosTodayAction,
     "recordTareWeightAction",
@@ -321,10 +323,9 @@ async function createTruckReceptionAction(payload) {
             throw new Error(errorMessage);
         }
         const result = await response.json();
-        console.log('Response from createTruckReceptionAction:', result);
         const truckData = result.data;
         if (!truckData.numero_turno) {
-            console.warn('Warning: numero_turno no definido en respuesta:', truckData);
+        // numero_turno no definido en respuesta
         }
         return truckData;
     } catch (error) {
@@ -347,7 +348,16 @@ async function recordTareWeightAction(payload) {
             body: JSON.stringify(payload)
         });
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorBody = await response.json();
+                if (errorBody.message) {
+                    errorMessage = errorBody.message;
+                }
+            } catch  {
+            // Si no se puede parsear el error, usar el mensaje generico
+            }
+            throw new Error(errorMessage);
         }
         const result = await response.json();
         return result.data;
@@ -377,6 +387,64 @@ async function getNextTurnoAction() {
         throw error;
     }
 }
+async function getTruckReceptionsGridAction(params) {
+    try {
+        const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$lib$2f$auth$2e$config$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["authOptions"]);
+        if (!session?.user?.accessToken) {
+            return {
+                rows: [],
+                total: 0
+            };
+        }
+        const limit = Math.min(Math.max(params.limit ?? 25, 1), 500);
+        const offset = Math.max(params.offset ?? 0, 0);
+        const response = await fetch(`${API_URL}/logistics/truck-receptions/grid?limit=${limit}&offset=${offset}`, {
+            headers: {
+                Authorization: `Bearer ${session.user.accessToken}`
+            },
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            return {
+                rows: [],
+                total: 0
+            };
+        }
+        const result = await response.json();
+        const payload = result.data;
+        const raw = payload?.data ?? [];
+        const total = typeof payload?.total === 'number' ? payload.total : raw.length;
+        const rows = raw.map((r)=>{
+            const producer = r.producer;
+            return {
+                id: Number(r.id),
+                numero_turno: r.numero_turno != null ? Number(r.numero_turno) : null,
+                status: String(r.status ?? ''),
+                turno_date: r.turno_date != null ? String(r.turno_date) : null,
+                license_plate: String(r.license_plate ?? ''),
+                driver_name: String(r.driver_name ?? ''),
+                carrier_company: r.carrier_company != null ? String(r.carrier_company) : null,
+                dispatch_guide: r.dispatch_guide != null ? String(r.dispatch_guide) : null,
+                gross_weight: r.gross_weight,
+                tare_weight: r.tare_weight,
+                net_weight: r.net_weight,
+                entry_at: r.entry_at != null ? String(r.entry_at) : '',
+                finished_at: r.finished_at != null ? String(r.finished_at) : null,
+                producer_name: producer?.name ?? '',
+                producer_rut: producer?.rut != null ? String(producer.rut) : ''
+            };
+        });
+        return {
+            rows,
+            total
+        };
+    } catch  {
+        return {
+            rows: [],
+            total: 0
+        };
+    }
+}
 async function getTurnosTodayAction() {
     try {
         const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$lib$2f$auth$2e$config$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["authOptions"]);
@@ -394,11 +462,9 @@ async function getTurnosTodayAction() {
             return [];
         }
         const result = await response.json();
-        console.log('Response from getTurnosTodayAction:', result);
         // El backend ahora retorna: { success, data: [...], timestamp }
         // Donde data es directamente el array de turnos
         const dataArray = result.data || [];
-        console.log('Extracted turnos:', dataArray);
         return dataArray;
     } catch (error) {
         console.error('Error obteniendo turnos:', error);
@@ -483,6 +549,7 @@ async function updateTruckTurnoAction(id, numeroTurno) {
     createTruckReceptionAction,
     recordTareWeightAction,
     getNextTurnoAction,
+    getTruckReceptionsGridAction,
     getTurnosTodayAction,
     getTruckReceptionByIdAction,
     updateTruckStatusAction,
@@ -491,6 +558,7 @@ async function updateTruckTurnoAction(id, numeroTurno) {
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(createTruckReceptionAction, "4050d7ab117902baaf6257f90e6439786adcc08baa", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(recordTareWeightAction, "40ebb88ba80441a75112e8cdf2a13620b182de3ab6", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getNextTurnoAction, "0058bf6fa1bb2d34d98b2adb0dac6c98985b479206", null);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getTruckReceptionsGridAction, "4028bdcaafef50d4cfa9add8e7c0e3be6b012b148e", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getTurnosTodayAction, "00e974fb0515369ecf82dada3ac5abce0639296144", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getTruckReceptionByIdAction, "408705be56ab210b83bde4817c26730e6db571ee8a", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(updateTruckStatusAction, "60b1c6f4f3ede8e97388a43447f378cfab1b572bae", null);
@@ -600,6 +668,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src
 ;
 ;
 ;
+;
 }),
 "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)", ((__turbopack_context__) => {
 "use strict";
@@ -611,6 +680,8 @@ __turbopack_context__.s([
     ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["createTruckReceptionAction"],
     "40943fe0fc99eb8d9cea89841d7ec7102a5dd85eac",
     ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$fetchProducersAction$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchProducersAction"],
+    "40ebb88ba80441a75112e8cdf2a13620b182de3ab6",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["recordTareWeightAction"],
     "60bad2f729042d2e500828f3b11a9d08742469b1d9",
     ()=>__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["updateTruckTurnoAction"]
 ]);

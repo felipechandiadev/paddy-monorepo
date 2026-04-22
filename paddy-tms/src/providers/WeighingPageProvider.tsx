@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getTurnosTodayAction, TruckReception } from '@/actions/truckReceptionActions';
+import { turnoService } from '@/services/turnoService';
 
 interface WeighingPageContextType {
   // Estado
@@ -33,14 +34,15 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setIsLoading(true);
     setError(null);
     try {
-      console.log('loadTrucksToday called - fetching turnos...');
       const turnos = await getTurnosTodayAction();
-      console.log('loadTrucksToday result:', turnos);
-      setTrucks(turnos);
+      
+      // Verificar si es nuevo día y combinar con pendientes de ayer
+      const { isNewDay, wasSystemRestart, allRecepciones } = turnoService.checkAndInitNewDay(turnos);
+      
+      setTrucks(allRecepciones);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
       setError(`Error cargando turnos: ${message}`);
-      console.error('Error cargando turnos:', err);
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +63,10 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setTrucks((prev) =>
       prev.map((t) => (t.id === truck.id ? truck : t))
     );
+    
+    // Actualizar estado de turnos en localStorage
+    turnoService.recordTurnoAssigned(truck.numero_turno);
+    turnoService.updatePreviousDayRecepciones(truck);
   }, []);
 
   // Limpiar error
@@ -83,7 +89,6 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setSyncStatus('synced');
       } catch (err) {
         setSyncStatus('error');
-        console.error('Error sincronizando:', err);
       }
     }, 30000);
 

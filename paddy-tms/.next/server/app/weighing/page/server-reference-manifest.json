@@ -44,6 +44,36 @@
       },
       "exportedName": "createTruckReceptionAction",
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+    },
+    "40fdc7aeff5a51cb5de9d47f5448fe69a154126e60": {
+      "workers": {
+        "app/weighing/page": {
+          "moduleId": 4251,
+          "async": false,
+          "exportedName": "recordTareWeightAction",
+          "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/page": "action-browser"
+      },
+      "exportedName": "recordTareWeightAction",
+      "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+    },
+    "605243c70be6c1cea35d51acfea5c32a19483c4e94": {
+      "workers": {
+        "app/weighing/page": {
+          "moduleId": 4251,
+          "async": false,
+          "exportedName": "updateTruckTurnoAction",
+          "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/page": "action-browser"
+      },
+      "exportedName": "updateTruckTurnoAction",
+      "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
     }
   },
   "edge": {}

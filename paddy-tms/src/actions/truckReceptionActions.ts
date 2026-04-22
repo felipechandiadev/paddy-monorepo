@@ -2,6 +2,7 @@
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
+import { formatChileanRut } from '@/lib/formatChileanRut';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -18,6 +19,7 @@ export interface CreateTruckWithGrossWeightPayload {
 export interface RegisterTareWeightPayload {
   truck_reception_id: number;
   tare_weight: number;
+  status?: 'FINISHED';
   created_by?: string;
 }
 
@@ -73,17 +75,15 @@ export async function createTruckReceptionAction(
       throw new Error(errorMessage);
     }
 
-    const result = await response.json();
+      const result = await response.json();
     
-    console.log('Response from createTruckReceptionAction:', result);
+      const truckData: TruckReception = result.data;
     
-    const truckData: TruckReception = result.data;
+      if (!truckData.numero_turno) {
+        // numero_turno no definido en respuesta
+      }
     
-    if (!truckData.numero_turno) {
-      console.warn('Warning: numero_turno no definido en respuesta:', truckData);
-    }
-    
-    return truckData;
+      return truckData;
   } catch (error) {
     console.error('Error creando recepcion:', error);
     throw error;
@@ -110,7 +110,16 @@ export async function recordTareWeightAction(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody.message) {
+          errorMessage = errorBody.message;
+        }
+      } catch {
+        // Si no se puede parsear el error, usar el mensaje generico
+      }
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
@@ -147,6 +156,85 @@ export async function getNextTurnoAction(): Promise<number> {
   }
 }
 
+/** Fila serializable para el DataGrid de recepciones */
+export interface TruckReceptionGridRow {
+  id: number;
+  status: string;
+  license_plate: string;
+  driver_name: string;
+  carrier_company?: string | null;
+  dispatch_guide?: string | null;
+  gross_weight: string | number | null;
+  tare_weight: string | number | null;
+  net_weight: string | number | null;
+  entry_at: string;
+  finished_at?: string | null;
+  producer_name: string;
+  producer_rut: string;
+}
+
+/**
+ * Listado paginado para el grid del TMS (endpoint autenticado /truck-receptions/grid).
+ */
+export async function getTruckReceptionsGridAction(params: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ rows: TruckReceptionGridRow[]; total: number }> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.accessToken) {
+      return { rows: [], total: 0 };
+    }
+
+    const limit = Math.min(Math.max(params.limit ?? 25, 1), 500);
+    const offset = Math.max(params.offset ?? 0, 0);
+
+    const response = await fetch(
+      `${API_URL}/logistics/truck-receptions/grid?limit=${limit}&offset=${offset}`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.user.accessToken}`,
+        },
+        cache: 'no-store',
+      },
+    );
+
+    if (!response.ok) {
+      return { rows: [], total: 0 };
+    }
+
+    const result = await response.json();
+    const payload = result.data as { data: unknown[]; total: number } | undefined;
+    const raw = (payload?.data ?? []) as Record<string, unknown>[];
+    const total = typeof payload?.total === 'number' ? payload.total : raw.length;
+
+    const rows: TruckReceptionGridRow[] = raw.map((r) => {
+      const producer = r.producer as { name?: string; rut?: string } | undefined;
+      return {
+        id: Number(r.id),
+        status: String(r.status ?? ''),
+        license_plate: String(r.license_plate ?? ''),
+        driver_name: String(r.driver_name ?? ''),
+        carrier_company: r.carrier_company != null ? String(r.carrier_company) : null,
+        dispatch_guide: r.dispatch_guide != null ? String(r.dispatch_guide) : null,
+        gross_weight: r.gross_weight as string | number | null,
+        tare_weight: r.tare_weight as string | number | null,
+        net_weight: r.net_weight as string | number | null,
+        entry_at: r.entry_at != null ? String(r.entry_at) : '',
+        finished_at: r.finished_at != null ? String(r.finished_at) : null,
+        producer_name: producer?.name ?? '',
+        producer_rut:
+          producer?.rut != null ? formatChileanRut(String(producer.rut)) : '',
+      };
+    });
+
+    return { rows, total };
+  } catch {
+    return { rows: [], total: 0 };
+  }
+}
+
 export async function getTurnosTodayAction(): Promise<TruckReception[]> {
   try {
     const session = await getServerSession(authOptions);
@@ -169,13 +257,10 @@ export async function getTurnosTodayAction(): Promise<TruckReception[]> {
 
     const result = await response.json();
     
-    console.log('Response from getTurnosTodayAction:', result);
-
     // El backend ahora retorna: { success, data: [...], timestamp }
     // Donde data es directamente el array de turnos
     const dataArray = (result.data || []) as TruckReception[];
 
-    console.log('Extracted turnos:', dataArray);
     return dataArray;
   } catch (error) {
     console.error('Error obteniendo turnos:', error);

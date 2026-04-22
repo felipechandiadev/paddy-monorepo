@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 const protectedRoutes = [
   '/weighing',
+  '/receptions',
 ];
 
 const publicRoutes = [

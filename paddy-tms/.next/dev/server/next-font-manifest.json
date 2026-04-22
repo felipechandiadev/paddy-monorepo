@@ -1,7 +1,8 @@
 {
   "app": {
-    "[project]/paddy/paddy-tms/src/app/_not-found/page": [],
+    "[project]/paddy/paddy-tms/src/app/monitor/page": [],
     "[project]/paddy/paddy-tms/src/app/page": [],
+    "[project]/paddy/paddy-tms/src/app/receptions/page": [],
     "[project]/paddy/paddy-tms/src/app/weighing/page": []
   },
   "appUsingSizeAdjust": true,

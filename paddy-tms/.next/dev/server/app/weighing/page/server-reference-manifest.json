@@ -45,6 +45,21 @@
       "exportedName": "createTruckReceptionAction",
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
     },
+    "40ebb88ba80441a75112e8cdf2a13620b182de3ab6": {
+      "workers": {
+        "app/weighing/page": {
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "recordTareWeightAction",
+          "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/page": "action-browser"
+      },
+      "exportedName": "recordTareWeightAction",
+      "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
+    },
     "60bad2f729042d2e500828f3b11a9d08742469b1d9": {
       "workers": {
         "app/weighing/page": {

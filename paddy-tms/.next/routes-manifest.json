@@ -64,6 +64,12 @@
       "namedRegex": "^/monitor(?:/)?$"
     },
     {
+      "page": "/receptions",
+      "regex": "^/receptions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/receptions(?:/)?$"
+    },
+    {
       "page": "/weighing",
       "regex": "^/weighing(?:/)?$",
       "routeKeys": {},

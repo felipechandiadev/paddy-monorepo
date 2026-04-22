@@ -52,10 +52,38 @@ export class SerialPortService {
 
       this.isConnected = true;
       this.startReading();
-      console.log('Puerto serial conectado exitosamente');
       return true;
     } catch (error) {
       console.warn('Error conectando a puerto serial:', error);
+      this.isConnected = false;
+      return false;
+    }
+  }
+
+  /**
+   * Abre el selector del sistema para elegir otro puerto (Web Serial API).
+   * Cierra la conexión actual si existía.
+   */
+  async connectChoosingPort(): Promise<boolean> {
+    try {
+      if (!this.isAvailable()) {
+        return false;
+      }
+      await this.disconnect();
+      this.port = await (navigator as any).serial.requestPort();
+      if (!this.port) {
+        return false;
+      }
+      await this.port.open({
+        baudRate: 9600,
+        dataBits: 8,
+        stopBits: 1,
+        parity: 'none',
+      });
+      this.isConnected = true;
+      this.startReading();
+      return true;
+    } catch (error) {
       this.isConnected = false;
       return false;
     }
@@ -159,6 +187,24 @@ export class SerialPortService {
   }
 
   /**
+   * Identificador legible del puerto actual (USB vendor/product si aplica).
+   */
+  getPortFingerprint(): string | null {
+    if (!this.port || typeof this.port.getInfo !== 'function') {
+      return null;
+    }
+    try {
+      const info = this.port.getInfo() as { usbVendorId?: number; usbProductId?: number };
+      if (info.usbVendorId != null && info.usbProductId != null) {
+        return `USB ${info.usbVendorId.toString(16)}:${info.usbProductId.toString(16)}`;
+      }
+    } catch {
+      // ignore
+    }
+    return 'Puerto serial (Web Serial)';
+  }
+
+  /**
    * Desconectar del puerto serial
    */
   async disconnect(): Promise<void> {
@@ -175,8 +221,6 @@ export class SerialPortService {
         await this.port.close();
         this.port = null;
       }
-
-      console.log('Puerto serial desconectado');
     } catch (error) {
       console.warn('Error desconectando puerto serial:', error);
     }

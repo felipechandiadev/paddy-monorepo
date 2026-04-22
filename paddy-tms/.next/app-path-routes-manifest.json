@@ -4,6 +4,7 @@
   "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
   "/monitor/page": "/monitor",
   "/page": "/",
+  "/receptions/page": "/receptions",
   "/weighing/[id]/page": "/weighing/[id]",
   "/weighing/page": "/weighing"
 }
