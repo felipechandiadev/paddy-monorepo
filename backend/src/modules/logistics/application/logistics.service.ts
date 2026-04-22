@@ -39,15 +39,12 @@ export class LogisticsService {
    * Obtener todos los turnos de un día específico
    */
   async getTurnosByDate(date: Date): Promise<TruckReception[]> {
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
+    const searchDate = new Date(date);
+    searchDate.setHours(0, 0, 0, 0);
 
     return this.truckReceptionRepository.find({
       where: {
-        turno_date: date,
+        turno_date: searchDate,
       },
       relations: ['producer'],
       order: { numero_turno: 'ASC' },
