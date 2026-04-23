@@ -30,6 +30,42 @@ function persistQueueIds(ids: number[]) {
   }
 }
 
+/** Fantasma bajo el cursor: carta “levantada” con sombra y borde acentuado. */
+function setQueueCardDragPreview(e: React.DragEvent, rowEl: HTMLElement) {
+  const rect = rowEl.getBoundingClientRect();
+  const clone = rowEl.cloneNode(true) as HTMLElement;
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+  clone.querySelectorAll('[draggable]').forEach((el) => el.removeAttribute('draggable'));
+
+  const w = Math.round(rect.width);
+  const shadowLift =
+    '0 28px 56px -16px rgba(0,0,0,0.38), 0 0 0 2px rgba(37, 99, 168, 0.55), 0 14px 32px -12px rgba(28, 32, 70, 0.35)';
+
+  clone.style.cssText = [
+    'position:fixed',
+    'top:0',
+    'left:0',
+    `width:${w}px`,
+    'pointer-events:none',
+    'opacity:1',
+    'border-radius:0.5rem',
+    'overflow:hidden',
+    'box-sizing:border-box',
+    `box-shadow:${shadowLift}`,
+    'transform:translate3d(-9999px,0,0) rotate(-1.25deg) scale(1.025)',
+    'z-index:2147483647',
+    'background:var(--color-background)',
+    'will-change:transform',
+  ].join(';');
+
+  document.body.appendChild(clone);
+  const offsetX = Math.max(8, Math.min(e.clientX - rect.left, w - 8));
+  const offsetY = Math.max(8, Math.min(e.clientY - rect.top, rect.height - 8));
+  e.dataTransfer.setDragImage(clone, offsetX, offsetY);
+  requestAnimationFrame(() => clone.remove());
+}
+
 /** Aplica orden guardado y añade al final los camiones nuevos (por número de turno). */
 function mergeEsperaOrder(espera: TruckReception[], savedIds: number[]): TruckReception[] {
   const byId = new Map(espera.map((t) => [t.id, t]));
@@ -89,10 +125,16 @@ export const TruckList: React.FC<TruckListProps> = ({
     }
   }, [queueHeadId, selectedTruckId, onSelectTruck]);
 
-  const handleDragStart = (e: React.DragEvent, truckId: number) => {
+  const handleRowDragStart = (e: React.DragEvent, truckId: number, rowEl: HTMLElement) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      e.preventDefault();
+      return;
+    }
     setDraggedId(truckId);
     e.dataTransfer.setData('text/paddy-truck-id', String(truckId));
     e.dataTransfer.effectAllowed = 'move';
+    setQueueCardDragPreview(e, rowEl);
   };
 
   const handleDragEnd = () => {
@@ -169,6 +211,11 @@ export const TruckList: React.FC<TruckListProps> = ({
               <div
                 key={truck.id}
                 role="listitem"
+                data-truck-queue-row
+                aria-grabbed={isDragging}
+                draggable
+                onDragStart={(e) => handleRowDragStart(e, truck.id, e.currentTarget)}
+                onDragEnd={handleDragEnd}
                 onDragOver={handleDragOver}
                 onDragEnter={(e) => {
                   e.preventDefault();
@@ -194,18 +241,24 @@ export const TruckList: React.FC<TruckListProps> = ({
                 }}
                 tabIndex={isHead ? 0 : -1}
                 className={[
-                  'group flex items-stretch rounded-lg border-2 transition-all overflow-hidden',
-                  isHead ? 'cursor-pointer' : '',
-                  isDragging ? 'opacity-50 border-dashed border-primary/50' : '',
-                  isDragOver && !isDragging ? 'ring-2 ring-primary/40 border-primary/60' : '',
-                  isHead
-                    ? 'ring-1 ring-amber-500/50 border-amber-500/40 bg-amber-500/5'
-                    : 'border-border bg-card',
-                  isSelected && isHead
+                  'group flex items-stretch rounded-lg border-2 overflow-hidden transition-[opacity,box-shadow,transform,border-color,background-color] duration-200',
+                  isDragging
+                    ? 'opacity-[0.52] cursor-grabbing border-dashed border-primary/70 bg-muted/40 shadow-[inset_0_1px_12px_rgba(0,0,0,0.08)] ring-2 ring-inset ring-primary/25 scale-[0.992]'
+                    : '',
+                  !isDragging && isHead ? 'cursor-pointer' : '',
+                  !isDragging && !isHead ? 'cursor-grab active:cursor-grabbing' : '',
+                  !isDragging && isDragOver ? 'ring-2 ring-primary/45 border-primary/65 shadow-md' : '',
+                  !isDragging &&
+                    isHead &&
+                    !isSelected &&
+                    'ring-1 ring-amber-500/50 border-amber-500/40 bg-amber-500/5',
+                  !isDragging && !isHead && 'border-border bg-card opacity-95 hover:border-primary/35',
+                  !isDragging && isSelected && isHead
                     ? 'bg-primary/10 border-primary shadow-lg ring-2 ring-primary'
                     : '',
-                  !isHead ? 'opacity-95 hover:border-primary/30' : '',
-                ].join(' ')}
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-primary/5 to-transparent px-4 py-4">
                   {isHead && (
@@ -299,18 +352,13 @@ export const TruckList: React.FC<TruckListProps> = ({
                 </div>
 
                 <div
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, truck.id)}
-                  onDragEnd={handleDragEnd}
-                  onClick={(e) => e.stopPropagation()}
-                  title="Arrastrar para reordenar"
-                  aria-label="Arrastrar para reordenar en la cola"
+                  title="Arrastrar la fila para reordenar"
+                  aria-hidden
                   className={[
                     'flex-shrink-0 min-w-12 flex items-center justify-center self-stretch border-l border-border/80 bg-muted/25 text-muted-foreground px-3 py-4',
-                    'cursor-grab active:cursor-grabbing hover:bg-muted/45 hover:text-foreground select-none touch-none',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset',
+                    'pointer-events-none select-none',
+                    'group-hover:bg-muted/35',
                   ].join(' ')}
-                  tabIndex={-1}
                 >
                   <span className="material-symbols-outlined text-xl leading-none" aria-hidden>
                     drag_pan
