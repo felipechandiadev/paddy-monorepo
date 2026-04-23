@@ -267,6 +267,7 @@ export default function ReceptionsSection({
               <th className="px-4 py-2 text-left font-semibold text-gray-900">Tipo Arroz</th>
               <th className="px-4 py-2 text-left font-semibold text-gray-900">Patente</th>
               <th className="px-4 py-2 text-right font-semibold text-gray-900">Peso Neto</th>
+              <th className="px-4 py-2 text-right font-semibold text-gray-900">Paddy neto</th>
               <th className="px-4 py-2 text-left font-semibold text-gray-900">Estado</th>
             </tr>
           </thead>
@@ -284,6 +285,9 @@ export default function ReceptionsSection({
                 <td className="px-4 py-2 text-gray-700 uppercase">{reception.licensePlate || '-'}</td>
                 <td className="px-4 py-2 text-right font-medium text-gray-900">
                   {Math.round(reception.netWeight).toLocaleString('es-CL')} kg
+                </td>
+                <td className="px-4 py-2 text-right font-medium text-gray-900">
+                  {Math.round(reception.paddyNetWeight).toLocaleString('es-CL')} kg
                 </td>
                 <td className="px-4 py-2">
                   <span

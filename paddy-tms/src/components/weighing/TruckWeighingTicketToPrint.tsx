@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { TruckReception } from '@/actions/truckReceptionActions';
+import type { TruckDispatch } from '@/actions/truckDispatchActions';
 import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import { formatChileanRut } from '@/lib/formatChileanRut';
 import styles from './TruckWeighingTicketToPrint.module.css';
@@ -44,7 +45,9 @@ function formatKgTicket(value?: number | string | null) {
 }
 
 export interface TruckWeighingTicketToPrintProps {
-  truck: TruckReception;
+  truck: TruckReception | TruckDispatch;
+  /** Recepción: Nº de turno (o folio si no hay turno). Despacho: siempre folio (`id`). */
+  variant?: 'reception' | 'dispatch';
   /** Texto libre bajo “Observaciones” (opcional). */
   observations?: string;
 }
@@ -55,6 +58,7 @@ export interface TruckWeighingTicketToPrintProps {
  */
 export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProps> = ({
   truck,
+  variant = 'reception',
   observations,
 }) => {
   const entry = toDate(truck.entry_at);
@@ -65,10 +69,15 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
   const producerName = truck.producer?.name ?? '—';
   const productorLine = `${producerRut} ${producerName}`.trim();
 
-  const turnoFormatted =
-    truck.numero_turno != null
+  const isDispatch = variant === 'dispatch';
+  const folioFormatted = Number(truck.id).toLocaleString('es-CL');
+  const numberLine = isDispatch
+    ? folioFormatted
+    : truck.numero_turno != null
       ? Number(truck.numero_turno).toLocaleString('es-CL')
-      : '—';
+      : folioFormatted;
+
+  const operationSubtitle = isDispatch ? 'Despacho de Carga' : 'Recepción de Carga';
 
   const guia = truck.dispatch_guide?.trim() || '—';
 
@@ -83,8 +92,10 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
         </div>
         <div className={styles.documentMeta}>
           <h2 className={styles.ticketTitle}>TICKET DE PESAJE</h2>
-          <p className={styles.ticketNumber}>Nº {turnoFormatted}</p>
-          <p className={styles.documentSubtitle}>Recepción de Carga</p>
+          <p className={styles.ticketNumber}>
+            {isDispatch ? `Folio Nº ${numberLine}` : `Nº ${numberLine}`}
+          </p>
+          <p className={styles.documentSubtitle}>{operationSubtitle}</p>
           {exit && (
             <p className={styles.documentDate} suppressHydrationWarning>
               Fecha: {formatDateDash(exit)}

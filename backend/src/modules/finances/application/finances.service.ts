@@ -3251,13 +3251,17 @@ export class FinancesService {
 
     const pendingReceptions = pendingReceptionsRaw.map((reception: any) => {
       const netWeight = Number(reception.netWeight ?? 0);
+      /** Kilos a valorizar: paddy neto (post análisis); si no hay, peso neto bruto−tara. */
+      const paddyNetKg = Number(
+        reception.finalNetWeight ?? reception.netWeight ?? 0,
+      );
       const ricePrice = Number(reception.ricePrice ?? 0);
       const dryPercent =
         reception.dryPercent === null || reception.dryPercent === undefined
           ? 0
           : Number(reception.dryPercent);
 
-      const netAmount = this.roundCurrency(netWeight * ricePrice);
+      const netAmount = this.roundCurrency(paddyNetKg * ricePrice);
       const dryingReferenceAmount = this.roundCurrency(netAmount * (dryPercent / 100));
       const riceVatAmount = this.roundCurrency(
         netAmount * FinancesService.RICE_VAT_RATE,
@@ -3275,6 +3279,7 @@ export class FinancesService {
         createdAt: reception.createdAt,
         status: reception.status,
         netWeight,
+        paddyNetWeight: paddyNetKg,
         ricePrice,
         dryPercent,
         netAmount,

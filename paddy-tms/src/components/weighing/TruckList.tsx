@@ -5,6 +5,7 @@ import { TruckReception } from '@/actions/truckReceptionActions';
 import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import Badge from '@/shared/components/ui/Badge/Badge';
 import { AssignTurnoRollerDialog } from '@/components/weighing/AssignTurnoRollerDialog';
+import { emitEsperaQueueOrder } from '@/lib/logisticsSocket';
 
 const QUEUE_STORAGE_KEY = 'paddy_tms_weighing_espera_order';
 
@@ -111,7 +112,9 @@ export const TruckList: React.FC<TruckListProps> = ({
     const saved = loadSavedQueueIds();
     const merged = mergeEsperaOrder(espera, saved);
     setOrderedTrucks(merged);
-    persistQueueIds(merged.map((t) => t.id));
+    const ids = merged.map((t) => t.id);
+    persistQueueIds(ids);
+    emitEsperaQueueOrder(ids);
   }, [espera]);
 
   const queueHeadId = orderedTrucks[0]?.id ?? null;
@@ -161,7 +164,9 @@ export const TruckList: React.FC<TruckListProps> = ({
       const [removed] = next.splice(from, 1);
       next.splice(to, 0, removed);
       setOrderedTrucks(next);
-      persistQueueIds(next.map((t) => t.id));
+      const orderedIds = next.map((t) => t.id);
+      persistQueueIds(orderedIds);
+      emitEsperaQueueOrder(orderedIds);
       handleDragEnd();
     },
     [draggedId, orderedTrucks],

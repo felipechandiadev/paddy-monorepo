@@ -61,6 +61,8 @@ export interface ProducerReceptionItem {
   grossWeight: number;
   tare: number;
   netWeight: number;
+  /** Peso final post análisis (finalNetWeight en API); si no hay análisis, coincide con netWeight. */
+  paddyNetWeight: number;
   licensePlate: string;
   status: ProducerReceptionStatus;
 }
@@ -76,6 +78,8 @@ export interface ProducerPendingBalanceReception {
   createdAt: string;
   status: string;
   netWeight: number;
+  /** Kilos usados para netAmount (paddy neto / finalNetWeight). */
+  paddyNetWeight: number;
   ricePrice: number;
   dryPercent: number;
   netAmount: number;

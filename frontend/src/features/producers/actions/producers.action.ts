@@ -93,6 +93,12 @@ function normalizeProducerPendingBalance(raw: any): ProducerPendingBalance {
         createdAt: String(reception?.createdAt ?? ''),
         status: String(reception?.status ?? 'cancelled'),
         netWeight: Number(reception?.netWeight ?? 0),
+        paddyNetWeight: Number(
+          reception?.paddyNetWeight ??
+            reception?.finalNetWeight ??
+            reception?.netWeight ??
+            0,
+        ),
         ricePrice: Number(reception?.ricePrice ?? 0),
         dryPercent: Number(reception?.dryPercent ?? 0),
         netAmount: Number(reception?.netAmount ?? 0),
@@ -313,20 +319,30 @@ export async function fetchProducerReceptions(
         ? payload.data
         : [];
 
-    const normalizedData: ProducerReceptionItem[] = receptions.map((reception: any) => ({
-      id: Number(reception.id),
-      guide: String(reception.guideNumber || reception.guide || ''),
-      createdAt: String(reception.createdAt || ''),
-      seasonId: reception.seasonId ? Number(reception.seasonId) : undefined,
-      seasonName: String(reception.season?.name || reception.seasonName || 'Sin temporada'),
-      riceTypeId: reception.riceTypeId ? Number(reception.riceTypeId) : undefined,
-      riceTypeName: String(reception.riceType?.name || reception.riceTypeName || 'Sin tipo'),
-      grossWeight: Number(reception.grossWeight) || 0,
-      tare: Number(reception.tareWeight || reception.tare) || 0,
-      netWeight: Number(reception.netWeight) || 0,
-      licensePlate: String(reception.licensePlate || '-'),
-      status: normalizeReceptionStatus(reception.status),
-    }));
+    const normalizedData: ProducerReceptionItem[] = receptions.map((reception: any) => {
+      const netWeight = Number(reception.netWeight) || 0;
+      const finalNw = reception.finalNetWeight;
+      const paddyNetWeight =
+        finalNw != null && finalNw !== ''
+          ? Number(finalNw) || 0
+          : netWeight;
+
+      return {
+        id: Number(reception.id),
+        guide: String(reception.guideNumber || reception.guide || ''),
+        createdAt: String(reception.createdAt || ''),
+        seasonId: reception.seasonId ? Number(reception.seasonId) : undefined,
+        seasonName: String(reception.season?.name || reception.seasonName || 'Sin temporada'),
+        riceTypeId: reception.riceTypeId ? Number(reception.riceTypeId) : undefined,
+        riceTypeName: String(reception.riceType?.name || reception.riceTypeName || 'Sin tipo'),
+        grossWeight: Number(reception.grossWeight) || 0,
+        tare: Number(reception.tareWeight || reception.tare) || 0,
+        netWeight,
+        paddyNetWeight,
+        licensePlate: String(reception.licensePlate || '-'),
+        status: normalizeReceptionStatus(reception.status),
+      };
+    });
 
     return { success: true, data: normalizedData };
   } catch (error) {

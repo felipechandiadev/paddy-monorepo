@@ -20,7 +20,9 @@ import {
   SettlementReceptionSnapshot,
 } from '../../modules/finances/domain/finances.entity';
 import { DatabaseBackupService } from './services/database-backup.service';
+import { MysqldumpBackupService } from './services/mysqldump-backup.service';
 import { BackupDatabaseCommand } from './commands/backup.command';
+import { DatabaseBackupScheduler } from './scheduler/database-backup.scheduler';
 
 @Module({
   imports: [
@@ -40,7 +42,12 @@ import { BackupDatabaseCommand } from './commands/backup.command';
       SettlementReceptionSnapshot,
     ]),
   ],
-  providers: [DatabaseBackupService, BackupDatabaseCommand],
+  providers: [
+    DatabaseBackupService,
+    MysqldumpBackupService,
+    DatabaseBackupScheduler,
+    BackupDatabaseCommand,
+  ],
   exports: [DatabaseBackupService],
 })
 export class DatabaseModule {}

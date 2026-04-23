@@ -20,6 +20,8 @@ export default function PaddyTopBar() {
       can('producers.view')  && { label: 'Productores',    url: '/paddy/management/producers' },
       can('users.view')      && { label: 'Usuarios',       url: '/paddy/users' },
       can('rice_types.view') && { label: 'Tipos de Arroz', url: '/paddy/management/rice-types' },
+      can('receptions.view') && { label: 'Recepciones de carga', url: '/paddy/management/truck-receptions' },
+      can('receptions.view') && { label: 'Despachos de carga', url: '/paddy/management/truck-dispatches' },
     ].filter(Boolean) as SideBarMenuItem[];
 
     const financesChildren = [

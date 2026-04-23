@@ -29,11 +29,15 @@ export interface DataGridColumn {
   filterable?: boolean; // Nueva propiedad para controlar si la columna es filtrable
   // Use serializable render hints instead of passing functions from server
   renderCell?: (params: any) => React.ReactNode;
-  renderType?: 'currency' | 'badge' | 'dateString';
+  renderType?: 'currency' | 'badge' | 'dateString' | 'weightKg';
   valueGetter?: (params: any) => any;
   align?: 'left' | 'right' | 'center';
   headerAlign?: 'left' | 'right' | 'center';
   hide?: boolean;
+  /** Una sola línea; evita que celdas como patente o fechas se partan. */
+  nowrap?: boolean;
+  /** Tipografía monoespaciada (ej. patente). */
+  mono?: boolean;
   // Componente para acciones que operan sobre la fila completa
   actionComponent?: React.ComponentType<{ row: any; column: DataGridColumn }>;
 }

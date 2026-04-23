@@ -110,6 +110,17 @@ export const TmsAppLayout: React.FC<TmsAppLayoutProps> = ({
                 </span>
               </a>
 
+              <Link
+                href="/despachos"
+                className="group p-2 rounded-lg hover:bg-muted/60 transition-colors duration-200 inline-flex items-center justify-center"
+                title="Despacho"
+                aria-label="Ir a despacho"
+              >
+                <span className="material-symbols-outlined text-[22px] leading-none text-foreground group-hover:text-primary transition-colors">
+                  outbox
+                </span>
+              </Link>
+
               <button
                 type="button"
                 className="p-2 rounded-lg hover:bg-muted/60 transition-colors duration-200"

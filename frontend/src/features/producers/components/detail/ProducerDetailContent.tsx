@@ -25,9 +25,9 @@ export default function ProducerDetailContent({
   const [pendingBalanceData, setPendingBalanceData] = useState<ProducerPendingBalance | null>(null);
   const [isLoadingPendingBalance, setIsLoadingPendingBalance] = useState(false);
   const [pendingBalanceError, setPendingBalanceError] = useState<string | null>(null);
-  const [producerAnalyzedKgTotal, setProducerAnalyzedKgTotal] = useState(0);
-  const [producerSettledKgTotal, setProducerSettledKgTotal] = useState(0);
-  const [isLoadingKgData, setIsLoadingKgData] = useState(false);
+  const [producerNetWeightTotal, setProducerNetWeightTotal] = useState(0);
+  const [producerPaddyNetTotal, setProducerPaddyNetTotal] = useState(0);
+  const [isLoadingReceptionKgTotals, setIsLoadingReceptionKgTotals] = useState(false);
 
   useEffect(() => {
     setProducer(initialProducer);
@@ -69,41 +69,40 @@ export default function ProducerDetailContent({
   useEffect(() => {
     let isMounted = true;
 
-    const loadProducerKgData = async () => {
-      setIsLoadingKgData(true);
+    const loadReceptionKgTotals = async () => {
+      setIsLoadingReceptionKgTotals(true);
 
       try {
-        const [analyzedResult, settledResult] = await Promise.all([
-          fetchProducerReceptions(initialProducer.id, 'analyzed'),
-          fetchProducerReceptions(initialProducer.id, 'settled'),
-        ]);
+        const result = await fetchProducerReceptions(initialProducer.id);
 
         if (!isMounted) {
           return;
         }
 
-        const analyzedKg = analyzedResult.data.reduce(
-          (sum, r) => sum + (r.netWeight || 0),
-          0,
-        );
+        if (!result.success) {
+          setProducerNetWeightTotal(0);
+          setProducerPaddyNetTotal(0);
+          return;
+        }
 
-        const settledKg = settledResult.data.reduce(
-          (sum, r) => sum + (r.netWeight || 0),
-          0,
-        );
-
-        setProducerAnalyzedKgTotal(analyzedKg);
-        setProducerSettledKgTotal(settledKg);
+        const netTotal = result.data.reduce((sum, r) => sum + (r.netWeight || 0), 0);
+        const paddyTotal = result.data.reduce((sum, r) => sum + (r.paddyNetWeight || 0), 0);
+        setProducerNetWeightTotal(netTotal);
+        setProducerPaddyNetTotal(paddyTotal);
       } catch (error) {
-        console.error('Error loading kg data:', error);
+        console.error('Error loading reception kg totals:', error);
+        if (isMounted) {
+          setProducerNetWeightTotal(0);
+          setProducerPaddyNetTotal(0);
+        }
       } finally {
         if (isMounted) {
-          setIsLoadingKgData(false);
+          setIsLoadingReceptionKgTotals(false);
         }
       }
     };
 
-    void loadProducerKgData();
+    void loadReceptionKgTotals();
 
     return () => {
       isMounted = false;
@@ -143,6 +142,10 @@ export default function ProducerDetailContent({
     : pendingBalanceError
       ? 'No disponible'
       : formattedPendingBalance;
+
+  const producerCastigoTotalKg = Math.round(
+    producerNetWeightTotal - producerPaddyNetTotal,
+  );
 
   const tabs: { id: TabType; label: string; icon: string }[] = [
     { id: 'info', label: 'Información', icon: 'person' },
@@ -316,36 +319,43 @@ export default function ProducerDetailContent({
               )}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
-                <span className="font-medium uppercase tracking-wide text-neutral-500">
-                  Paddy recibido
-                </span>
-                <span className="font-semibold text-neutral-900">
-                  {isLoadingKgData ? '...' : `${numberFormatter.format(producerAnalyzedKgTotal)} kg`}
-                </span>
-              </span>
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
-                <span className="font-medium uppercase tracking-wide text-neutral-500">
-                  Paddy liquidado
-                </span>
-                <span className="font-semibold text-neutral-900">
-                  {isLoadingKgData ? '...' : `${numberFormatter.format(producerSettledKgTotal)} kg`}
-                </span>
-              </span>
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
-                <span className="font-medium uppercase tracking-wide text-neutral-500">
-                  Paddy total
-                </span>
-                <span className="font-semibold text-neutral-900">
-                  {isLoadingKgData ? '...' : `${numberFormatter.format(producerAnalyzedKgTotal + producerSettledKgTotal)} kg`}
-                </span>
-              </span>
-            </div>
           </>
         )}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
+            <span className="font-medium uppercase tracking-wide text-neutral-500">
+              Peso neto total
+            </span>
+            <span className="font-semibold text-neutral-900">
+              {isLoadingReceptionKgTotals
+                ? '...'
+                : `${numberFormatter.format(Math.round(producerNetWeightTotal))} kg`}
+            </span>
+          </span>
+
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
+            <span className="font-medium uppercase tracking-wide text-neutral-500">
+              Castigo total
+            </span>
+            <span className="font-semibold text-neutral-900">
+              {isLoadingReceptionKgTotals
+                ? '...'
+                : `${numberFormatter.format(producerCastigoTotalKg)} kg`}
+            </span>
+          </span>
+
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-neutral-50 px-3 py-1.5 text-[10px] leading-none text-neutral-600">
+            <span className="font-medium uppercase tracking-wide text-neutral-500">
+              Paddy neto total
+            </span>
+            <span className="font-semibold text-neutral-900">
+              {isLoadingReceptionKgTotals
+                ? '...'
+                : `${numberFormatter.format(Math.round(producerPaddyNetTotal))} kg`}
+            </span>
+          </span>
+        </div>
       </div>
 
       {/* Main Content Area */}

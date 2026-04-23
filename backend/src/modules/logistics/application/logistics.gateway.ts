@@ -26,6 +26,30 @@ export interface MonitorStatePayload {
   waiting: MonitorQueueItemDto[];
 }
 
+/** Aplica orden de cola enviado desde pesaje; ids desconocidos se ignoran; faltantes van al final por número de turno. */
+function applyEsperaQueueOrder(
+  waiting: MonitorQueueItemDto[],
+  orderIds: number[],
+): MonitorQueueItemDto[] {
+  if (!orderIds.length) return waiting;
+  const byId = new Map(waiting.map((w) => [w.id, w]));
+  const seen = new Set<number>();
+  const out: MonitorQueueItemDto[] = [];
+  for (const id of orderIds) {
+    const w = byId.get(id);
+    if (w) {
+      out.push(w);
+      seen.add(id);
+    }
+  }
+  const rest = waiting.filter((w) => !seen.has(w.id));
+  rest.sort(
+    (a, b) => (a.numero_turno ?? 1000) - (b.numero_turno ?? 1000),
+  );
+  out.push(...rest);
+  return out;
+}
+
 @WebSocketGateway({
   namespace: '/logistics',
   cors: {
@@ -41,6 +65,8 @@ export class LogisticsGateway
   private connectedClients: Map<string, string> = new Map();
   /** Recepción que el operador tiene seleccionada en la pantalla de pesaje (balanza). */
   private weighingTruckReceptionId: number | null = null;
+  /** Orden de cola ESPERA acordado por drag-and-drop desde la pantalla de pesaje (ids de truck_reception). */
+  private esperaQueueOrderIds: number[] = [];
 
   constructor(
     @Inject(forwardRef(() => LogisticsService))
@@ -54,7 +80,7 @@ export class LogisticsGateway
 
   private async buildMonitorPayload(): Promise<MonitorStatePayload> {
     const rows = await this.logisticsService.getTurnosByDate(new Date());
-    const waiting = rows
+    const waitingRaw = rows
       .filter((r) => r.status === TruckReceptionStatus.ESPERA)
       .map((r) => ({
         id: r.id,
@@ -66,6 +92,10 @@ export class LogisticsGateway
             : String(r.entry_at),
         status: r.status,
       }));
+    const waiting = applyEsperaQueueOrder(
+      waitingRaw,
+      this.esperaQueueOrderIds,
+    );
 
     return {
       serverTime: new Date().toISOString(),
@@ -180,6 +210,22 @@ export class LogisticsGateway
     const raw = body?.truck_reception_id;
     this.weighingTruckReceptionId =
       raw === null || raw === undefined ? null : Number(raw);
+    await this.broadcastMonitorState();
+    return { success: true };
+  }
+
+  @SubscribeMessage('espera-queue-order')
+  async handleEsperaQueueOrder(
+    @MessageBody() body: { ordered_ids?: unknown },
+  ) {
+    const raw = body?.ordered_ids;
+    if (!Array.isArray(raw)) {
+      return { success: false, error: 'ordered_ids debe ser un arreglo' };
+    }
+    const ordered_ids = raw
+      .map((x) => Number(x))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    this.esperaQueueOrderIds = ordered_ids;
     await this.broadcastMonitorState();
     return { success: true };
   }

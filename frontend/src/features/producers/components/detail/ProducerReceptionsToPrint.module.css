@@ -100,9 +100,10 @@
 
 .summarySection {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 0.8rem;
   margin-bottom: 1rem;
+  align-items: stretch;
 }
 
 .summaryCard {
@@ -110,6 +111,57 @@
   border-radius: 8px;
   background: #f9fafb;
   padding: 0.65rem;
+}
+
+.summaryCardTotals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summaryCardTotalsTitle {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summaryTotalsBlock {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+}
+
+.summaryMetricRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.25rem;
+  border-right: 1px solid #e5e7eb;
+}
+
+.summaryMetricRow:last-child {
+  border-right: none;
+}
+
+.summaryMetricLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #4b5563;
+  line-height: 1.2;
+}
+
+.summaryMetricValue {
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .summaryLabel {

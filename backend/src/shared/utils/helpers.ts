@@ -67,3 +67,34 @@ export function parseCLP(amount: string): number {
 export function roundToTwoDecimals(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
+
+/**
+ * Formatea RUT chileno para visualización: XX.XXX.XXX-X
+ * (alineado con `formatChileanRut` del frontend principal).
+ * Ej: "22222222-3" → "22.222.222-3"
+ */
+export function formatChileanRutDisplay(rut: string | null | undefined): string {
+  if (!rut || String(rut).trim() === '') {
+    return '';
+  }
+
+  const raw = String(rut).trim();
+  const cleanRut = raw.replace(/[.-]/g, '');
+
+  if (cleanRut.length < 2) {
+    return raw;
+  }
+
+  const body = cleanRut.slice(0, -1);
+  const verifier = cleanRut.slice(-1);
+  const paddedBody = body.padStart(8, '0');
+
+  const part3 = paddedBody.slice(-3);
+  const part2 = paddedBody.slice(-6, -3);
+  const part1 = paddedBody.slice(0, -6);
+
+  const dv =
+    verifier.toLowerCase() === 'k' ? 'K' : verifier;
+
+  return `${part1}.${part2}.${part3}-${dv}`;
+}

@@ -111,9 +111,8 @@ export const MonitorDisplay: React.FC<MonitorDisplayProps> = ({ state, error }) 
     ? waiting.find((w) => w.id === weighingId) ?? null
     : null;
 
-  const orderedRest = [...waiting]
-    .filter((w) => w.id !== weighingId)
-    .sort((a, b) => (a.numero_turno ?? 1000) - (b.numero_turno ?? 1000));
+  /** Mantiene el orden que envía el backend (tras drag-and-drop en pesaje). */
+  const orderedRest = [...waiting].filter((w) => w.id !== weighingId);
 
   if (error) {
     return (

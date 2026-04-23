@@ -20,8 +20,11 @@ import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 import { RegisterDispatchWeighingDto } from '../dtos/register-dispatch-weighing.dto';
+import { CreateTruckDispatchWithTareDto } from '../dtos/create-truck-dispatch-with-tare.dto';
+import { RegisterDispatchGrossWeightDto } from '../dtos/register-dispatch-gross-weight.dto';
 import { UpdateTruckStatusDto } from '../dtos/update-truck-status.dto';
 import { UpdateTruckReceptionDto } from '../dtos/update-truck-reception.dto';
+import { UpdateTruckDispatchDto } from '../dtos/update-truck-dispatch.dto';
 import { TruckReceptionStatus } from '../domain/truck-reception.entity';
 import { LogisticsProduct } from '../domain/logistics-product.enum';
 
@@ -79,6 +82,22 @@ export class LogisticsController {
     }
   }
 
+  @Post('truck-dispatches/with-tare')
+  @HttpCode(HttpStatus.CREATED)
+  async createTruckDispatchWithTare(
+    @Body(ValidationPipe) createTruckDto: CreateTruckDispatchWithTareDto,
+  ) {
+    this.logger.log(
+      `POST /truck-dispatches/with-tare - Despacho patente: ${createTruckDto.license_plate}`,
+    );
+    try {
+      return await this.logisticsService.createTruckDispatchWithTare(createTruckDto);
+    } catch (error) {
+      this.logger.error(`Error al registrar despacho con tara: ${error.message}`);
+      throw error;
+    }
+  }
+
   @Post('truck-dispatches')
   @HttpCode(HttpStatus.CREATED)
   async createTruckDispatch(@Body(ValidationPipe) createTruckDto: CreateTruckDto) {
@@ -95,6 +114,7 @@ export class LogisticsController {
     }
   }
 
+  /** @deprecated Flujo legacy bruto→tara. Preferir with-tare + weighings/dispatch-gross. */
   @Post('weighings/dispatch-tare')
   @HttpCode(HttpStatus.OK)
   async registerDispatchTareWeight(
@@ -107,6 +127,22 @@ export class LogisticsController {
       return await this.logisticsService.registerDispatchTareWeight(registerDto);
     } catch (error) {
       this.logger.error(`Error al registrar tara despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Post('weighings/dispatch-gross')
+  @HttpCode(HttpStatus.OK)
+  async registerDispatchGrossWeight(
+    @Body(ValidationPipe) registerDto: RegisterDispatchGrossWeightDto,
+  ) {
+    this.logger.log(
+      `POST /weighings/dispatch-gross - Bruto despacho: ${registerDto.truck_dispatch_id}`,
+    );
+    try {
+      return await this.logisticsService.registerDispatchGrossWeight(registerDto);
+    } catch (error) {
+      this.logger.error(`Error al registrar bruto despacho: ${error.message}`);
       throw error;
     }
   }
@@ -128,15 +164,61 @@ export class LogisticsController {
   async getTruckDispatchesForGrid(
     @Query('limit') limit: string = '100',
     @Query('offset') offset: string = '0',
+    @Query('search') search?: string,
+    @Query('filters') filters?: string,
+    @Query('sort') sort?: string,
+    @Query('sortField') sortField?: string,
   ) {
-    this.logger.log(`GET /truck-dispatches/grid - Limit: ${limit}, Offset: ${offset}`);
+    const lim = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 500);
+    const off = Math.max(parseInt(offset, 10) || 0, 0);
+    this.logger.log(
+      `GET /truck-dispatches/grid - Limit: ${lim}, Offset: ${off}, search: ${search ?? ''}`,
+    );
     try {
-      return await this.logisticsService.getAllTruckDispatches(
-        parseInt(limit, 10),
-        parseInt(offset, 10),
-      );
+      return await this.logisticsService.getTruckDispatchesGrid(lim, off, {
+        search: search?.trim() || undefined,
+        filters: filters?.trim() || undefined,
+        sort: sort?.trim() || undefined,
+        sortField: sortField?.trim() || undefined,
+      });
     } catch (error) {
       this.logger.error(`Error al obtener despachos (grid): ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Get('truck-dispatches/:id')
+  async getTruckDispatchById(@Param('id', new ParseIntPipe()) id: number) {
+    this.logger.log(`GET /truck-dispatches/:id - ID: ${id}`);
+    try {
+      return await this.logisticsService.getTruckDispatchById(id);
+    } catch (error) {
+      this.logger.error(`Error al obtener despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Put('truck-dispatches/:id')
+  async updateTruckDispatch(
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body(ValidationPipe) updateDto: UpdateTruckDispatchDto,
+  ) {
+    this.logger.log(`PUT /truck-dispatches/:id - ID: ${id}`);
+    try {
+      return await this.logisticsService.updateTruckDispatch(id, updateDto);
+    } catch (error) {
+      this.logger.error(`Error al actualizar despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Delete('truck-dispatches/:id')
+  async cancelTruckDispatch(@Param('id', new ParseIntPipe()) id: number) {
+    this.logger.log(`DELETE /truck-dispatches/:id - ID: ${id}`);
+    try {
+      return await this.logisticsService.cancelTruckDispatch(id);
+    } catch (error) {
+      this.logger.error(`Error al cancelar despacho: ${error.message}`);
       throw error;
     }
   }

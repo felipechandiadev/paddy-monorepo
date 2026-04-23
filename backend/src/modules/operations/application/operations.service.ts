@@ -8,6 +8,7 @@ import { Repository, IsNull, Brackets } from 'typeorm';
 import * as ExcelJS from 'exceljs';
 import { DateTime } from 'luxon';
 import { formatDateString } from '@shared/utils/luxon-utils';
+import { formatChileanRutDisplay } from '@shared/utils/helpers';
 import { Reception, AnalysisRecord } from '../domain/operations.entity';
 import { ReceptionStatusEnum } from '@shared/enums';
 import { ConfigurationService } from '@modules/configuration/application/configuration.service';
@@ -479,7 +480,7 @@ export class OperationsService {
         guideNumber: reception.guideNumber || '',
         createdAt: this.formatDateValue(reception.createdAt),
         producerName: reception.producer?.name || '',
-        producerRut: reception.producer?.rut || '',
+        producerRut: formatChileanRutDisplay(reception.producer?.rut || '') || '',
         licensePlate: reception.licensePlate || '',
         grossWeight: Number(reception.grossWeight || 0),
         tareWeight: Number(reception.tareWeight || 0),

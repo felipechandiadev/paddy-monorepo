@@ -20,13 +20,6 @@ function formatDate(value: string | null | undefined): string {
   return formatDateValue(value);
 }
 
-function formatKg(value: number): string {
-  return `${value.toLocaleString('es-CL', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} kg`;
-}
-
 function formatNetWeightKg(value: number): string {
   return `${Math.round(value).toLocaleString('es-CL')} kg`;
 }
@@ -51,6 +44,8 @@ export default function ProducerReceptionsToPrint({
   filters,
 }: ProducerReceptionsToPrintProps) {
   const totalNetWeight = receptions.reduce((sum, reception) => sum + reception.netWeight, 0);
+  const totalPaddyNet = receptions.reduce((sum, reception) => sum + reception.paddyNetWeight, 0);
+  const castigoKg = Math.round(totalNetWeight - totalPaddyNet);
 
   return (
     <div className={styles.sheet}>
@@ -100,9 +95,26 @@ export default function ProducerReceptionsToPrint({
           <p className={styles.summaryLabel}>Recepciones filtradas</p>
           <p className={styles.summaryValue}>{receptions.length}</p>
         </div>
-        <div className={styles.summaryCard}>
-          <p className={styles.summaryLabel}>Peso neto total</p>
-          <p className={styles.summaryValue}>{formatNetWeightKg(totalNetWeight)}</p>
+        <div className={`${styles.summaryCard} ${styles.summaryCardTotals}`}>
+          <p className={styles.summaryCardTotalsTitle}>Totales (kg)</p>
+          <div className={styles.summaryTotalsBlock}>
+            <div className={styles.summaryMetricRow}>
+              <span className={styles.summaryMetricLabel}>Peso neto total</span>
+              <span className={styles.summaryMetricValue}>
+                {formatNetWeightKg(totalNetWeight)}
+              </span>
+            </div>
+            <div className={styles.summaryMetricRow}>
+              <span className={styles.summaryMetricLabel}>Castigo</span>
+              <span className={styles.summaryMetricValue}>{formatNetWeightKg(castigoKg)}</span>
+            </div>
+            <div className={styles.summaryMetricRow}>
+              <span className={styles.summaryMetricLabel}>Paddy neto total</span>
+              <span className={styles.summaryMetricValue}>
+                {formatNetWeightKg(totalPaddyNet)}
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -119,6 +131,7 @@ export default function ProducerReceptionsToPrint({
               <th>Tipo Arroz</th>
               <th>Patente</th>
               <th className={styles.rightAlign}>Peso Neto</th>
+              <th className={styles.rightAlign}>Paddy neto</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -132,6 +145,7 @@ export default function ProducerReceptionsToPrint({
                 <td>{reception.riceTypeName || '-'}</td>
                 <td>{reception.licensePlate || '-'}</td>
                 <td className={styles.rightAlign}>{formatNetWeightKg(reception.netWeight)}</td>
+                <td className={styles.rightAlign}>{formatNetWeightKg(reception.paddyNetWeight)}</td>
                 <td>{getStatusLabel(reception.status)}</td>
               </tr>
             ))}

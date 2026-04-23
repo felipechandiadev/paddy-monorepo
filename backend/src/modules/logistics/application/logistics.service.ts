@@ -16,7 +16,10 @@ import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 import { RegisterDispatchWeighingDto } from '../dtos/register-dispatch-weighing.dto';
+import { CreateTruckDispatchWithTareDto } from '../dtos/create-truck-dispatch-with-tare.dto';
+import { RegisterDispatchGrossWeightDto } from '../dtos/register-dispatch-gross-weight.dto';
 import { UpdateTruckReceptionDto } from '../dtos/update-truck-reception.dto';
+import { UpdateTruckDispatchDto } from '../dtos/update-truck-dispatch.dto';
 import { LogisticsGateway } from './logistics.gateway';
 import {
   RECEPTION_TURNO_MAX,
@@ -167,15 +170,24 @@ export class LogisticsService {
     });
   }
 
+  /**
+   * Cola de pesaje despacho: hoy, ESPERA, con tara y sin bruto (orden de llegada).
+   */
   async getDispatchTurnosByDate(date: Date): Promise<TruckDispatch[]> {
-    const searchDate = new Date(date);
-    searchDate.setHours(0, 0, 0, 0);
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
 
-    return this.truckDispatchRepository.find({
-      where: { turno_date: searchDate },
-      relations: ['producer'],
-      order: { numero_turno: 'ASC' },
-    });
+    return this.truckDispatchRepository
+      .createQueryBuilder('td')
+      .leftJoinAndSelect('td.producer', 'producer')
+      .where('td.status = :st', { st: TruckReceptionStatus.ESPERA })
+      .andWhere('td.tare_weight IS NOT NULL')
+      .andWhere('td.gross_weight IS NULL')
+      .andWhere('td.entry_at >= :start AND td.entry_at < :end', { start, end })
+      .orderBy('td.entry_at', 'ASC')
+      .getMany();
   }
 
   /**
@@ -396,6 +408,62 @@ export class LogisticsService {
     }
   }
 
+  async createTruckDispatchWithTare(
+    dto: CreateTruckDispatchWithTareDto,
+  ): Promise<TruckDispatch> {
+    try {
+      const producer = await this.producerRepository.findOne({
+        where: { id: dto.producer_id },
+      });
+
+      if (!producer) {
+        throw new NotFoundException(
+          `Productor con ID ${dto.producer_id} no encontrado`,
+        );
+      }
+
+      const tw = Number(dto.tare_weight);
+      if (!Number.isFinite(tw) || tw <= 0) {
+        throw new BadRequestException('Peso tara inválido');
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const driverName =
+        dto.driver_name != null && String(dto.driver_name).trim() !== ''
+          ? String(dto.driver_name).trim()
+          : null;
+
+      const truckDispatch = this.truckDispatchRepository.create({
+        producer_id: dto.producer_id,
+        license_plate: dto.license_plate,
+        driver_name: driverName,
+        carrier_company: dto.carrier_company ?? undefined,
+        dispatch_guide: dto.dispatch_guide ?? undefined,
+        tare_weight: tw,
+        product: dto.product ?? LogisticsProduct.ARROZ_PADDY,
+        created_by: dto.created_by,
+        status: TruckReceptionStatus.ESPERA,
+        numero_turno: null,
+        turno_date: today,
+        entry_at: new Date(),
+      });
+
+      const saved = await this.truckDispatchRepository.save(truckDispatch);
+      this.logger.log(
+        `Despacho (tara): ${saved.id} - Patente: ${saved.license_plate}`,
+      );
+
+      void this.logisticsGateway.broadcastMonitorState();
+
+      return saved;
+    } catch (error) {
+      this.logger.error(`Error al registrar despacho con tara: ${error.message}`);
+      throw error;
+    }
+  }
+
   async registerDispatchTareWeight(
     registerDto: RegisterDispatchWeighingDto,
   ): Promise<TruckDispatch> {
@@ -456,6 +524,97 @@ export class LogisticsService {
       return withProducer ?? truckDispatch;
     } catch (error) {
       this.logger.error(`Error al registrar tara despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Paso 2 despacho (tara primero): registrar bruto y finalizar. net = bruto - tara.
+   */
+  async registerDispatchGrossWeight(
+    registerDto: RegisterDispatchGrossWeightDto,
+  ): Promise<TruckDispatch> {
+    try {
+      const { truck_dispatch_id, gross_weight, status } = registerDto;
+
+      if (status !== TruckReceptionStatus.FINISHED) {
+        throw new BadRequestException(
+          `Solo se admite finalizar despacho con estado FINISHED (recibido: ${status})`,
+        );
+      }
+
+      const truckDispatch = await this.truckDispatchRepository.findOne({
+        where: { id: truck_dispatch_id },
+      });
+
+      if (!truckDispatch) {
+        throw new NotFoundException(
+          `Despacho de camión con ID ${truck_dispatch_id} no encontrado`,
+        );
+      }
+
+      if (truckDispatch.status !== TruckReceptionStatus.ESPERA) {
+        throw new BadRequestException(
+          `Solo se puede registrar bruto en estado ESPERA, estado actual: ${truckDispatch.status}`,
+        );
+      }
+
+      if (
+        truckDispatch.tare_weight == null ||
+        Number(truckDispatch.tare_weight) <= 0
+      ) {
+        throw new BadRequestException(
+          'No hay peso tara registrado para este despacho',
+        );
+      }
+
+      const existingGross =
+        truckDispatch.gross_weight != null
+          ? Number(truckDispatch.gross_weight)
+          : NaN;
+      if (Number.isFinite(existingGross) && existingGross > 0) {
+        throw new BadRequestException(
+          'Este despacho ya tiene peso bruto registrado',
+        );
+      }
+
+      if (gross_weight == null) {
+        throw new BadRequestException('El peso bruto es requerido');
+      }
+
+      const gw = Number(gross_weight);
+      const tw = Number(truckDispatch.tare_weight);
+      if (!Number.isFinite(gw) || gw <= tw) {
+        throw new BadRequestException(
+          'El peso bruto debe ser mayor que la tara',
+        );
+      }
+
+      truckDispatch.gross_weight = gw;
+      truckDispatch.calculateNetWeight();
+
+      if (
+        truckDispatch.net_weight == null ||
+        Number(truckDispatch.net_weight) <= 0
+      ) {
+        throw new BadRequestException('El peso neto debe ser mayor a 0');
+      }
+
+      truckDispatch.status = TruckReceptionStatus.FINISHED;
+      truckDispatch.finished_at = new Date();
+
+      await this.truckDispatchRepository.save(truckDispatch);
+      this.logger.log(`Despacho finalizado (bruto): ${truck_dispatch_id}`);
+
+      void this.logisticsGateway.broadcastMonitorState();
+
+      const withProducer = await this.truckDispatchRepository.findOne({
+        where: { id: truck_dispatch_id },
+        relations: ['producer'],
+      });
+      return withProducer ?? truckDispatch;
+    } catch (error) {
+      this.logger.error(`Error al registrar bruto despacho: ${error.message}`);
       throw error;
     }
   }
@@ -606,6 +765,20 @@ export class LogisticsService {
       return `CASE tr.product::text WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE tr.product::text END`;
     }
     return `CASE CAST(tr.product AS CHAR) WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE CAST(tr.product AS CHAR) END`;
+  }
+
+  private sqlCaseStatusSpanishTd(): string {
+    if (this.isPostgresDriver()) {
+      return `CASE td.status::text WHEN 'FINISHED' THEN 'Finalizado' WHEN 'ESPERA' THEN 'En espera' ELSE td.status::text END`;
+    }
+    return `CASE CAST(td.status AS CHAR) WHEN 'FINISHED' THEN 'Finalizado' WHEN 'ESPERA' THEN 'En espera' ELSE CAST(td.status AS CHAR) END`;
+  }
+
+  private sqlCaseProductSpanishTd(): string {
+    if (this.isPostgresDriver()) {
+      return `CASE td.product::text WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE td.product::text END`;
+    }
+    return `CASE CAST(td.product AS CHAR) WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE CAST(td.product AS CHAR) END`;
   }
 
   /**
@@ -797,6 +970,193 @@ export class LogisticsService {
   }
 
   /**
+   * Listado despachos para DataGrid TMS (misma convención que recepciones).
+   */
+  async getTruckDispatchesGrid(
+    limit: number,
+    offset: number,
+    opts?: {
+      search?: string;
+      filters?: string;
+      sort?: string;
+      sortField?: string;
+    },
+  ): Promise<{ data: TruckDispatch[]; total: number }> {
+    const SORT_WHITELIST: Record<string, string> = {
+      id: 'td.id',
+      status: 'td.status',
+      product: 'td.product',
+      license_plate: 'td.license_plate',
+      dispatch_guide: 'td.dispatch_guide',
+      producer_name: 'producer.name',
+      producer_rut: 'producer.rut',
+      gross_weight: 'td.gross_weight',
+      tare_weight: 'td.tare_weight',
+      net_weight: 'td.net_weight',
+      entry_at: 'td.entry_at',
+      finished_at: 'td.finished_at',
+      numero_turno: 'td.numero_turno',
+    };
+
+    const qb = this.truckDispatchRepository
+      .createQueryBuilder('td')
+      .leftJoinAndSelect('td.producer', 'producer');
+
+    const search = opts?.search?.trim();
+    if (search) {
+      const searchPat = `%${this.escapeIlikePattern(search)}%`;
+      const rutDigits = search.replace(/[^0-9kK]/g, '');
+      const rutPat =
+        rutDigits.length > 0
+          ? `%${this.escapeIlikePattern(rutDigits)}%`
+          : null;
+
+      const rutExpr =
+        `REPLACE(REPLACE(COALESCE(producer.rut, ''), '.', ''), '-', '')`;
+      const rutOr =
+        rutPat != null
+          ? `OR ${this.sqlLikeInsensitive(rutExpr, ':rutDigits')}`
+          : '';
+
+      const statusLabel = this.sqlCaseStatusSpanishTd();
+      const productLabel = this.sqlCaseProductSpanishTd();
+
+      qb.andWhere(
+        `(
+          ${this.sqlLikeInsensitive(this.sqlCastText('td.id'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive('td.license_plate', ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(td.dispatch_guide, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(td.driver_name, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(producer.name, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(producer.rut, '')`, ':searchPat')}
+          ${rutOr}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.status'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`(${statusLabel})`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.product'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`(${productLabel})`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.gross_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.tare_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.net_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.numero_turno'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.entry_at'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('td.finished_at'), ':searchPat')}
+        )`,
+        rutPat != null
+          ? { searchPat, rutDigits: rutPat }
+          : { searchPat },
+      );
+    }
+
+    const filtersMap = this.parseGridFiltersParam(opts?.filters);
+    let fIdx = 0;
+    for (const [field, rawVal] of Object.entries(filtersMap)) {
+      const val = rawVal?.trim();
+      if (!val) {
+        continue;
+      }
+      const param = `dgf${fIdx++}`;
+      const pat = `%${this.escapeIlikePattern(val)}%`;
+
+      const pRef = `:${param}`;
+      switch (field) {
+        case 'id':
+          qb.andWhere(this.sqlLikeInsensitive(this.sqlCastText('td.id'), pRef), {
+            [param]: pat,
+          });
+          break;
+        case 'status':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.status'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'product':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.product'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'license_plate':
+          qb.andWhere(
+            this.sqlLikeInsensitive('td.license_plate', pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'dispatch_guide':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(td.dispatch_guide, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'producer_name':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(producer.name, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'producer_rut':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(producer.rut, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'gross_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.gross_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'tare_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.tare_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'net_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.net_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'entry_at':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.entry_at'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'finished_at':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.finished_at'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'numero_turno':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('td.numero_turno'), pRef),
+            { [param]: pat },
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    const sortFieldKey = opts?.sortField?.trim() ?? '';
+    const sortCol = SORT_WHITELIST[sortFieldKey] ?? 'td.entry_at';
+    let dir: 'ASC' | 'DESC' = 'DESC';
+    if (sortFieldKey && SORT_WHITELIST[sortFieldKey]) {
+      dir = opts?.sort?.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+    }
+
+    qb.orderBy(sortCol, dir).addOrderBy('td.id', 'ASC');
+
+    qb.skip(offset).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total };
+  }
+
+  /**
    * Obtener recepciones de camiones por productor
    */
   async getTruckReceptionsByProducerId(
@@ -971,6 +1331,121 @@ export class LogisticsService {
     this.logger.log(`Recepción de camión cancelada: ${id}`);
 
     return truckReception;
+  }
+
+  async updateTruckDispatch(
+    id: number,
+    updateData: UpdateTruckDispatchDto,
+  ): Promise<TruckDispatch> {
+    const td = await this.getTruckDispatchById(id);
+
+    const hasDetailUpdate =
+      updateData.producer_id !== undefined ||
+      updateData.license_plate !== undefined ||
+      updateData.driver_name !== undefined ||
+      updateData.carrier_company !== undefined ||
+      updateData.dispatch_guide !== undefined ||
+      updateData.gross_weight !== undefined ||
+      updateData.tare_weight !== undefined ||
+      updateData.product !== undefined;
+
+    if (hasDetailUpdate) {
+      if (updateData.producer_id !== undefined) {
+        const producer = await this.producerRepository.findOne({
+          where: { id: updateData.producer_id },
+        });
+        if (!producer) {
+          throw new BadRequestException('Productor no encontrado');
+        }
+        td.producer_id = updateData.producer_id;
+      }
+
+      if (updateData.license_plate !== undefined) {
+        td.license_plate = updateData.license_plate.trim();
+      }
+
+      if (updateData.driver_name !== undefined) {
+        const d =
+          updateData.driver_name == null
+            ? ''
+            : String(updateData.driver_name).trim();
+        td.driver_name = d === '' ? null : d;
+      }
+
+      if (updateData.carrier_company !== undefined) {
+        td.carrier_company = updateData.carrier_company?.trim() ?? '';
+      }
+
+      if (updateData.dispatch_guide !== undefined) {
+        td.dispatch_guide = updateData.dispatch_guide?.trim() ?? '';
+      }
+
+      if (updateData.gross_weight !== undefined) {
+        td.gross_weight = Number(updateData.gross_weight);
+      }
+
+      if (updateData.tare_weight !== undefined) {
+        td.tare_weight = Number(updateData.tare_weight);
+      }
+
+      if (updateData.product !== undefined) {
+        td.product = updateData.product;
+      }
+
+      if (
+        updateData.gross_weight !== undefined ||
+        updateData.tare_weight !== undefined
+      ) {
+        const g = td.gross_weight != null ? Number(td.gross_weight) : NaN;
+        const t = td.tare_weight != null ? Number(td.tare_weight) : NaN;
+        const hasG = Number.isFinite(g) && g > 0;
+        const hasT = Number.isFinite(t) && t > 0;
+
+        if (hasG && !hasT) {
+          throw new BadRequestException(
+            'En despacho debe existir peso tara antes que el bruto',
+          );
+        }
+
+        if (hasG && hasT) {
+          if (g <= t) {
+            throw new BadRequestException(
+              'El peso bruto debe ser mayor que la tara',
+            );
+          }
+          td.calculateNetWeight();
+          if (
+            td.net_weight == null ||
+            Number(td.net_weight) <= 0
+          ) {
+            throw new BadRequestException('El peso neto debe ser mayor a 0');
+          }
+          if (td.status === TruckReceptionStatus.ESPERA) {
+            td.status = TruckReceptionStatus.FINISHED;
+            td.finished_at = new Date();
+          }
+        } else {
+          td.net_weight = null;
+          if (td.status === TruckReceptionStatus.FINISHED) {
+            throw new BadRequestException(
+              'Un despacho finalizado debe mantener bruto y tara válidos',
+            );
+          }
+        }
+      }
+    }
+
+    const saved = await this.truckDispatchRepository.save(td);
+    this.logger.log(`Despacho de camión actualizado: ${id}`);
+    void this.logisticsGateway.broadcastMonitorState();
+    return saved;
+  }
+
+  async cancelTruckDispatch(id: number): Promise<TruckDispatch> {
+    const row = await this.getTruckDispatchById(id);
+    await this.truckDispatchRepository.softDelete(id);
+    this.logger.log(`Despacho de camión cancelado: ${id}`);
+    return row;
   }
 
   /**
