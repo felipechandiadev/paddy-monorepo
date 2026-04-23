@@ -2,10 +2,9 @@
 
 import React from 'react';
 import type { TruckReception } from '@/actions/truckReceptionActions';
+import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import { formatChileanRut } from '@/lib/formatChileanRut';
 import styles from './TruckWeighingTicketToPrint.module.css';
-
-const DEFAULT_PRODUCT_LABEL = 'Arroz paddy';
 
 function toDate(value: Date | string | undefined | null): Date | null {
   if (value == null) return null;
@@ -116,7 +115,7 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
         </div>
         <div className={styles.blockRow}>
           <span className={styles.label}>Producto:</span>
-          <span className={styles.value}>{DEFAULT_PRODUCT_LABEL}</span>
+          <span className={styles.value}>{formatLogisticsProductLabel(truck.product)}</span>
         </div>
         <div className={styles.blockRow}>
           <span className={styles.label}>Transportista:</span>

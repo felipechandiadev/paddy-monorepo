@@ -14,7 +14,7 @@ import { TruckReceptionStatus } from '../domain/truck-reception.entity';
 
 export interface MonitorQueueItemDto {
   id: number;
-  numero_turno: number;
+  numero_turno: number | null;
   license_plate: string;
   entry_at: string;
   status: TruckReceptionStatus;

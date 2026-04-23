@@ -5,7 +5,7 @@ import { createLogisticsSocket } from '@/lib/logisticsSocket';
 
 export interface MonitorQueueItem {
   id: number;
-  numero_turno: number;
+  numero_turno: number | null;
   license_plate: string;
   entry_at: string;
   status: string;

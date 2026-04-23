@@ -25,6 +25,7 @@ import {
   SettlementReceptionSnapshot,
 } from '@modules/finances/domain/finances.entity';
 import { TruckReception } from '@modules/logistics/domain/truck-reception.entity';
+import { TruckDispatch } from '@modules/logistics/domain/truck-dispatch.entity';
 
 const isDatabaseSslRequired =
   process.env.DATABASE_SSL_MODE?.toUpperCase() === 'REQUIRED';
@@ -69,6 +70,7 @@ export const dataSource = new DataSource({
     SettlementReceptionSnapshot,
     UserPermissionOverride,
     TruckReception,
+    TruckDispatch,
   ],
   migrations: [`${__dirname}/migrations/**/*{.ts,.js}`],
   migrationsRun: process.env.NODE_ENV === 'production',

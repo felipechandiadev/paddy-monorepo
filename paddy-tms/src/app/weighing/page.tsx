@@ -10,14 +10,25 @@ import { TmsAppLayout, useTmsSerialPort } from '@/components/layout/TmsAppLayout
 import { WeighingMonitorSync } from '@/components/weighing/WeighingMonitorSync';
 import DialogToPrint from '@/shared/components/ui/Dialog/DialogToPrint';
 import { TruckWeighingTicketToPrint } from '@/components/weighing/TruckWeighingTicketToPrint';
+import { SerialRawTramaPanel } from '@/components/weighing/SerialRawTramaPanel';
+import { TurnoSlotsDialog } from '@/components/weighing/TurnoSlotsDialog';
 
 const WeighingPageContent: React.FC = () => {
-  const { trucks, selectedTruckId, error, selectTruck, clearError } = useWeighingPage();
+  const { trucks, selectedTruckId, error, selectTruck, clearError, loadTrucksToday } = useWeighingPage();
+  const [turnoBoardOpen, setTurnoBoardOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   const [printTruck, setPrintTruck] = useState<TruckReception | null>(null);
   const {
     isConnected: serialConnected,
+    isAvailable: serialAvailable,
+    isConnecting: serialConnecting,
     lastWeight,
+    lastRawSample,
+    bytesReceivedTotal,
+    configuredBaudRate,
+    configuredDataBits,
+    configuredParity,
+    connectChoosingPort,
   } = useTmsSerialPort();
 
   const selectedTruck = trucks.find((t) => t.id === selectedTruckId) || null;
@@ -63,6 +74,9 @@ const WeighingPageContent: React.FC = () => {
             selectedTruck={selectedTruck}
             serialWeight={lastWeight}
             isSerialConnected={serialConnected}
+            serialAvailable={serialAvailable}
+            serialConnecting={serialConnecting}
+            onConnectSerial={() => void connectChoosingPort()}
             onCancel={handleCancel}
             onTareFinalized={handleTareFinalized}
           />
@@ -72,10 +86,31 @@ const WeighingPageContent: React.FC = () => {
           <TruckList
             trucks={trucks}
             selectedTruckId={selectedTruckId}
-            onSelectTruck={selectTruck}
+            onSelectTruck={(id) => selectTruck(id)}
+            onOpenTurnoBoard={() => setTurnoBoardOpen(true)}
+            onAfterTurnoChange={loadTrucksToday}
           />
         </div>
       </div>
+
+      <TurnoSlotsDialog
+        open={turnoBoardOpen}
+        onClose={() => setTurnoBoardOpen(false)}
+        trucks={trucks}
+        selectedTruckId={selectedTruckId}
+        onSelectTruck={selectTruck}
+        onAfterAssign={loadTrucksToday}
+      />
+
+      <SerialRawTramaPanel
+        isConnected={serialConnected}
+        lastRawSample={lastRawSample}
+        lastParsedWeight={lastWeight}
+        bytesReceivedTotal={bytesReceivedTotal}
+        configuredBaudRate={configuredBaudRate}
+        configuredDataBits={configuredDataBits}
+        configuredParity={configuredParity}
+      />
 
       <DialogToPrint
         open={printOpen && !!printTruck}

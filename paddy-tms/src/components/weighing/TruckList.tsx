@@ -1,34 +1,98 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { TruckReception, updateTruckTurnoAction } from '@/actions/truckReceptionActions';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { TruckReception } from '@/actions/truckReceptionActions';
+import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import Badge from '@/shared/components/ui/Badge/Badge';
+import { AssignTurnoRollerDialog } from '@/components/weighing/AssignTurnoRollerDialog';
+
+const QUEUE_STORAGE_KEY = 'paddy_tms_weighing_espera_order';
+
+function loadSavedQueueIds(): number[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is number => typeof x === 'number');
+  } catch {
+    return [];
+  }
+}
+
+function persistQueueIds(ids: number[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // ignore
+  }
+}
+
+/** Aplica orden guardado y añade al final los camiones nuevos (por número de turno). */
+function mergeEsperaOrder(espera: TruckReception[], savedIds: number[]): TruckReception[] {
+  const byId = new Map(espera.map((t) => [t.id, t]));
+  const idSet = new Set(espera.map((t) => t.id));
+  const out: TruckReception[] = [];
+  const used = new Set<number>();
+  for (const id of savedIds) {
+    if (!idSet.has(id)) continue;
+    const t = byId.get(id);
+    if (t) {
+      out.push(t);
+      used.add(id);
+    }
+  }
+  const rest = espera
+    .filter((t) => !used.has(t.id))
+    .sort((a, b) => (a.numero_turno ?? 1000) - (b.numero_turno ?? 1000));
+  out.push(...rest);
+  return out;
+}
 
 interface TruckListProps {
   trucks: TruckReception[];
   selectedTruckId: number | null;
-  onSelectTruck: (id: number) => void;
+  onSelectTruck: (id: number | null) => void;
+  onOpenTurnoBoard?: () => void;
+  onAfterTurnoChange?: () => Promise<void>;
 }
 
 export const TruckList: React.FC<TruckListProps> = ({
   trucks,
   selectedTruckId,
   onSelectTruck,
+  onOpenTurnoBoard,
+  onAfterTurnoChange,
 }) => {
   const [orderedTrucks, setOrderedTrucks] = useState<TruckReception[]>([]);
+  const [rollerTruckId, setRollerTruckId] = useState<number | null>(null);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
+
+  const espera = useMemo(() => trucks.filter((t) => t.status === 'ESPERA'), [trucks]);
 
   useEffect(() => {
-    const espera = trucks.filter(t => t.status === 'ESPERA');
-    setOrderedTrucks(espera);
-  }, [trucks]);
+    const saved = loadSavedQueueIds();
+    const merged = mergeEsperaOrder(espera, saved);
+    setOrderedTrucks(merged);
+    persistQueueIds(merged.map((t) => t.id));
+  }, [espera]);
+
+  const queueHeadId = orderedTrucks[0]?.id ?? null;
+
+  useEffect(() => {
+    if (selectedTruckId == null || queueHeadId == null) return;
+    if (selectedTruckId !== queueHeadId) {
+      onSelectTruck(null);
+    }
+  }, [queueHeadId, selectedTruckId, onSelectTruck]);
 
   const handleDragStart = (e: React.DragEvent, truckId: number) => {
     setDraggedId(truckId);
+    e.dataTransfer.setData('text/paddy-truck-id', String(truckId));
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('truckId', truckId.toString());
   };
 
   const handleDragEnd = () => {
@@ -41,76 +105,53 @@ export const TruckList: React.FC<TruckListProps> = ({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDragEnter = (e: React.DragEvent, truckId: number) => {
-    e.preventDefault();
-    setDragOverId(truckId);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOverId(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetTruckId: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!draggedId || draggedId === targetTruckId) {
-      setDraggedId(null);
-      setDragOverId(null);
-      return;
-    }
-
-    const draggedIndex = orderedTrucks.findIndex(t => t.id === draggedId);
-    const targetIndex = orderedTrucks.findIndex(t => t.id === targetTruckId);
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedId(null);
-      setDragOverId(null);
-      return;
-    }
-
-    // Simple swap: intercambiar las posiciones
-    const newList = [...orderedTrucks];
-    [newList[draggedIndex], newList[targetIndex]] = [newList[targetIndex], newList[draggedIndex]];
-
-    // Actualizar los números de turno en los objetos
-    newList.forEach((truck, index) => {
-      truck.numero_turno = index + 1;
-    });
-
-    setOrderedTrucks(newList);
-    setDraggedId(null);
-    setDragOverId(null);
-
-    // Actualizar turnos en el backend
-    setIsUpdating(true);
-    try {
-      // Actualizar todos los turnos con sus nuevas posiciones
-      const updatePromises = newList.map((truck, index) =>
-        updateTruckTurnoAction(truck.id, index + 1)
-      );
-      
-      await Promise.all(updatePromises);
-      console.log('Turnos actualizados exitosamente:', newList.map(t => ({ id: t.id, turno: t.numero_turno })));
-    } catch (error) {
-      console.error('Error actualizando turnos:', error);
-      // Revertir a la lista original en caso de error
-      const espera = trucks.filter(t => t.status === 'ESPERA');
-      setOrderedTrucks(espera);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const handleDrop = useCallback(
+    (targetId: number) => {
+      if (!draggedId || draggedId === targetId) {
+        handleDragEnd();
+        return;
+      }
+      const from = orderedTrucks.findIndex((t) => t.id === draggedId);
+      const to = orderedTrucks.findIndex((t) => t.id === targetId);
+      if (from < 0 || to < 0) {
+        handleDragEnd();
+        return;
+      }
+      const next = [...orderedTrucks];
+      const [removed] = next.splice(from, 1);
+      next.splice(to, 0, removed);
+      setOrderedTrucks(next);
+      persistQueueIds(next.map((t) => t.id));
+      handleDragEnd();
+    },
+    [draggedId, orderedTrucks],
+  );
 
   return (
     <div className="bg-background rounded-lg border border-border p-4 h-full overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2">
         <h2 className="text-lg font-bold text-foreground">En Espera para Tara</h2>
-        <Badge variant="secondary" className="text-sm">
-          {orderedTrucks.length}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {onOpenTurnoBoard && (
+            <button
+              type="button"
+              onClick={onOpenTurnoBoard}
+              className="inline-flex items-center justify-center rounded-md border border-border bg-background p-2 text-foreground hover:bg-muted/80 transition-colors"
+              title="Tablero de turnos 1–100"
+              aria-label="Abrir tablero de turnos"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">grid_view</span>
+            </button>
+          )}
+          <Badge variant="secondary" className="text-sm">
+            {orderedTrucks.length}
+          </Badge>
+        </div>
       </div>
+
+      <p className="text-xs text-muted-foreground mb-3">
+        Arrastra para reordenar la cola. Solo el primero puede pasar a tara en recepción.
+      </p>
 
       <div className="space-y-3" onDragOver={handleDragOver}>
         {orderedTrucks.length === 0 ? (
@@ -119,158 +160,177 @@ export const TruckList: React.FC<TruckListProps> = ({
           </div>
         ) : (
           orderedTrucks.map((truck, index) => {
-            const isFirstTruck = index === 0;
+            const isHead = index === 0;
+            const isSelected = selectedTruckId === truck.id;
+            const isDragOver = dragOverId === truck.id;
+            const isDragging = draggedId === truck.id;
 
             return (
-            <div
-              key={truck.id}
-              draggable={isFirstTruck}
-              onDragStart={(e) => handleDragStart(e, truck.id)}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-              onDragEnter={(e) => handleDragEnter(e, truck.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, truck.id)}
-              onClick={() => isFirstTruck && onSelectTruck(truck.id)}
-              className={`group relative flex items-center rounded-lg border-2 transition-all ${
-                isFirstTruck ? 'cursor-move' : 'cursor-default'
-              } overflow-hidden ${
-                isUpdating ? 'opacity-50 cursor-wait' :
-                draggedId === truck.id
-                  ? 'opacity-50 border-dashed border-primary/50'
-                  : dragOverId === truck.id
-                  ? 'bg-primary/5 border-primary border-dashed shadow-md'
-                  : selectedTruckId === truck.id
-                  ? 'bg-primary/10 border-primary shadow-lg'
-                  : 'bg-card border-border hover:border-primary/50 hover:shadow-md'
-              }`}
-            >
-              {/* Icono de Flecha - Solo visible si es el primer truck */}
-              {isFirstTruck ? (
-                <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-primary/5 to-transparent py-4 pl-3">
-                  {/* Badge de Turno */}
-                  <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
-                    #{truck.numero_turno}
-                  </Badge>
-
-                  {/* Botón Flecha */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectTruck(truck.id);
-                    }}
-                    className="p-2 rounded-full hover:bg-primary/30 hover:scale-110 transition-all duration-200 disabled:opacity-50 group/btn"
-                    title="Seleccionar para pesar"
-                    disabled={isUpdating}
-                  >
-                    <svg
-                      className="w-8 h-8 text-primary group-hover/btn:text-primary group-hover/btn:drop-shadow-lg transition-all duration-200"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <path d="M 15 12 L 9 12 M 9 12 L 12 9 M 9 12 L 12 15" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-muted/5 to-transparent py-4 pl-3">
-                  {/* Badge de Turno - Sin botón */}
-                  <Badge variant="secondary" className="text-xs font-semibold">
-                    #{truck.numero_turno}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Contenido Principal - 82% ancho */}
-              <div className="flex-1 flex items-center justify-between p-4 pr-3 relative gap-4">
-                {/* Sección izquierda: Info principal */}
-                <div className="flex-1 min-w-0 space-y-1">
-                  {/* Patente */}
-                  <div className="flex items-baseline gap-3">
-                    <p className="text-lg font-bold text-foreground truncate">
-                      {truck.license_plate}
-                    </p>
-                  </div>
-
-                  {/* Chofer */}
-                  <div className="text-xs">
-                    <span className="text-muted-foreground font-medium">Chofer:</span>
-                    <span className="text-foreground ml-1">{truck.driver_name}</span>
-                  </div>
-
-                  {/* Empresa */}
-                  {truck.carrier_company && (
-                    <div className="text-xs">
-                      <span className="text-muted-foreground font-medium">Empresa:</span>
-                      <span className="text-foreground ml-1">{truck.carrier_company}</span>
-                    </div>
+              <div
+                key={truck.id}
+                role="listitem"
+                onDragOver={handleDragOver}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragOverId(truck.id);
+                }}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDrop(truck.id);
+                }}
+                onClick={() => {
+                  if (isHead) {
+                    onSelectTruck(truck.id);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (!isHead) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectTruck(truck.id);
+                  }
+                }}
+                tabIndex={isHead ? 0 : -1}
+                className={[
+                  'group flex items-stretch rounded-lg border-2 transition-all overflow-hidden',
+                  isHead ? 'cursor-pointer' : '',
+                  isDragging ? 'opacity-50 border-dashed border-primary/50' : '',
+                  isDragOver && !isDragging ? 'ring-2 ring-primary/40 border-primary/60' : '',
+                  isHead
+                    ? 'ring-1 ring-amber-500/50 border-amber-500/40 bg-amber-500/5'
+                    : 'border-border bg-card',
+                  isSelected && isHead
+                    ? 'bg-primary/10 border-primary shadow-lg ring-2 ring-primary'
+                    : '',
+                  !isHead ? 'opacity-95 hover:border-primary/30' : '',
+                ].join(' ')}
+              >
+                <div className="w-[18%] flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-primary/5 to-transparent px-4 py-4">
+                  {isHead && (
+                    <Badge variant="primary" className="text-[10px] font-semibold uppercase tracking-wide">
+                      Siguiente tara
+                    </Badge>
                   )}
-
-                  {/* Guía */}
-                  {truck.dispatch_guide && (
-                    <div className="text-xs">
-                      <span className="text-muted-foreground font-medium">Guía:</span>
-                      <span className="text-foreground ml-1">{truck.dispatch_guide}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sección derecha: Pesos y entrada */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Peso Bruto */}
-                  <div className="text-center px-2 py-1.5 rounded-md bg-neutral/10">
-                    <p className="text-xs text-muted-foreground font-medium">Bruto</p>
-                    <p className="text-sm font-bold text-foreground">
-                      {Number(truck.gross_weight || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg
-                    </p>
-                  </div>
-
-                  {/* Entrada */}
-                  <div className="text-center px-2 py-1.5 rounded-md bg-neutral/10">
-                    <p className="text-xs text-muted-foreground font-medium">Entrada</p>
-                    <p className="text-sm font-bold text-foreground">
-                      {new Date(truck.entry_at).toLocaleTimeString('es-CL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Icono Drag - Esquina Superior Derecha */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-                  <button
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="p-1.5 rounded hover:bg-primary/20 transition-all duration-200 disabled:opacity-50"
-                    title="Arrastrar para reordenar"
-                    disabled={isUpdating}
-                  >
-                    <svg
-                      className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors duration-200"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
+                  {truck.numero_turno != null ? (
+                    <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
+                      #{truck.numero_turno}
+                    </Badge>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onAfterTurnoChange) {
+                          setRollerTruckId(truck.id);
+                        }
+                      }}
+                      disabled={!onAfterTurnoChange}
+                      title="Asignar número de turno"
+                      className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
                     >
-                      <circle cx="9" cy="5" r="1.5" />
-                      <circle cx="9" cy="12" r="1.5" />
-                      <circle cx="9" cy="19" r="1.5" />
-                      <circle cx="15" cy="5" r="1.5" />
-                      <circle cx="15" cy="12" r="1.5" />
-                      <circle cx="15" cy="19" r="1.5" />
-                    </svg>
-                  </button>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-semibold flex-shrink-0 cursor-pointer hover:bg-primary/20 border border-dashed border-primary/40"
+                      >
+                        Sin turno
+                      </Badge>
+                    </button>
+                  )}
+                  <span className="material-symbols-outlined text-primary text-2xl">local_shipping</span>
+                </div>
+
+                <div className="flex-1 flex items-center justify-between px-4 py-4 gap-4 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-lg font-bold text-foreground truncate">{truck.license_plate}</p>
+
+                    <div className="text-xs">
+                      <span className="text-muted-foreground font-medium">Producto:</span>
+                      <span className="text-foreground ml-1">
+                        {formatLogisticsProductLabel(truck.product)}
+                      </span>
+                    </div>
+
+                    <div className="text-xs">
+                      <span className="text-muted-foreground font-medium">Chofer:</span>
+                      <span className="text-foreground ml-1">
+                        {truck.driver_name?.trim() || '—'}
+                      </span>
+                    </div>
+
+                    {truck.carrier_company && (
+                      <div className="text-xs">
+                        <span className="text-muted-foreground font-medium">Empresa:</span>
+                        <span className="text-foreground ml-1">{truck.carrier_company}</span>
+                      </div>
+                    )}
+
+                    {truck.dispatch_guide && (
+                      <div className="text-xs">
+                        <span className="text-muted-foreground font-medium">Guía:</span>
+                        <span className="text-foreground ml-1">{truck.dispatch_guide}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="text-center px-2 py-1.5 rounded-md bg-neutral/10">
+                      <p className="text-xs text-muted-foreground font-medium">Bruto</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {Number(truck.gross_weight || 0).toLocaleString('es-CL', {
+                          maximumFractionDigits: 0,
+                        })}{' '}
+                        kg
+                      </p>
+                    </div>
+
+                    <div className="text-center px-2 py-1.5 rounded-md bg-neutral/10">
+                      <p className="text-xs text-muted-foreground font-medium">Entrada</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {new Date(truck.entry_at).toLocaleTimeString('es-CL', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, truck.id)}
+                  onDragEnd={handleDragEnd}
+                  onClick={(e) => e.stopPropagation()}
+                  title="Arrastrar para reordenar"
+                  aria-label="Arrastrar para reordenar en la cola"
+                  className={[
+                    'flex-shrink-0 min-w-12 flex items-center justify-center self-stretch border-l border-border/80 bg-muted/25 text-muted-foreground px-3 py-4',
+                    'cursor-grab active:cursor-grabbing hover:bg-muted/45 hover:text-foreground select-none touch-none',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset',
+                  ].join(' ')}
+                  tabIndex={-1}
+                >
+                  <span className="material-symbols-outlined text-xl leading-none" aria-hidden>
+                    drag_pan
+                  </span>
                 </div>
               </div>
-            </div>
             );
           })
         )}
       </div>
+
+      {onAfterTurnoChange && (
+        <AssignTurnoRollerDialog
+          open={rollerTruckId != null}
+          truckId={rollerTruckId}
+          trucks={trucks}
+          onClose={() => setRollerTruckId(null)}
+          onAfterAssign={onAfterTurnoChange}
+        />
+      )}
     </div>
   );
 };

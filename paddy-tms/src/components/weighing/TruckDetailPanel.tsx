@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { recordTareWeightAction, RegisterTareWeightPayload, TruckReception } from '@/actions/truckReceptionActions';
+import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
@@ -60,6 +61,7 @@ export const TruckDetailPanel: React.FC<TruckDetailPanelProps> = ({
       const payload: RegisterTareWeightPayload = {
         truck_reception_id: truck.id,
         tare_weight: weight,
+        status: 'FINISHED',
       };
 
       const updatedTruck = await recordTareWeightAction(payload);
@@ -85,8 +87,13 @@ export const TruckDetailPanel: React.FC<TruckDetailPanelProps> = ({
         </div>
 
         <div>
+          <label className="text-xs font-medium text-muted-foreground">Producto</label>
+          <p className="text-foreground">{formatLogisticsProductLabel(truck.product)}</p>
+        </div>
+
+        <div>
           <label className="text-xs font-medium text-muted-foreground">Chofer</label>
-          <p className="text-foreground">{truck.driver_name}</p>
+          <p className="text-foreground">{truck.driver_name?.trim() || '—'}</p>
         </div>
 
         <div>
@@ -101,7 +108,9 @@ export const TruckDetailPanel: React.FC<TruckDetailPanelProps> = ({
 
         <div>
           <label className="text-xs font-medium text-muted-foreground">Turno</label>
-          <p className="text-lg font-bold text-primary">#{truck.numero_turno}</p>
+          <p className="text-lg font-bold text-primary">
+            {truck.numero_turno != null ? `#${truck.numero_turno}` : 'Sin turno'}
+          </p>
         </div>
 
         <div>

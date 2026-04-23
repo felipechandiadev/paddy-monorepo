@@ -19,8 +19,11 @@ import { LogisticsService } from '../application/logistics.service';
 import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
+import { RegisterDispatchWeighingDto } from '../dtos/register-dispatch-weighing.dto';
 import { UpdateTruckStatusDto } from '../dtos/update-truck-status.dto';
+import { UpdateTruckReceptionDto } from '../dtos/update-truck-reception.dto';
 import { TruckReceptionStatus } from '../domain/truck-reception.entity';
+import { LogisticsProduct } from '../domain/logistics-product.enum';
 
 @Controller('logistics')
 export class LogisticsController {
@@ -31,7 +34,9 @@ export class LogisticsController {
   @Post('truck-receptions/with-gross-weight')
   @HttpCode(HttpStatus.CREATED)
   async createTruckWithGrossWeight(@Body(ValidationPipe) createTruckDto: CreateTruckWithGrossWeightDto) {
-    this.logger.log(`POST /truck-receptions/with-gross-weight - Registrando camion: ${createTruckDto.license_plate}`);
+    this.logger.log(
+      `POST /truck-receptions/with-gross-weight - Patente: ${createTruckDto.license_plate}, producto: ${createTruckDto.product}`,
+    );
     try {
       const result = await this.logisticsService.createTruckWithGrossWeight(createTruckDto);
       return result;
@@ -49,10 +54,89 @@ export class LogisticsController {
       const result = await this.logisticsService.createTruckWithGrossWeight({
         ...createTruckDto,
         gross_weight: 0,
+        product: createTruckDto.product ?? LogisticsProduct.ARROZ_PADDY,
       });
       return result;
     } catch (error) {
       this.logger.error(`Error al registrar camion: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Post('truck-dispatches/with-gross-weight')
+  @HttpCode(HttpStatus.CREATED)
+  async createTruckDispatchWithGrossWeight(
+    @Body(ValidationPipe) createTruckDto: CreateTruckWithGrossWeightDto,
+  ) {
+    this.logger.log(
+      `POST /truck-dispatches/with-gross-weight - Despacho patente: ${createTruckDto.license_plate}`,
+    );
+    try {
+      return await this.logisticsService.createTruckDispatchWithGrossWeight(createTruckDto);
+    } catch (error) {
+      this.logger.error(`Error al registrar despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Post('truck-dispatches')
+  @HttpCode(HttpStatus.CREATED)
+  async createTruckDispatch(@Body(ValidationPipe) createTruckDto: CreateTruckDto) {
+    this.logger.log(`POST /truck-dispatches - Despacho patente: ${createTruckDto.license_plate}`);
+    try {
+      return await this.logisticsService.createTruckDispatchWithGrossWeight({
+        ...createTruckDto,
+        gross_weight: 0,
+        product: createTruckDto.product ?? LogisticsProduct.ARROZ_PADDY,
+      });
+    } catch (error) {
+      this.logger.error(`Error al registrar despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Post('weighings/dispatch-tare')
+  @HttpCode(HttpStatus.OK)
+  async registerDispatchTareWeight(
+    @Body(ValidationPipe) registerDto: RegisterDispatchWeighingDto,
+  ) {
+    this.logger.log(
+      `POST /weighings/dispatch-tare - Tara despacho: ${registerDto.truck_dispatch_id}`,
+    );
+    try {
+      return await this.logisticsService.registerDispatchTareWeight(registerDto);
+    } catch (error) {
+      this.logger.error(`Error al registrar tara despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Get('turnos/dispatches/today')
+  async getDispatchTurnosToday() {
+    this.logger.log(`GET /turnos/dispatches/today`);
+    try {
+      const today = new Date();
+      return await this.logisticsService.getDispatchTurnosByDate(today);
+    } catch (error) {
+      this.logger.error(`Error al obtener turnos despacho: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @Get('truck-dispatches/grid')
+  @UseGuards(JwtAuthGuard)
+  async getTruckDispatchesForGrid(
+    @Query('limit') limit: string = '100',
+    @Query('offset') offset: string = '0',
+  ) {
+    this.logger.log(`GET /truck-dispatches/grid - Limit: ${limit}, Offset: ${offset}`);
+    try {
+      return await this.logisticsService.getAllTruckDispatches(
+        parseInt(limit, 10),
+        parseInt(offset, 10),
+      );
+    } catch (error) {
+      this.logger.error(`Error al obtener despachos (grid): ${error.message}`);
       throw error;
     }
   }
@@ -215,11 +299,11 @@ export class LogisticsController {
   @Put('truck-receptions/:id')
   async updateTruckReception(
     @Param('id', new ParseIntPipe()) id: number,
-    @Body() updateData: Partial<CreateTruckDto>,
+    @Body(ValidationPipe) updateDto: UpdateTruckReceptionDto,
   ) {
     this.logger.log(`PUT /truck-receptions/:id - ID: ${id}`);
     try {
-      const result = await this.logisticsService.updateTruckReception(id, updateData);
+      const result = await this.logisticsService.updateTruckReception(id, updateDto);
       return result;
     } catch (error) {
       this.logger.error(`Error al actualizar recepcion: ${error.message}`);

@@ -10,19 +10,18 @@ import {
   Index,
 } from 'typeorm';
 import { Producer } from '@modules/producers/domain/producer.entity';
+import { TruckReceptionStatus } from './truck-reception.entity';
 import { LogisticsProduct } from './logistics-product.enum';
 
-export enum TruckReceptionStatus {
-  ESPERA = 'ESPERA',
-  FINISHED = 'FINISHED',
-}
-
-@Entity('truck_receptions')
+/**
+ * Despacho de camión (misma estructura operativa que recepción + producto).
+ */
+@Entity('truck_dispatches')
 @Index(['producer_id'])
 @Index(['status'])
 @Index(['entry_at'])
 @Index(['turno_date'])
-export class TruckReception {
+export class TruckDispatch {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
@@ -98,4 +97,3 @@ export class TruckReception {
     }
   }
 }
-

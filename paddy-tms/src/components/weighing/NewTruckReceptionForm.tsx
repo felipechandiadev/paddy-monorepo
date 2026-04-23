@@ -5,8 +5,10 @@ import { TextField } from '@/shared/components/ui/TextField/TextField';
 import AutoComplete from '@/shared/components/ui/AutoComplete/AutoComplete';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
+import Select from '@/shared/components/ui/Select/Select';
 import { fetchProducersAction, ProducerOption } from '@/actions/fetchProducersAction';
 import { createTruckReceptionAction, TruckReception } from '@/actions/truckReceptionActions';
+import { LOGISTICS_PRODUCT_OPTIONS, type LogisticsProductCode } from '@/lib/logisticsProduct';
 import { useWeighingPage } from '@/hooks/useWeighingPage';
 
 interface NewTruckReceptionFormProps {
@@ -19,9 +21,10 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
   isSerialConnected,
 }) => {
   const { addTruck, loadTrucksToday } = useWeighingPage();
-  
+
   const [formData, setFormData] = useState({
     producer_id: null as number | null,
+    product: 'ARROZ_PADDY' as LogisticsProductCode,
     license_plate: '',
     driver_name: '',
     carrier_company: '',
@@ -43,6 +46,11 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
       console.error('Error cargando productores:', err);
     }
   }, []);
+
+  const productSelectOptions = React.useMemo(
+    () => LOGISTICS_PRODUCT_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
+    []
+  );
 
   // Cargar productores al montar
   React.useEffect(() => {
@@ -79,11 +87,6 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
       return;
     }
 
-    if (!formData.driver_name.trim()) {
-      setError('El nombre del chofer es requerido');
-      return;
-    }
-
     const weight = Number(formData.gross_weight);
     if (!weight || weight <= 0) {
       setError('El peso bruto debe ser mayor a 0');
@@ -93,13 +96,15 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
     setIsLoading(true);
 
     try {
+      const driverTrim = formData.driver_name.trim();
       const newTruck = await createTruckReceptionAction({
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
-        driver_name: formData.driver_name.trim(),
+        ...(driverTrim ? { driver_name: driverTrim } : {}),
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
         gross_weight: weight,
+        product: formData.product,
       });
       
       // Agregar a la lista local
@@ -108,11 +113,16 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
       // Recargar la lista completa desde el servidor para sincronizar turnos
       await loadTrucksToday();
 
-      setSuccessMessage(`Recepción creada: Turno #${newTruck.numero_turno}`);
+      setSuccessMessage(
+        newTruck.numero_turno != null
+          ? `Recepción creada: Turno #${newTruck.numero_turno}`
+          : 'Recepción creada. Asigna el turno en el tablero cuando corresponda.',
+      );
       
       // Limpiar formulario
       setFormData({
         producer_id: null,
+        product: 'ARROZ_PADDY',
         license_plate: '',
         driver_name: '',
         carrier_company: '',
@@ -175,6 +185,22 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
           />
         </div>
 
+        <Select
+          label="Producto"
+          name="new-truck-product"
+          placeholder="Selecciona producto"
+          options={productSelectOptions}
+          value={formData.product}
+          onChange={(id) => {
+            if (id !== null && id !== undefined) {
+              setFormData((prev) => ({ ...prev, product: id as LogisticsProductCode }));
+            }
+          }}
+          required
+          disabled={isLoading}
+          data-test-id="new-truck-product"
+        />
+
         {/* Patente */}
         <TextField
           label="Patente *"
@@ -187,7 +213,7 @@ export const NewTruckReceptionForm: React.FC<NewTruckReceptionFormProps> = ({
 
         {/* Nombre del Chofer */}
         <TextField
-          label="Nombre del Chofer *"
+          label="Nombre del Chofer"
           value={formData.driver_name}
           onChange={(e) => setFormData(prev => ({ ...prev, driver_name: e.target.value }))}
           placeholder="Ej: Juan Pérez"

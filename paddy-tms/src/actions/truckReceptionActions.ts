@@ -3,23 +3,29 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { formatChileanRut } from '@/lib/formatChileanRut';
+import type { LogisticsProductCode } from '@/lib/logisticsProduct';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 export interface CreateTruckWithGrossWeightPayload {
   producer_id: number;
   license_plate: string;
-  driver_name: string;
+  driver_name?: string;
   carrier_company?: string;
   dispatch_guide?: string;
   gross_weight: number;
+  /** Obligatorio en POST `/logistics/truck-receptions/with-gross-weight` (validación API). */
+  product: LogisticsProductCode;
+  /** Opcional en alta; asignar después vía tablero o PUT. Si se envía, 1–100 y libre en ESPERA. */
+  numero_turno?: number;
   created_by?: string;
 }
 
 export interface RegisterTareWeightPayload {
   truck_reception_id: number;
   tare_weight: number;
-  status?: 'FINISHED';
+  /** Requerido por la API (`RegisterWeighingDto`). */
+  status: 'FINISHED';
   created_by?: string;
 }
 
@@ -32,13 +38,14 @@ export interface TruckReceptionProducerRef {
 
 export interface TruckReception {
   id: number;
-  numero_turno: number;
+  numero_turno: number | null;
   status: 'ESPERA' | 'FINISHED';
   producer_id: number;
+  product?: LogisticsProductCode;
   /** Presente cuando la API incluye `relations: ['producer']`. */
   producer?: TruckReceptionProducerRef;
   license_plate: string;
-  driver_name: string;
+  driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
   gross_weight?: number;
@@ -87,11 +94,6 @@ export async function createTruckReceptionAction(
       const result = await response.json();
     
       const truckData: TruckReception = result.data;
-    
-      if (!truckData.numero_turno) {
-        // numero_turno no definido en respuesta
-      }
-    
       return truckData;
   } catch (error) {
     console.error('Error creando recepcion:', error);
@@ -115,7 +117,12 @@ export async function recordTareWeightAction(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.user.accessToken}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        truck_reception_id: payload.truck_reception_id,
+        tare_weight: payload.tare_weight,
+        status: payload.status ?? 'FINISHED',
+        created_by: payload.created_by,
+      }),
     });
 
     if (!response.ok) {
@@ -169,6 +176,7 @@ export async function getNextTurnoAction(): Promise<number> {
 export interface TruckReceptionGridRow {
   id: number;
   status: string;
+  product?: string;
   license_plate: string;
   driver_name: string;
   carrier_company?: string | null;
@@ -223,6 +231,7 @@ export async function getTruckReceptionsGridAction(params: {
       return {
         id: Number(r.id),
         status: String(r.status ?? ''),
+        product: r.product != null ? String(r.product) : undefined,
         license_plate: String(r.license_plate ?? ''),
         driver_name: String(r.driver_name ?? ''),
         carrier_company: r.carrier_company != null ? String(r.carrier_company) : null,

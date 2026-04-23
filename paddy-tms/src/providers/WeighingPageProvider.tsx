@@ -35,10 +35,7 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setError(null);
     try {
       const turnos = await getTurnosTodayAction();
-      
-      // Verificar si es nuevo día y combinar con pendientes de ayer
-      const { isNewDay, wasSystemRestart, allRecepciones } = turnoService.checkAndInitNewDay(turnos);
-      
+      const { allRecepciones } = turnoService.checkAndInitNewDay(turnos);
       setTrucks(allRecepciones);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
@@ -64,8 +61,9 @@ export const WeighingPageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       prev.map((t) => (t.id === truck.id ? truck : t))
     );
     
-    // Actualizar estado de turnos en localStorage
-    turnoService.recordTurnoAssigned(truck.numero_turno);
+    if (truck.numero_turno != null) {
+      turnoService.recordTurnoAssigned(truck.numero_turno);
+    }
     turnoService.updatePreviousDayRecepciones(truck);
   }, []);
 

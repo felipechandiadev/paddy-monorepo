@@ -63,7 +63,7 @@ function QueueCard({
           ].join(' ')}
         >
           <span className="font-medium text-muted-foreground">Turno</span>{' '}
-          {item.numero_turno}
+          {item.numero_turno ?? '—'}
         </span>
         <span
           className={[
@@ -113,7 +113,7 @@ export const MonitorDisplay: React.FC<MonitorDisplayProps> = ({ state, error }) 
 
   const orderedRest = [...waiting]
     .filter((w) => w.id !== weighingId)
-    .sort((a, b) => a.numero_turno - b.numero_turno);
+    .sort((a, b) => (a.numero_turno ?? 1000) - (b.numero_turno ?? 1000));
 
   if (error) {
     return (

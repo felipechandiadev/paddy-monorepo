@@ -5,6 +5,7 @@ import { TextField } from '@/shared/components/ui/TextField/TextField';
 import AutoComplete from '@/shared/components/ui/AutoComplete/AutoComplete';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
+import Select from '@/shared/components/ui/Select/Select';
 import { fetchProducersAction, ProducerOption } from '@/actions/fetchProducersAction';
 import type { CreatedProducer } from '@/actions/producerActions';
 import {
@@ -13,6 +14,11 @@ import {
   TruckReception,
   RegisterTareWeightPayload,
 } from '@/actions/truckReceptionActions';
+import {
+  LOGISTICS_PRODUCT_OPTIONS,
+  formatLogisticsProductLabel,
+  type LogisticsProductCode,
+} from '@/lib/logisticsProduct';
 import { useWeighingPage } from '@/hooks/useWeighingPage';
 import CreateProducerDialog from '@/components/producers/CreateProducerDialog';
 
@@ -39,6 +45,11 @@ interface TruckReceptionFormProps {
   selectedTruck?: TruckReception | null;
   serialWeight: number | null;
   isSerialConnected: boolean;
+  /** Web Serial API disponible (HTTPS / localhost). */
+  serialAvailable?: boolean;
+  /** Abre el selector de puerto (requiere gesto del usuario la primera vez). */
+  onConnectSerial?: () => void;
+  serialConnecting?: boolean;
   onTruckCreated?: (truck: TruckReception) => void;
   onTareFinalized?: (truck: TruckReception) => void;
   onCancel?: () => void;
@@ -49,6 +60,9 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   selectedTruck,
   serialWeight,
   isSerialConnected,
+  serialAvailable = false,
+  onConnectSerial,
+  serialConnecting = false,
   onTruckCreated,
   onTareFinalized,
   onCancel,
@@ -58,6 +72,7 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   const [formData, setFormData] = useState({
     // Modo: create
     producer_id: null as number | null,
+    product: 'ARROZ_PADDY' as LogisticsProductCode,
     license_plate: '',
     driver_name: '',
     carrier_company: '',
@@ -75,6 +90,12 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  /** Evita mismatch SSR: `serialAvailable` solo existe en el navegador. */
+  const [clientMounted, setClientMounted] = useState(false);
+
+  useEffect(() => {
+    setClientMounted(true);
+  }, []);
 
   const loadProducers = useCallback(async () => {
     try {
@@ -119,20 +140,19 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     ];
   }, [producers, producerSearch]);
 
-  // Sincronizar peso serial en modo create
-  useEffect(() => {
-    if (mode === 'create' && serialWeight && isSerialConnected) {
-      setFormData((prev) => ({ ...prev, gross_weight: String(serialWeight) }));
-    }
-  }, [serialWeight, isSerialConnected, mode]);
+  const productSelectOptions = useMemo(
+    () => LOGISTICS_PRODUCT_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
+    [],
+  );
 
-  // Resetear formulario cuando cambia el modo
+  // Resetear formulario al pasar a modo creación
   useEffect(() => {
     setError(null);
     setSuccessMessage(null);
     if (mode === 'create') {
       setFormData({
         producer_id: null,
+        product: 'ARROZ_PADDY',
         license_plate: '',
         driver_name: '',
         carrier_company: '',
@@ -140,13 +160,28 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
         gross_weight: '',
         tare_weight: '',
       });
-    } else if (mode === 'tare') {
-      setFormData((prev) => ({
-        ...prev,
-        tare_weight: '',
-      }));
     }
   }, [mode]);
+
+  // En tara: limpiar campo al elegir otro camión (el peso se vuelve a llenar desde la balanza)
+  useEffect(() => {
+    if (mode === 'tare' && selectedTruck?.id != null) {
+      setFormData((prev) => ({ ...prev, tare_weight: '' }));
+    }
+  }, [mode, selectedTruck?.id]);
+
+  /** Peso bruto / tara desde balanza (debe ir después de los resets anteriores). */
+  useEffect(() => {
+    if (!isSerialConnected || serialWeight == null || !Number.isFinite(serialWeight)) {
+      return;
+    }
+    const value = String(serialWeight);
+    if (mode === 'create') {
+      setFormData((prev) => ({ ...prev, gross_weight: value }));
+    } else if (mode === 'tare') {
+      setFormData((prev) => ({ ...prev, tare_weight: value }));
+    }
+  }, [serialWeight, isSerialConnected, mode]);
 
   const handleProducerCreated = useCallback(
     (producer: CreatedProducer) => {
@@ -174,6 +209,35 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
       ? selectedTruck.gross_weight - Number(formData.tare_weight)
       : null;
 
+  const serialScaleNotice =
+    clientMounted && serialAvailable ? (
+      <div className="mb-4 rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        {isSerialConnected ? (
+          <p className="text-xs text-muted-foreground">
+            Balanza conectada: el peso del campo inferior se actualiza desde el puerto serie.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Si la balanza no enlaza sola, elija el puerto serie (requiere un clic del usuario).
+            </p>
+            {onConnectSerial ? (
+              <Button
+                type="button"
+                variant="outlined"
+                size="sm"
+                className="shrink-0"
+                onClick={() => onConnectSerial()}
+                disabled={serialConnecting}
+              >
+                {serialConnecting ? 'Conectando…' : 'Conectar puerto serie'}
+              </Button>
+            ) : null}
+          </>
+        )}
+      </div>
+    ) : null;
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -190,11 +254,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
       return;
     }
 
-    if (!formData.driver_name.trim()) {
-      setError('El nombre del chofer es requerido');
-      return;
-    }
-
     const weight = Number(formData.gross_weight);
     if (!weight || weight <= 0) {
       setError('El peso bruto debe ser mayor a 0');
@@ -204,13 +263,15 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     setIsLoading(true);
 
     try {
+      const driverTrim = formData.driver_name.trim();
       const newTruck = await createTruckReceptionAction({
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
-        driver_name: formData.driver_name.trim(),
+        ...(driverTrim ? { driver_name: driverTrim } : {}),
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
         gross_weight: weight,
+        product: formData.product,
       });
 
       console.log('newTruck created:', newTruck);
@@ -218,11 +279,16 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
       addTruck(newTruck);
       await loadTrucksToday();
 
-      setSuccessMessage(`Recepción creada: Turno #${newTruck.numero_turno}`);
+      setSuccessMessage(
+        newTruck.numero_turno != null
+          ? `Recepción creada: Turno #${newTruck.numero_turno}`
+          : 'Recepción creada. Asigna el turno en el tablero cuando corresponda.',
+      );
 
       // Limpiar formulario
       setFormData({
         producer_id: null,
+        product: 'ARROZ_PADDY',
         license_plate: '',
         driver_name: '',
         carrier_company: '',
@@ -303,7 +369,8 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     return (
       <>
         <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
-          <h2 className="text-xl font-bold text-foreground mb-6">Nueva Recepción</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Nueva Recepción</h2>
+          {serialScaleNotice}
 
           <form onSubmit={handleCreateSubmit} className="space-y-4">
           {/* Success Alert */}
@@ -365,6 +432,22 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
             labelAlwaysVisible
           />
 
+          <Select
+            label="Producto"
+            name="reception-product"
+            placeholder="Selecciona producto"
+            options={productSelectOptions}
+            value={formData.product}
+            onChange={(id) => {
+              if (id !== null && id !== undefined) {
+                setFormData((prev) => ({ ...prev, product: id as LogisticsProductCode }));
+              }
+            }}
+            required
+            disabled={isLoading}
+            data-test-id="reception-product"
+          />
+
           {/* Patente */}
           <TextField
             label="Patente *"
@@ -377,7 +460,7 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
 
           {/* Nombre del Chofer */}
           <TextField
-            label="Nombre del Chofer *"
+            label="Nombre del Chofer"
             value={formData.driver_name}
             onChange={(e) => setFormData((prev) => ({ ...prev, driver_name: e.target.value }))}
             placeholder="Ej: Juan Pérez"
@@ -411,7 +494,11 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
             type="number"
             value={formData.gross_weight}
             onChange={(e) => setFormData((prev) => ({ ...prev, gross_weight: e.target.value }))}
-            placeholder={isSerialConnected ? `${serialWeight || 0} kg (serial)` : 'Ingresa peso manualmente'}
+            placeholder={
+              isSerialConnected && serialWeight != null && Number.isFinite(serialWeight)
+                ? `${serialWeight} kg (serie)`
+                : 'Ingresa peso manualmente'
+            }
             disabled={isLoading}
             min="0"
             step="0.01"
@@ -443,7 +530,8 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   if (mode === 'tare' && selectedTruck) {
     return (
       <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
-        <h2 className="text-lg font-bold text-foreground mb-4">Registrar Peso Tara</h2>
+        <h2 className="text-lg font-bold text-foreground mb-2">Registrar Peso Tara</h2>
+        {serialScaleNotice}
 
         {/* Información General - Grid compacta */}
         <div className="grid grid-cols-2 gap-3 mb-6 p-4 bg-neutral/5 rounded-lg">
@@ -459,12 +547,25 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">Turno</label>
-            <p className="text-sm font-bold text-primary">#{selectedTruck.numero_turno}</p>
+            <p className="text-sm font-bold text-primary">
+              {selectedTruck.numero_turno != null
+                ? `#${selectedTruck.numero_turno}`
+                : 'Sin turno — asignar en tablero'}
+            </p>
+          </div>
+
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-muted-foreground">Producto</label>
+            <p className="text-sm font-semibold text-foreground">
+              {formatLogisticsProductLabel(selectedTruck.product)}
+            </p>
           </div>
 
           <div className="col-span-2">
             <label className="text-xs font-medium text-muted-foreground">Chofer</label>
-            <p className="text-sm text-foreground">{selectedTruck.driver_name}</p>
+            <p className="text-sm text-foreground">
+              {selectedTruck.driver_name?.trim() || '—'}
+            </p>
           </div>
 
           {selectedTruck.carrier_company && (
@@ -532,7 +633,11 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
             type="number"
             value={formData.tare_weight}
             onChange={(e) => setFormData((prev) => ({ ...prev, tare_weight: e.target.value }))}
-            placeholder={isSerialConnected ? `${serialWeight || 0} kg (serial)` : 'Ingresa peso'}
+            placeholder={
+              isSerialConnected && serialWeight != null && Number.isFinite(serialWeight)
+                ? `${serialWeight} kg (serie)`
+                : 'Ingresa peso'
+            }
             disabled={isLoading}
             min="0"
             step="0.01"

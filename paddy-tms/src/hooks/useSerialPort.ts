@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { serialPortService } from '@/services/serialPort.service';
+import { serialPortService, type SerialRawSample } from '@/services/serialPort.service';
 import { serialPortConfigStorage } from '@/services/serialPortConfigService';
 
 interface UseSerialPortReturn {
@@ -10,6 +10,11 @@ interface UseSerialPortReturn {
   isConnecting: boolean;
   error: string | null;
   lastWeight: number | null;
+  lastRawSample: SerialRawSample | null;
+  bytesReceivedTotal: number;
+  configuredBaudRate: number;
+  configuredDataBits: 7 | 8;
+  configuredParity: 'none' | 'even' | 'odd';
   connect: () => Promise<void>;
   connectChoosingPort: () => Promise<void>;
   disconnect: () => Promise<void>;
@@ -19,12 +24,13 @@ interface UseSerialPortReturn {
 
 function persistSerialConfig() {
   const fp = serialPortService.getPortFingerprint();
+  const prev = serialPortConfigStorage.getConfig();
   serialPortConfigStorage.saveConfig({
     port: fp || 'serial',
-    baudRate: 9600,
-    dataBits: 8,
+    baudRate: prev?.baudRate ?? 9600,
+    dataBits: prev?.dataBits === 8 ? 8 : 7,
     stopBits: 1,
-    parity: 'none',
+    parity: prev?.parity === 'even' || prev?.parity === 'odd' ? prev.parity : 'none',
     lastUsed: new Date().toISOString(),
   });
 }
@@ -37,12 +43,22 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastWeight, setLastWeight] = useState<number | null>(null);
+  const [lastRawSample, setLastRawSample] = useState<SerialRawSample | null>(null);
+  const [bytesReceivedTotal, setBytesReceivedTotal] = useState(0);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isConnectedRef = useRef(false);
   /** Evita que el efecto de auto-conexión vuelva a conectar tras un Desconectar explícito */
   const suppressAutoConnectRef = useRef(false);
 
+  useEffect(() => {
+    isConnectedRef.current = isConnected;
+  }, [isConnected]);
+
   // Verificar disponibilidad de Serial API
   const isAvailable = serialPortService.isAvailable();
+  const configuredBaudRate = serialPortService.getConfiguredBaudRate();
+  const configuredDataBits = serialPortService.getConfiguredDataBits();
+  const configuredParity = serialPortService.getConfiguredParity();
 
   // Conectar
   const connect = useCallback(async () => {
@@ -61,19 +77,38 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
     try {
       const success = await serialPortService.connect();
       if (success) {
+        suppressAutoConnectRef.current = false;
         setIsConnected(true);
         persistSerialConfig();
-        // Comenzar a polling del peso
         const interval = setInterval(() => {
+          if (!serialPortService.getIsConnected() && isConnectedRef.current) {
+            isConnectedRef.current = false;
+            suppressAutoConnectRef.current = true;
+            setIsConnected(false);
+            const lost = serialPortService.getConnectionLostMessage();
+            if (lost) {
+              setError(lost);
+            }
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            return;
+          }
           const weight = serialPortService.readWeight();
           if (weight !== null) {
             setLastWeight(weight);
           }
+          setLastRawSample(serialPortService.getLastRawSample());
+          setBytesReceivedTotal(serialPortService.getBytesReceivedTotal());
         }, 100);
-        
+
         pollingIntervalRef.current = interval;
       } else {
-        setError('No se pudo conectar al puerto serial');
+        suppressAutoConnectRef.current = true;
+        setError(
+          serialPortService.getConnectionLostMessage() || 'No se pudo conectar al puerto serial',
+        );
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
@@ -104,15 +139,35 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
         setIsConnected(true);
         persistSerialConfig();
         const interval = setInterval(() => {
+          if (!serialPortService.getIsConnected() && isConnectedRef.current) {
+            isConnectedRef.current = false;
+            suppressAutoConnectRef.current = true;
+            setIsConnected(false);
+            const lost = serialPortService.getConnectionLostMessage();
+            if (lost) {
+              setError(lost);
+            }
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            return;
+          }
           const weight = serialPortService.readWeight();
           if (weight !== null) {
             setLastWeight(weight);
           }
+          setLastRawSample(serialPortService.getLastRawSample());
+          setBytesReceivedTotal(serialPortService.getBytesReceivedTotal());
         }, 100);
         pollingIntervalRef.current = interval;
       } else {
         setIsConnected(false);
-        setError('No se pudo conectar o se canceló la selección del puerto');
+        suppressAutoConnectRef.current = true;
+        setError(
+          serialPortService.getConnectionLostMessage() ||
+            'No se pudo conectar o se canceló la selección del puerto',
+        );
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
@@ -134,6 +189,8 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
       await serialPortService.disconnect();
       setIsConnected(false);
       setLastWeight(null);
+      setLastRawSample(null);
+      setBytesReceivedTotal(0);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
@@ -177,6 +234,11 @@ export function useSerialPort(enabled: boolean = false): UseSerialPortReturn {
     isConnecting,
     error,
     lastWeight,
+    lastRawSample,
+    bytesReceivedTotal,
+    configuredBaudRate,
+    configuredDataBits,
+    configuredParity,
     connect,
     connectChoosingPort,
     disconnect,

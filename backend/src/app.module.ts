@@ -42,6 +42,7 @@ import {
 } from './modules/finances/domain/finances.entity';
 import { AuditEvent } from './modules/audit/domain/audit-event.entity';
 import { TruckReception } from './modules/logistics/domain/truck-reception.entity';
+import { TruckDispatch } from './modules/logistics/domain/truck-dispatch.entity';
 
 const isDatabaseSslRequired =
   process.env.DATABASE_SSL_MODE?.toUpperCase() === 'REQUIRED';
@@ -89,6 +90,7 @@ const databaseSslConfig = isDatabaseSslEnabled
         UserPermissionOverride,
         AuditEvent,
         TruckReception,
+        TruckDispatch,
       ],
       synchronize:
         process.env.TYPEORM_SYNCHRONIZE === 'true' &&

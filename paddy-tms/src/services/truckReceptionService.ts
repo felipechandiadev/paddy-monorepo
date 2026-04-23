@@ -2,41 +2,15 @@
 
 import { localStorageService } from '@/services/localStorage.service';
 import { getAuthTokenAction } from '@/actions/authActions';
+import type {
+  CreateTruckWithGrossWeightPayload,
+  RegisterTareWeightPayload,
+  TruckReception,
+} from '@/actions/truckReceptionActions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
-export interface CreateTruckWithGrossWeightPayload {
-  producer_id: number;
-  license_plate: string;
-  driver_name: string;
-  carrier_company?: string;
-  dispatch_guide?: string;
-  gross_weight: number;
-  created_by?: string;
-}
-
-export interface RegisterTareWeightPayload {
-  truck_reception_id: number;
-  tare_weight: number;
-  created_by?: string;
-}
-
-export interface TruckReception {
-  id: number;
-  numero_turno: number;
-  status: 'ESPERA' | 'FINISHED';
-  producer_id: number;
-  license_plate: string;
-  driver_name: string;
-  carrier_company?: string;
-  dispatch_guide?: string;
-  gross_weight?: number;
-  tare_weight?: number;
-  net_weight?: number;
-  entry_at: Date;
-  finished_at?: Date;
-  created_by?: string;
-}
+export type { CreateTruckWithGrossWeightPayload, RegisterTareWeightPayload, TruckReception };
 
 /**
  * Servicio para gestionar recepciones de camiones con sincronización offline
@@ -81,14 +55,15 @@ export class TruckReceptionService {
       // Guardar en localStorage
       localStorageService.saveTruckReception(truck);
 
-      // Agregar a sesión de turnos
       const today = new Date();
-      localStorageService.addTurno(today, {
-        numero: truck.numero_turno,
-        truck_id: truck.id,
-        status: truck.status as 'ESPERA' | 'FINISHED',
-        patente: truck.license_plate,
-      });
+      if (truck.numero_turno != null) {
+        localStorageService.addTurno(today, {
+          numero: truck.numero_turno,
+          truck_id: truck.id,
+          status: truck.status as 'ESPERA' | 'FINISHED',
+          patente: truck.license_plate,
+        });
+      }
 
       // Agregar a cola de sincronización como respaldo
       localStorageService.addToSyncQueue('create', truck, truck.id);
@@ -99,23 +74,31 @@ export class TruckReceptionService {
 
       // Fallback: crear localmente si falla el backend
       const today = new Date();
-      const nextTurno = localStorageService.getNextTurno(today);
       const localTruck: TruckReception = {
         id: Date.now(), // ID temporal
-        numero_turno: nextTurno,
+        numero_turno: payload.numero_turno ?? null,
         status: 'ESPERA',
-        ...payload,
+        producer_id: payload.producer_id,
+        product: payload.product,
+        license_plate: payload.license_plate,
+        driver_name: payload.driver_name ?? '',
+        carrier_company: payload.carrier_company,
+        dispatch_guide: payload.dispatch_guide,
+        gross_weight: payload.gross_weight,
+        created_by: payload.created_by,
         entry_at: new Date(),
       };
 
       // Guardar localmente
       localStorageService.saveTruckReception(localTruck);
-      localStorageService.addTurno(today, {
-        numero: nextTurno,
-        truck_id: localTruck.id,
-        status: 'ESPERA',
-        patente: localTruck.license_plate,
-      });
+      if (payload.numero_turno != null) {
+        localStorageService.addTurno(today, {
+          numero: payload.numero_turno,
+          truck_id: localTruck.id,
+          status: 'ESPERA',
+          patente: localTruck.license_plate,
+        });
+      }
 
       // Agregar a cola de sincronización
       localStorageService.addToSyncQueue('create', localTruck, localTruck.id);
@@ -147,7 +130,12 @@ export class TruckReceptionService {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          truck_reception_id: payload.truck_reception_id,
+          tare_weight: payload.tare_weight,
+          status: payload.status ?? 'FINISHED',
+          created_by: payload.created_by,
+        }),
       });
 
       if (!response.ok) {
@@ -160,9 +148,10 @@ export class TruckReceptionService {
       // Actualizar en localStorage
       localStorageService.saveTruckReception(truck);
 
-      // Actualizar sesión de turnos
       const today = new Date();
-      localStorageService.updateTurno(today, truck.numero_turno, 'FINISHED');
+      if (truck.numero_turno != null) {
+        localStorageService.updateTurno(today, truck.numero_turno, 'FINISHED');
+      }
 
       // Agregar a cola de sincronización
       localStorageService.addToSyncQueue('update', truck, truck.id);
@@ -184,7 +173,9 @@ export class TruckReceptionService {
         localStorageService.saveTruckReception(truck);
 
         const today = new Date();
-        localStorageService.updateTurno(today, truck.numero_turno, 'FINISHED');
+        if (truck.numero_turno != null) {
+          localStorageService.updateTurno(today, truck.numero_turno, 'FINISHED');
+        }
 
         localStorageService.addToSyncQueue('update', truck, truck.id);
 
@@ -379,6 +370,7 @@ export class TruckReceptionService {
               body: JSON.stringify({
                 truck_reception_id: item.id,
                 tare_weight: item.data.tare_weight,
+                status: 'FINISHED',
               }),
             });
 

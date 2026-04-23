@@ -3,10 +3,17 @@
 import React from 'react';
 import DataGrid, { DataGridColumn } from '@/shared/components/ui/DataGrid';
 import type { TruckReceptionGridRow } from '@/actions/truckReceptionActions';
+import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 
 const columns: DataGridColumn[] = [
   { field: 'id', headerName: 'Folio', type: 'id', width: 72 },
   { field: 'status', headerName: 'Estado', width: 124, renderType: 'badge' },
+  {
+    field: 'product',
+    headerName: 'Producto',
+    width: 130,
+    valueGetter: ({ row }) => formatLogisticsProductLabel(row.product),
+  },
   {
     field: 'license_plate',
     headerName: 'Patente',
