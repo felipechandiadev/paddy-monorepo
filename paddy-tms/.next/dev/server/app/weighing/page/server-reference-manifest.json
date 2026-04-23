@@ -1,9 +1,9 @@
 {
   "node": {
-    "00e974fb0515369ecf82dada3ac5abce0639296144": {
+    "0052034b30fe013497a1c8838d10aedd6eda260c12": {
       "workers": {
         "app/weighing/page": {
-          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "getTurnosTodayAction",
           "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
@@ -15,10 +15,10 @@
       "exportedName": "getTurnosTodayAction",
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
     },
-    "40943fe0fc99eb8d9cea89841d7ec7102a5dd85eac": {
+    "401bab28b0299646f861535a0f8397c9b5b1018ac3": {
       "workers": {
         "app/weighing/page": {
-          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "fetchProducersAction",
           "filename": "paddy/paddy-tms/src/actions/fetchProducersAction.ts"
@@ -30,10 +30,10 @@
       "exportedName": "fetchProducersAction",
       "filename": "paddy/paddy-tms/src/actions/fetchProducersAction.ts"
     },
-    "4050d7ab117902baaf6257f90e6439786adcc08baa": {
+    "40bb2c25bc547fec94ca266ab057edd092726f4ce1": {
       "workers": {
         "app/weighing/page": {
-          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "createTruckReceptionAction",
           "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
@@ -45,10 +45,10 @@
       "exportedName": "createTruckReceptionAction",
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
     },
-    "40ebb88ba80441a75112e8cdf2a13620b182de3ab6": {
+    "40137737295fcef84cd023dee89a7385b4cc7dd322": {
       "workers": {
         "app/weighing/page": {
-          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "recordTareWeightAction",
           "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
@@ -60,10 +60,25 @@
       "exportedName": "recordTareWeightAction",
       "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"
     },
-    "60bad2f729042d2e500828f3b11a9d08742469b1d9": {
+    "4028b62734a9917b4c9f8d2832850b923ccee3c38a": {
       "workers": {
         "app/weighing/page": {
-          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createProducerAction",
+          "filename": "paddy/paddy-tms/src/actions/producerActions.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/page": "action-browser"
+      },
+      "exportedName": "createProducerAction",
+      "filename": "paddy/paddy-tms/src/actions/producerActions.ts"
+    },
+    "6076d9f5f4add8830368030addaf9a1737d3c7f847": {
+      "workers": {
+        "app/weighing/page": {
+          "moduleId": "[project]/paddy/paddy-tms/.next-internal/server/app/weighing/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/paddy-tms/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/paddy-tms/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/paddy/paddy-tms/src/actions/producerActions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "updateTruckTurnoAction",
           "filename": "paddy/paddy-tms/src/actions/truckReceptionActions.ts"

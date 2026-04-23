@@ -16,6 +16,7 @@ import { CreateTruckDto } from '../dtos/create-truck.dto';
 import { CreateTruckWithGrossWeightDto } from '../dtos/create-truck-with-gross-weight.dto';
 import { RegisterWeighingDto } from '../dtos/register-weighing.dto';
 import { RegisterDispatchWeighingDto } from '../dtos/register-dispatch-weighing.dto';
+import { UpdateTruckReceptionDto } from '../dtos/update-truck-reception.dto';
 import { LogisticsGateway } from './logistics.gateway';
 import {
   RECEPTION_TURNO_MAX,
@@ -228,6 +229,28 @@ export class LogisticsService {
         turno_date: today,
         entry_at: new Date(),
       });
+
+      if (createTruckDto.tare_weight != null) {
+        const tw = Number(createTruckDto.tare_weight);
+        if (!Number.isFinite(tw) || tw <= 0) {
+          throw new BadRequestException('Peso tara inválido');
+        }
+        if (tw >= createTruckDto.gross_weight) {
+          throw new BadRequestException(
+            'El peso tara debe ser menor al peso bruto',
+          );
+        }
+        truckReception.tare_weight = tw;
+        truckReception.calculateNetWeight();
+        if (
+          truckReception.net_weight == null ||
+          Number(truckReception.net_weight) <= 0
+        ) {
+          throw new BadRequestException('El peso neto debe ser mayor a 0');
+        }
+        truckReception.status = TruckReceptionStatus.FINISHED;
+        truckReception.finished_at = new Date();
+      }
 
       const saved = await this.truckReceptionRepository.save(truckReception);
       this.logger.log(
@@ -518,6 +541,261 @@ export class LogisticsService {
     return { data, total };
   }
 
+  private parseGridFiltersParam(filtersParam: string | undefined): Record<string, string> {
+    if (!filtersParam?.trim()) {
+      return {};
+    }
+    const out: Record<string, string> = {};
+    for (const pair of filtersParam.split(',')) {
+      const i = pair.indexOf('-');
+      if (i <= 0) {
+        continue;
+      }
+      const column = pair.slice(0, i).trim();
+      const raw = pair.slice(i + 1);
+      if (!column) {
+        continue;
+      }
+      try {
+        out[column] = decodeURIComponent(raw);
+      } catch {
+        out[column] = raw;
+      }
+    }
+    return out;
+  }
+
+  private escapeIlikePattern(value: string): string {
+    return value
+      .replace(/\\/g, '\\\\')
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_');
+  }
+
+  /** PG vs MySQL/MariaDB (el proyecto usa mysql en app.module). */
+  private isPostgresDriver(): boolean {
+    const t = this.truckReceptionRepository.manager.connection.options
+      .type as string;
+    return t === 'postgres' || t === 'aurora-postgres';
+  }
+
+  private sqlCastText(expr: string): string {
+    return this.isPostgresDriver()
+      ? `CAST(${expr} AS TEXT)`
+      : `CAST(${expr} AS CHAR)`;
+  }
+
+  /** Insensible a mayúsculas: ILIKE en Postgres; LOWER/LIKE en MySQL (válido con cualquier collation). */
+  private sqlLikeInsensitive(columnExpr: string, paramRef: string): string {
+    const esc = "ESCAPE '\\\\'";
+    if (this.isPostgresDriver()) {
+      return `${columnExpr} ILIKE ${paramRef} ${esc}`;
+    }
+    return `LOWER(${columnExpr}) LIKE LOWER(${paramRef}) ${esc}`;
+  }
+
+  private sqlCaseStatusSpanish(): string {
+    if (this.isPostgresDriver()) {
+      return `CASE tr.status::text WHEN 'FINISHED' THEN 'Finalizado' WHEN 'ESPERA' THEN 'En espera' ELSE tr.status::text END`;
+    }
+    return `CASE CAST(tr.status AS CHAR) WHEN 'FINISHED' THEN 'Finalizado' WHEN 'ESPERA' THEN 'En espera' ELSE CAST(tr.status AS CHAR) END`;
+  }
+
+  private sqlCaseProductSpanish(): string {
+    if (this.isPostgresDriver()) {
+      return `CASE tr.product::text WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE tr.product::text END`;
+    }
+    return `CASE CAST(tr.product AS CHAR) WHEN 'ARROZ_PADDY' THEN 'Arroz paddy' WHEN 'CASCARILLA' THEN 'Cascarilla' ELSE CAST(tr.product AS CHAR) END`;
+  }
+
+  /**
+   * Listado recepciones para DataGrid TMS: paginación, búsqueda global, filtros por columna (misma
+   * convención que la URL del TMS: filters=field-value,field2-val2) y ordenación por campo permitido.
+   */
+  async getTruckReceptionsGrid(
+    limit: number,
+    offset: number,
+    opts?: {
+      search?: string;
+      filters?: string;
+      sort?: string;
+      sortField?: string;
+    },
+  ): Promise<{ data: TruckReception[]; total: number }> {
+    const SORT_WHITELIST: Record<string, string> = {
+      id: 'tr.id',
+      status: 'tr.status',
+      product: 'tr.product',
+      license_plate: 'tr.license_plate',
+      dispatch_guide: 'tr.dispatch_guide',
+      producer_name: 'producer.name',
+      producer_rut: 'producer.rut',
+      gross_weight: 'tr.gross_weight',
+      tare_weight: 'tr.tare_weight',
+      net_weight: 'tr.net_weight',
+      entry_at: 'tr.entry_at',
+      finished_at: 'tr.finished_at',
+      numero_turno: 'tr.numero_turno',
+    };
+
+    const qb = this.truckReceptionRepository
+      .createQueryBuilder('tr')
+      .leftJoinAndSelect('tr.producer', 'producer');
+
+    const search = opts?.search?.trim();
+    if (search) {
+      const searchPat = `%${this.escapeIlikePattern(search)}%`;
+      const rutDigits = search.replace(/[^0-9kK]/g, '');
+      const rutPat =
+        rutDigits.length > 0
+          ? `%${this.escapeIlikePattern(rutDigits)}%`
+          : null;
+
+      const rutExpr =
+        `REPLACE(REPLACE(COALESCE(producer.rut, ''), '.', ''), '-', '')`;
+      const rutOr =
+        rutPat != null
+          ? `OR ${this.sqlLikeInsensitive(rutExpr, ':rutDigits')}`
+          : '';
+
+      const statusLabel = this.sqlCaseStatusSpanish();
+      const productLabel = this.sqlCaseProductSpanish();
+
+      qb.andWhere(
+        `(
+          ${this.sqlLikeInsensitive(this.sqlCastText('tr.id'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive('tr.license_plate', ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(tr.dispatch_guide, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(tr.driver_name, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(producer.name, '')`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`COALESCE(producer.rut, '')`, ':searchPat')}
+          ${rutOr}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.status'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`(${statusLabel})`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.product'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(`(${productLabel})`, ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.gross_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.tare_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.net_weight'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.numero_turno'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.entry_at'), ':searchPat')}
+          OR ${this.sqlLikeInsensitive(this.sqlCastText('tr.finished_at'), ':searchPat')}
+        )`,
+        rutPat != null
+          ? { searchPat, rutDigits: rutPat }
+          : { searchPat },
+      );
+    }
+
+    const filtersMap = this.parseGridFiltersParam(opts?.filters);
+    let fIdx = 0;
+    for (const [field, rawVal] of Object.entries(filtersMap)) {
+      const val = rawVal?.trim();
+      if (!val) {
+        continue;
+      }
+      const param = `gf${fIdx++}`;
+      const pat = `%${this.escapeIlikePattern(val)}%`;
+
+      const pRef = `:${param}`;
+      switch (field) {
+        case 'id':
+          qb.andWhere(this.sqlLikeInsensitive(this.sqlCastText('tr.id'), pRef), {
+            [param]: pat,
+          });
+          break;
+        case 'status':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.status'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'product':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.product'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'license_plate':
+          qb.andWhere(
+            this.sqlLikeInsensitive('tr.license_plate', pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'dispatch_guide':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(tr.dispatch_guide, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'producer_name':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(producer.name, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'producer_rut':
+          qb.andWhere(
+            this.sqlLikeInsensitive(`COALESCE(producer.rut, '')`, pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'gross_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.gross_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'tare_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.tare_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'net_weight':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.net_weight'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'entry_at':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.entry_at'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'finished_at':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.finished_at'), pRef),
+            { [param]: pat },
+          );
+          break;
+        case 'numero_turno':
+          qb.andWhere(
+            this.sqlLikeInsensitive(this.sqlCastText('tr.numero_turno'), pRef),
+            { [param]: pat },
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    const sortFieldKey = opts?.sortField?.trim() ?? '';
+    const sortCol = SORT_WHITELIST[sortFieldKey] ?? 'tr.entry_at';
+    let dir: 'ASC' | 'DESC' = 'DESC';
+    if (sortFieldKey && SORT_WHITELIST[sortFieldKey]) {
+      dir = opts?.sort?.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+    }
+
+    qb.orderBy(sortCol, dir).addOrderBy('tr.id', 'ASC');
+
+    qb.skip(offset).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total };
+  }
+
   /**
    * Obtener recepciones de camiones por productor
    */
@@ -561,11 +839,14 @@ export class LogisticsService {
    */
   async updateTruckReception(
     id: number,
-    updateData: Partial<TruckReception> & { numero_turno?: number },
+    updateData: UpdateTruckReceptionDto,
   ): Promise<TruckReception> {
     const truckReception = await this.getTruckReceptionById(id);
 
-    if (updateData.numero_turno !== undefined) {
+    if (
+      updateData.numero_turno !== undefined &&
+      truckReception.status === TruckReceptionStatus.ESPERA
+    ) {
       if (updateData.numero_turno === null) {
         throw new BadRequestException(
           'numero_turno no puede ser nulo; envíe un entero entre 1 y 100',
@@ -577,13 +858,99 @@ export class LogisticsService {
           'numero_turno debe ser un número entero',
         );
       }
-      if (truckReception.status !== TruckReceptionStatus.ESPERA) {
-        throw new BadRequestException(
-          'Solo se puede cambiar el turno en recepciones en espera',
-        );
-      }
       await this.assertReceptionTurnoAvailable(n, id);
       truckReception.numero_turno = n;
+    }
+
+    const hasDetailUpdate =
+      updateData.producer_id !== undefined ||
+      updateData.license_plate !== undefined ||
+      updateData.driver_name !== undefined ||
+      updateData.carrier_company !== undefined ||
+      updateData.dispatch_guide !== undefined ||
+      updateData.gross_weight !== undefined ||
+      updateData.tare_weight !== undefined ||
+      updateData.product !== undefined;
+
+    if (hasDetailUpdate) {
+      if (updateData.producer_id !== undefined) {
+        const producer = await this.producerRepository.findOne({
+          where: { id: updateData.producer_id },
+        });
+        if (!producer) {
+          throw new BadRequestException('Productor no encontrado');
+        }
+        truckReception.producer_id = updateData.producer_id;
+      }
+
+      if (updateData.license_plate !== undefined) {
+        truckReception.license_plate = updateData.license_plate.trim();
+      }
+
+      if (updateData.driver_name !== undefined) {
+        const d =
+          updateData.driver_name == null
+            ? ''
+            : String(updateData.driver_name).trim();
+        truckReception.driver_name = d === '' ? null : d;
+      }
+
+      if (updateData.carrier_company !== undefined) {
+        truckReception.carrier_company =
+          updateData.carrier_company?.trim() ?? '';
+      }
+
+      if (updateData.dispatch_guide !== undefined) {
+        truckReception.dispatch_guide =
+          updateData.dispatch_guide?.trim() ?? '';
+      }
+
+      if (updateData.gross_weight !== undefined) {
+        truckReception.gross_weight = Number(updateData.gross_weight);
+      }
+
+      if (updateData.tare_weight !== undefined) {
+        truckReception.tare_weight = Number(updateData.tare_weight);
+      }
+
+      if (
+        updateData.gross_weight !== undefined ||
+        updateData.tare_weight !== undefined
+      ) {
+        truckReception.calculateNetWeight();
+        const g = Number(truckReception.gross_weight);
+        const t =
+          truckReception.tare_weight != null
+            ? Number(truckReception.tare_weight)
+            : NaN;
+
+        if (Number.isFinite(t) && t > 0) {
+          if (!Number.isFinite(g) || g <= 0) {
+            throw new BadRequestException(
+              'Debe existir peso bruto válido para registrar la tara',
+            );
+          }
+          if (t >= g) {
+            throw new BadRequestException(
+              'El peso tara debe ser menor al peso bruto',
+            );
+          }
+          if (
+            truckReception.net_weight == null ||
+            Number(truckReception.net_weight) <= 0
+          ) {
+            throw new BadRequestException('El peso neto debe ser mayor a 0');
+          }
+          if (truckReception.status === TruckReceptionStatus.ESPERA) {
+            truckReception.status = TruckReceptionStatus.FINISHED;
+            truckReception.finished_at = new Date();
+          }
+        }
+      }
+
+      if (updateData.product !== undefined) {
+        truckReception.product = updateData.product;
+      }
     }
 
     const saved = await this.truckReceptionRepository.save(truckReception);

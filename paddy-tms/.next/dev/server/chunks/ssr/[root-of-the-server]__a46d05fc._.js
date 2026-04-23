@@ -96,7 +96,9 @@ __turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f
 
 __turbopack_context__.s([
     "default",
-    ()=>ReceptionsPage
+    ()=>ReceptionsPage,
+    "dynamic",
+    ()=>dynamic
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.js [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$api$2f$navigation$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/node_modules/next/dist/api/navigation.react-server.js [app-rsc] (ecmascript) <locals>");
@@ -108,6 +110,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src
 var __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$app$2f$receptions$2f$ui$2f$ReceptionsDataGrid$2e$tsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/paddy/paddy-tms/src/app/receptions/ui/ReceptionsDataGrid.tsx [app-rsc] (ecmascript)");
 ;
 ;
+const dynamic = 'force-dynamic';
 ;
 ;
 ;
@@ -117,6 +120,13 @@ function parseIntParam(v, fallback) {
     const s = Array.isArray(v) ? v[0] : v;
     const n = parseInt(s ?? '', 10);
     return Number.isFinite(n) ? n : fallback;
+}
+function pickQueryString(v) {
+    if (v === undefined) {
+        return undefined;
+    }
+    const s = (Array.isArray(v) ? v[0] : v)?.trim();
+    return s === '' ? undefined : s;
 }
 async function ReceptionsPage({ searchParams }) {
     const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$lib$2f$auth$2e$config$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["authOptions"]);
@@ -129,7 +139,11 @@ async function ReceptionsPage({ searchParams }) {
     const offset = (page - 1) * limit;
     const { rows, total } = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$actions$2f$truckReceptionActions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getTruckReceptionsGridAction"])({
         limit,
-        offset
+        offset,
+        search: pickQueryString(sp.search),
+        filters: pickQueryString(sp.filters),
+        sort: pickQueryString(sp.sort),
+        sortField: pickQueryString(sp.sortField)
     });
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$src$2f$components$2f$layout$2f$TmsAppLayout$2e$tsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TmsAppLayout"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$paddy$2f$paddy$2d$tms$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -139,17 +153,17 @@ async function ReceptionsPage({ searchParams }) {
                 totalRows: total
             }, void 0, false, {
                 fileName: "[project]/paddy/paddy-tms/src/app/receptions/page.tsx",
-                lineNumber: 37,
+                lineNumber: 54,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/paddy/paddy-tms/src/app/receptions/page.tsx",
-            lineNumber: 36,
+            lineNumber: 53,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/paddy/paddy-tms/src/app/receptions/page.tsx",
-        lineNumber: 35,
+        lineNumber: 52,
         columnNumber: 5
     }, this);
 }

@@ -3,7 +3,7 @@ import React from 'react';
 import Pagination from './Pagination';
 import { useScreenSize } from '../utils/columnStyles';
 import Select, { Option } from '@/shared/components/ui/Select/Select';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 interface FooterProps {
   total?: number;
@@ -15,6 +15,7 @@ const Footer: React.FC<FooterProps> = ({ total = 0, totalGeneral }) => {
 
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
 
@@ -23,7 +24,7 @@ const Footer: React.FC<FooterProps> = ({ total = 0, totalGeneral }) => {
     Object.entries(newParams).forEach(([key, value]) => {
       params.set(key, value);
     });
-    router.push(`?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleLimitChange = (newLimit: number) => {

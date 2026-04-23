@@ -1,6 +1,6 @@
 "use client"
 import React from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import IconButton from '@/shared/components/ui/IconButton/IconButton'
 import Select, { Option } from '@/shared/components/ui/Select/Select'
 
@@ -13,6 +13,7 @@ interface PaginationProps {
 const Pagination: React.FC<PaginationProps> = ({ total, totalGeneral, mobileMode = false }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const pathname = usePathname()
   
   // Obtener valores de la URL
   const page = parseInt(searchParams.get('page') || '1')
@@ -26,7 +27,7 @@ const Pagination: React.FC<PaginationProps> = ({ total, totalGeneral, mobileMode
     Object.entries(newParams).forEach(([key, value]) => {
       params.set(key, value)
     })
-    router.push(`?${params.toString()}`)
+    router.push(`${pathname}?${params.toString()}`)
   }
 
   const handleLimitChange = (newLimit: number) => {

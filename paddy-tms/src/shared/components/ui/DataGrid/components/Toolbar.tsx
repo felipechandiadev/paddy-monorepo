@@ -1,7 +1,7 @@
 'use client'
 import React from 'react';
 import IconButton from '@/shared/components/ui/IconButton/IconButton';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { DataGridColumn } from '../DataGrid';
 // TODO: Create shared/hooks/useAlert hook
 // import { useAlert } from '@/shared/hooks/useAlert';
@@ -28,6 +28,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   showExportButton = true,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // TODO: Implement useAlert hook
   // const { showAlert } = useAlert();
@@ -51,7 +52,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       params.set('sortField', firstVisible);
       params.set('page', '1');
     }
-    router.replace(`?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const handleExportExcel = async () => {
@@ -96,11 +97,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
               // Clear filters when deactivating
               params.delete('filters');
               params.delete('filtration');
-              router.replace(`?${params.toString()}`);
+              router.replace(`${pathname}?${params.toString()}`);
             } else {
               // Activate filtration when enabling filter mode
               params.set('filtration', 'true');
-              router.replace(`?${params.toString()}`);
+              router.replace(`${pathname}?${params.toString()}`);
             }
             onToggleFilterMode?.();
           }}

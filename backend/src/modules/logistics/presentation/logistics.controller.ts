@@ -225,13 +225,23 @@ export class LogisticsController {
   async getTruckReceptionsForGrid(
     @Query('limit') limit: string = '100',
     @Query('offset') offset: string = '0',
+    @Query('search') search?: string,
+    @Query('filters') filters?: string,
+    @Query('sort') sort?: string,
+    @Query('sortField') sortField?: string,
   ) {
-    this.logger.log(`GET /truck-receptions/grid - Limit: ${limit}, Offset: ${offset}`);
+    const lim = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 500);
+    const off = Math.max(parseInt(offset, 10) || 0, 0);
+    this.logger.log(
+      `GET /truck-receptions/grid - Limit: ${lim}, Offset: ${off}, search: ${search ?? ''}, sort: ${sort ?? ''}/${sortField ?? ''}`,
+    );
     try {
-      return await this.logisticsService.getAllTruckReceptions(
-        parseInt(limit, 10),
-        parseInt(offset, 10),
-      );
+      return await this.logisticsService.getTruckReceptionsGrid(lim, off, {
+        search: search?.trim() || undefined,
+        filters: filters?.trim() || undefined,
+        sort: sort?.trim() || undefined,
+        sortField: sortField?.trim() || undefined,
+      });
     } catch (error) {
       this.logger.error(`Error al obtener recepciones (grid): ${error.message}`);
       throw error;

@@ -2,7 +2,7 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import type { DataGridColumn } from '../DataGrid';
 import IconButton from '@/shared/components/ui/IconButton/IconButton';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 interface ColHeaderProps {
   column: DataGridColumn;
@@ -37,6 +37,7 @@ export const ColHeader: React.FC<ColHeaderProps> = ({
   const { headerName, headerAlign, align, width, flex, minWidth, maxWidth, field, filterable = true } = column;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Get current sort state from URL
@@ -118,9 +119,9 @@ export const ColHeader: React.FC<ColHeaderProps> = ({
 
       // Reset to page 1 when filtering
       params.set('page', '1');
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }, 300);
-  }, [searchParams, router, field]);
+  }, [searchParams, router, pathname, field]);
 
   // Handle sort click - toggle between asc/desc if this column is active, or activate this column
   const handleSortClick = () => {
@@ -140,7 +141,7 @@ export const ColHeader: React.FC<ColHeaderProps> = ({
     }
     
     params.set('page', '1');
-    router.replace(`?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Determine which icon to show and its color

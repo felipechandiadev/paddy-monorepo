@@ -1,5 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { getTruckReceptionsGridAction } from '@/actions/truckReceptionActions';
@@ -12,6 +14,14 @@ function parseIntParam(v: string | string[] | undefined, fallback: number): numb
   const s = Array.isArray(v) ? v[0] : v;
   const n = parseInt(s ?? '', 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function pickQueryString(v: string | string[] | undefined): string | undefined {
+  if (v === undefined) {
+    return undefined;
+  }
+  const s = (Array.isArray(v) ? v[0] : v)?.trim();
+  return s === '' ? undefined : s;
 }
 
 export default async function ReceptionsPage({
@@ -29,7 +39,14 @@ export default async function ReceptionsPage({
   const page = Math.max(parseIntParam(sp.page, 1), 1);
   const offset = (page - 1) * limit;
 
-  const { rows, total } = await getTruckReceptionsGridAction({ limit, offset });
+  const { rows, total } = await getTruckReceptionsGridAction({
+    limit,
+    offset,
+    search: pickQueryString(sp.search),
+    filters: pickQueryString(sp.filters),
+    sort: pickQueryString(sp.sort),
+    sortField: pickQueryString(sp.sortField),
+  });
 
   return (
     <TmsAppLayout>

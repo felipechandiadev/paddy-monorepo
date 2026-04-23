@@ -48,6 +48,7 @@ const Header: React.FC<HeaderProps> = ({
   onSearchChange,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
@@ -80,10 +81,10 @@ const Header: React.FC<HeaderProps> = ({
         }
         // Reset to page 1 when searching
         params.set('page', '1');
-        router.replace(`?${params.toString()}`);
+        router.replace(`${pathname}?${params.toString()}`);
       }
     }, 300);
-  }, [searchParams, router, onSearchChange]);
+  }, [searchParams, router, pathname, onSearchChange]);
 
   // Limpiar búsqueda de forma inmediata (cancela debounce y actualiza la URL o llama onSearchChange)
   const handleClear = useCallback(() => {
@@ -99,9 +100,9 @@ const Header: React.FC<HeaderProps> = ({
       const params = new URLSearchParams(searchParams.toString());
       params.delete('search');
       params.set('page', '1');
-      router.replace(`?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [searchParams, router, onSearchChange]);
+  }, [searchParams, router, pathname, onSearchChange]);
 
   // Calcular estilos computados para las columnas usando utilidad centralizada
   const computedStyles = calculateColumnStyles(columns, screenWidth);

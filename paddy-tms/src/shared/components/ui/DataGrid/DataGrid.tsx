@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import { ColHeader } from './components/ColHeader';
 import { calculateColumnStyles, DataGridStyles, useScreenSize } from './utils/columnStyles';
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 export type DataGridColumnType =
   | 'string'
@@ -114,6 +114,7 @@ const DataGrid: React.FC<DataGridProps> = ({
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const [data, setData] = useState<any[]>(rows || []);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(totalRows || (rows ? rows.length : 0));
@@ -160,9 +161,9 @@ const DataGrid: React.FC<DataGridProps> = ({
     if (!currentLimit) {
       const params = new URLSearchParams(searchParams.toString());
       params.set('limit', limit.toString());
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [searchParams, limit, router]);
+  }, [searchParams, limit, router, pathname]);
 
   const containerClasses = `${DataGridStyles.container} ${DataGridStyles.responsive.minWidth} ${DataGridStyles.responsive.mobileScroll} ${showBorder ? 'border border-border' : ''}`.trim();
   const visibleColumns = columns.filter((c) => !c.hide);

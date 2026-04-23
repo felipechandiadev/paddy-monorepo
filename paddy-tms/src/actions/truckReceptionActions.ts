@@ -15,6 +15,8 @@ export interface CreateTruckWithGrossWeightPayload {
   carrier_company?: string;
   dispatch_guide?: string;
   gross_weight: number;
+  /** Si se envía, menor que bruto; la recepción queda finalizada con neto calculado. */
+  tare_weight?: number;
   /** Obligatorio en POST `/logistics/truck-receptions/with-gross-weight` (validación API). */
   product: LogisticsProductCode;
   /** Opcional en alta; asignar después vía tablero o PUT. Si se envía, 1–100 y libre en ESPERA. */
@@ -178,6 +180,8 @@ export interface TruckReceptionGridRow {
   id: number;
   status: string;
   product?: string;
+  producer_id?: number;
+  numero_turno?: number | null;
   license_plate: string;
   driver_name: string;
   carrier_company?: string | null;
@@ -191,12 +195,43 @@ export interface TruckReceptionGridRow {
   producer_rut: string;
 }
 
+export interface UpdateTruckReceptionPayload {
+  numero_turno?: number;
+  producer_id?: number;
+  license_plate?: string;
+  driver_name?: string | null;
+  carrier_company?: string;
+  dispatch_guide?: string;
+  gross_weight?: number;
+  tare_weight?: number;
+  product?: LogisticsProductCode;
+}
+
+function parseTruckReceptionApiError(
+  payload: unknown,
+  fallback: string,
+): string {
+  const raw = (payload as { message?: unknown })?.message;
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (Array.isArray(raw)) {
+    return raw.join('. ');
+  }
+  return fallback;
+}
+
 /**
  * Listado paginado para el grid del TMS (endpoint autenticado /truck-receptions/grid).
+ * Alineado con los query params del DataGrid: search, filters, sort, sortField, limit, offset.
  */
 export async function getTruckReceptionsGridAction(params: {
   limit?: number;
   offset?: number;
+  search?: string;
+  filters?: string;
+  sort?: string;
+  sortField?: string;
 }): Promise<{ rows: TruckReceptionGridRow[]; total: number }> {
   try {
     const session = await getServerSession(authOptions);
@@ -208,8 +243,24 @@ export async function getTruckReceptionsGridAction(params: {
     const limit = Math.min(Math.max(params.limit ?? 25, 1), 500);
     const offset = Math.max(params.offset ?? 0, 0);
 
+    const qs = new URLSearchParams();
+    qs.set('limit', String(limit));
+    qs.set('offset', String(offset));
+    if (params.search?.trim()) {
+      qs.set('search', params.search.trim());
+    }
+    if (params.filters?.trim()) {
+      qs.set('filters', params.filters.trim());
+    }
+    if (params.sort?.trim()) {
+      qs.set('sort', params.sort.trim());
+    }
+    if (params.sortField?.trim()) {
+      qs.set('sortField', params.sortField.trim());
+    }
+
     const response = await fetch(
-      `${API_URL}/logistics/truck-receptions/grid?limit=${limit}&offset=${offset}`,
+      `${API_URL}/logistics/truck-receptions/grid?${qs.toString()}`,
       {
         headers: {
           Authorization: `Bearer ${session.user.accessToken}`,
@@ -233,6 +284,12 @@ export async function getTruckReceptionsGridAction(params: {
         id: Number(r.id),
         status: String(r.status ?? ''),
         product: r.product != null ? String(r.product) : undefined,
+        producer_id:
+          r.producer_id != null ? Number(r.producer_id) : undefined,
+        numero_turno:
+          r.numero_turno != null && !Number.isNaN(Number(r.numero_turno))
+            ? Number(r.numero_turno)
+            : null,
         license_plate: String(r.license_plate ?? ''),
         driver_name: String(r.driver_name ?? ''),
         carrier_company: r.carrier_company != null ? String(r.carrier_company) : null,
@@ -345,9 +402,9 @@ export async function updateTruckStatusAction(
   }
 }
 
-export async function updateTruckTurnoAction(
+export async function updateTruckReceptionAction(
   id: number,
-  numeroTurno: number,
+  payload: UpdateTruckReceptionPayload,
 ): Promise<TruckReception> {
   try {
     const session = await getServerSession(authOptions);
@@ -356,16 +413,9 @@ export async function updateTruckTurnoAction(
       throw new Error('No autenticado');
     }
 
-    const slot = Math.round(Number(numeroTurno));
-    if (
-      !Number.isFinite(slot) ||
-      slot < RECEPTION_TURNO_MIN ||
-      slot > RECEPTION_TURNO_MAX
-    ) {
-      throw new Error(
-        `Turno inválido: debe ser un entero entre ${RECEPTION_TURNO_MIN} y ${RECEPTION_TURNO_MAX}`,
-      );
-    }
+    const body = Object.fromEntries(
+      Object.entries(payload).filter(([, v]) => v !== undefined),
+    );
 
     const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
       method: 'PUT',
@@ -373,25 +423,71 @@ export async function updateTruckTurnoAction(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.user.accessToken}`,
       },
-      body: JSON.stringify({ numero_turno: slot }),
+      body: JSON.stringify(body),
     });
 
-    const payload = await response.json().catch(() => null);
+    const responsePayload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const raw = payload?.message;
-      const detail =
-        typeof raw === 'string'
-          ? raw
-          : Array.isArray(raw)
-            ? raw.join('. ')
-            : response.statusText;
-      throw new Error(detail || `HTTP ${response.status}`);
+      throw new Error(
+        parseTruckReceptionApiError(
+          responsePayload,
+          `HTTP ${response.status}: ${response.statusText}`,
+        ),
+      );
     }
 
-    return payload.data as TruckReception;
+    return responsePayload.data as TruckReception;
   } catch (error) {
-    console.error('Error actualizando turno del camion:', error);
+    console.error('Error actualizando recepción:', error);
+    throw error;
+  }
+}
+
+export async function updateTruckTurnoAction(
+  id: number,
+  numeroTurno: number,
+): Promise<TruckReception> {
+  const slot = Math.round(Number(numeroTurno));
+  if (
+    !Number.isFinite(slot) ||
+    slot < RECEPTION_TURNO_MIN ||
+    slot > RECEPTION_TURNO_MAX
+  ) {
+    throw new Error(
+      `Turno inválido: debe ser un entero entre ${RECEPTION_TURNO_MIN} y ${RECEPTION_TURNO_MAX}`,
+    );
+  }
+  return updateTruckReceptionAction(id, { numero_turno: slot });
+}
+
+export async function deleteTruckReceptionAction(id: number): Promise<void> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.accessToken) {
+      throw new Error('No autenticado');
+    }
+
+    const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${session.user.accessToken}`,
+      },
+    });
+
+    const responsePayload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        parseTruckReceptionApiError(
+          responsePayload,
+          `HTTP ${response.status}: ${response.statusText}`,
+        ),
+      );
+    }
+  } catch (error) {
+    console.error('Error eliminando recepción:', error);
     throw error;
   }
 }

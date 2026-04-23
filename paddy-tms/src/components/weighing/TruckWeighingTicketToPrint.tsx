@@ -71,8 +71,6 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
       : '—';
 
   const guia = truck.dispatch_guide?.trim() || '—';
-  const transportista = truck.carrier_company?.trim() || '—';
-  const chofer = truck.driver_name?.trim() || '—';
 
   return (
     <div className={styles.sheet}>
@@ -98,14 +96,16 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
       <div className={styles.separator} />
 
       <section className={styles.ticketGeneral}>
-        <div className={styles.twoColRow}>
-          <div>
-            <span className={styles.label}>Patente:</span>
-            <span className={styles.value}>{truck.license_plate}</span>
+        <div className={styles.plateGuideRow}>
+          <div className={styles.plateGuideItem}>
+            <span className={styles.plateGuideLabel}>Patente</span>
+            <span className={`${styles.plateGuideValue} ${styles.plateGuideValuePlate}`}>
+              {truck.license_plate}
+            </span>
           </div>
-          <div>
-            <span className={styles.label}>Nº Guía de Despacho:</span>
-            <span className={styles.value}>{guia}</span>
+          <div className={styles.plateGuideItem}>
+            <span className={styles.plateGuideLabel}>Nº Guía de Despacho</span>
+            <span className={styles.plateGuideValue}>{guia}</span>
           </div>
         </div>
 
@@ -116,14 +116,6 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
         <div className={styles.blockRow}>
           <span className={styles.label}>Producto:</span>
           <span className={styles.value}>{formatLogisticsProductLabel(truck.product)}</span>
-        </div>
-        <div className={styles.blockRow}>
-          <span className={styles.label}>Transportista:</span>
-          <span className={styles.value}>{transportista}</span>
-        </div>
-        <div className={styles.blockRow}>
-          <span className={styles.label}>Chofer:</span>
-          <span className={styles.value}>{chofer}</span>
         </div>
 
         <div className={styles.datetimeRow}>

@@ -46,6 +46,15 @@ export class CreateTruckWithGrossWeightDto {
   @IsNotEmpty({ message: 'El peso bruto es requerido' })
   gross_weight: number;
 
+  /**
+   * Opcional: si se envía, debe ser menor que el bruto; la recepción queda FINISHED con neto calculado.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El peso tara debe ser numérico' })
+  @IsPositive({ message: 'El peso tara debe ser positivo' })
+  tare_weight?: number;
+
   @IsEnum(LogisticsProduct, { message: 'Producto debe ser ARROZ_PADDY o CASCARILLA' })
   @IsNotEmpty({ message: 'El producto transportado es requerido' })
   product: LogisticsProduct;
