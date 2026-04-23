@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
+import Link from 'next/link';
 import type { TruckReception } from '@/actions/truckReceptionActions';
 import { WeighingPageProvider, useWeighingPage } from '@/providers/WeighingPageProvider';
 import { TruckReceptionForm } from '@/components/weighing/TruckReceptionForm';
@@ -10,26 +11,11 @@ import { TmsAppLayout, useTmsSerialPort } from '@/components/layout/TmsAppLayout
 import { WeighingMonitorSync } from '@/components/weighing/WeighingMonitorSync';
 import DialogToPrint from '@/shared/components/ui/Dialog/DialogToPrint';
 import { TruckWeighingTicketToPrint } from '@/components/weighing/TruckWeighingTicketToPrint';
-import { SerialRawTramaPanel } from '@/components/weighing/SerialRawTramaPanel';
-import { TurnoSlotsDialog } from '@/components/weighing/TurnoSlotsDialog';
-
 const WeighingPageContent: React.FC = () => {
   const { trucks, selectedTruckId, error, selectTruck, clearError, loadTrucksToday } = useWeighingPage();
-  const [turnoBoardOpen, setTurnoBoardOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   const [printTruck, setPrintTruck] = useState<TruckReception | null>(null);
-  const {
-    isConnected: serialConnected,
-    isAvailable: serialAvailable,
-    isConnecting: serialConnecting,
-    lastWeight,
-    lastRawSample,
-    bytesReceivedTotal,
-    configuredBaudRate,
-    configuredDataBits,
-    configuredParity,
-    connectChoosingPort,
-  } = useTmsSerialPort();
+  const { isConnected: serialConnected, lastWeight } = useTmsSerialPort();
 
   const selectedTruck = trucks.find((t) => t.id === selectedTruckId) || null;
   const formMode = selectedTruckId ? 'tare' : 'create';
@@ -67,16 +53,23 @@ const WeighingPageContent: React.FC = () => {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-180px)]">
+      <header className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Recepción de carga</h1>
+        <Link
+          href="/receptions"
+          className="text-sm font-medium text-primary hover:text-primary/85 hover:underline underline-offset-4 w-fit"
+        >
+          Ver listado de recepciones
+        </Link>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-220px)]">
         <div className="lg:col-span-1 overflow-auto">
           <TruckReceptionForm
             mode={formMode as 'create' | 'tare'}
             selectedTruck={selectedTruck}
             serialWeight={lastWeight}
             isSerialConnected={serialConnected}
-            serialAvailable={serialAvailable}
-            serialConnecting={serialConnecting}
-            onConnectSerial={() => void connectChoosingPort()}
             onCancel={handleCancel}
             onTareFinalized={handleTareFinalized}
           />
@@ -87,30 +80,10 @@ const WeighingPageContent: React.FC = () => {
             trucks={trucks}
             selectedTruckId={selectedTruckId}
             onSelectTruck={(id) => selectTruck(id)}
-            onOpenTurnoBoard={() => setTurnoBoardOpen(true)}
             onAfterTurnoChange={loadTrucksToday}
           />
         </div>
       </div>
-
-      <TurnoSlotsDialog
-        open={turnoBoardOpen}
-        onClose={() => setTurnoBoardOpen(false)}
-        trucks={trucks}
-        selectedTruckId={selectedTruckId}
-        onSelectTruck={selectTruck}
-        onAfterAssign={loadTrucksToday}
-      />
-
-      <SerialRawTramaPanel
-        isConnected={serialConnected}
-        lastRawSample={lastRawSample}
-        lastParsedWeight={lastWeight}
-        bytesReceivedTotal={bytesReceivedTotal}
-        configuredBaudRate={configuredBaudRate}
-        configuredDataBits={configuredDataBits}
-        configuredParity={configuredParity}
-      />
 
       <DialogToPrint
         open={printOpen && !!printTruck}

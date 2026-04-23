@@ -91,7 +91,6 @@ interface TruckListProps {
   trucks: TruckReception[];
   selectedTruckId: number | null;
   onSelectTruck: (id: number | null) => void;
-  onOpenTurnoBoard?: () => void;
   onAfterTurnoChange?: () => Promise<void>;
 }
 
@@ -99,7 +98,6 @@ export const TruckList: React.FC<TruckListProps> = ({
   trucks,
   selectedTruckId,
   onSelectTruck,
-  onOpenTurnoBoard,
   onAfterTurnoChange,
 }) => {
   const [orderedTrucks, setOrderedTrucks] = useState<TruckReception[]>([]);
@@ -173,22 +171,9 @@ export const TruckList: React.FC<TruckListProps> = ({
     <div className="bg-background rounded-lg border border-border p-4 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-6 gap-2">
         <h2 className="text-lg font-bold text-foreground">En Espera para Tara</h2>
-        <div className="flex items-center gap-2">
-          {onOpenTurnoBoard && (
-            <button
-              type="button"
-              onClick={onOpenTurnoBoard}
-              className="inline-flex items-center justify-center rounded-md border border-border bg-background p-2 text-foreground hover:bg-muted/80 transition-colors"
-              title="Tablero de turnos 1–100"
-              aria-label="Abrir tablero de turnos"
-            >
-              <span className="material-symbols-outlined text-xl leading-none">grid_view</span>
-            </button>
-          )}
-          <Badge variant="secondary" className="text-sm">
-            {orderedTrucks.length}
-          </Badge>
-        </div>
+        <Badge variant="secondary" className="text-sm">
+          {orderedTrucks.length}
+        </Badge>
       </div>
 
       <p className="text-xs text-muted-foreground mb-3">
@@ -267,9 +252,25 @@ export const TruckList: React.FC<TruckListProps> = ({
                     </Badge>
                   )}
                   {truck.numero_turno != null ? (
-                    <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
-                      #{truck.numero_turno}
-                    </Badge>
+                    <div className="flex items-center gap-0.5">
+                      <Badge variant="primary" className="text-xs font-semibold flex-shrink-0">
+                        #{truck.numero_turno}
+                      </Badge>
+                      {onAfterTurnoChange && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRollerTruckId(truck.id);
+                          }}
+                          title="Cambiar número de turno"
+                          aria-label="Cambiar número de turno"
+                          className="inline-flex items-center justify-center rounded-md p-1 text-primary hover:bg-primary/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                          <span className="material-symbols-outlined text-lg leading-none">edit_square</span>
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <button
                       type="button"

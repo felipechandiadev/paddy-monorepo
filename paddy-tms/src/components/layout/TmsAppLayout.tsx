@@ -59,7 +59,7 @@ export const TmsAppLayout: React.FC<TmsAppLayoutProps> = ({
               <img src="/logo.svg" alt="Paddy AyG" className="h-8 w-auto" />
               <div className="flex flex-col">
                 <span className="text-3xl font-bold text-primary">Paddy AyG</span>
-                <span className="text-xs text-muted-foreground -mt-1">Recepción de carga</span>
+                <span className="text-xs text-muted-foreground -mt-1">Recepción y despacho de carga</span>
               </div>
             </Link>
 
@@ -99,39 +99,15 @@ export const TmsAppLayout: React.FC<TmsAppLayoutProps> = ({
                 </svg>
               </button>
 
-              <Link
-                href="/receptions"
-                className="p-2 rounded-lg hover:bg-muted/60 transition-colors duration-200"
-                title="Listado de recepciones"
-              >
-                <svg
-                  className="w-5 h-5 text-foreground hover:text-primary transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-6 4h6" />
-                </svg>
-              </Link>
-
               <a
                 href={WEIGHING_APP_URL}
-                className="p-2 rounded-lg hover:bg-muted/60 transition-colors duration-200"
-                title="Ir a pesaje (dashboard)"
+                className="group p-2 rounded-lg hover:bg-muted/60 transition-colors duration-200 inline-flex items-center justify-center"
+                title="Ir a recepción y pesaje"
+                aria-label="Ir a recepción y pesaje"
               >
-                <svg
-                  className="w-5 h-5 text-foreground hover:text-primary transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                </svg>
+                <span className="material-symbols-outlined text-[22px] leading-none text-foreground group-hover:text-primary transition-colors">
+                  local_shipping
+                </span>
               </a>
 
               <button

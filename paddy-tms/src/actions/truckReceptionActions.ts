@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { formatChileanRut } from '@/lib/formatChileanRut';
 import type { LogisticsProductCode } from '@/lib/logisticsProduct';
+import { RECEPTION_TURNO_MAX, RECEPTION_TURNO_MIN } from '@/lib/receptionTurno';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -355,21 +356,40 @@ export async function updateTruckTurnoAction(
       throw new Error('No autenticado');
     }
 
+    const slot = Math.round(Number(numeroTurno));
+    if (
+      !Number.isFinite(slot) ||
+      slot < RECEPTION_TURNO_MIN ||
+      slot > RECEPTION_TURNO_MAX
+    ) {
+      throw new Error(
+        `Turno inválido: debe ser un entero entre ${RECEPTION_TURNO_MIN} y ${RECEPTION_TURNO_MAX}`,
+      );
+    }
+
     const response = await fetch(`${API_URL}/logistics/truck-receptions/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.user.accessToken}`,
       },
-      body: JSON.stringify({ numero_turno: numeroTurno }),
+      body: JSON.stringify({ numero_turno: slot }),
     });
 
+    const payload = await response.json().catch(() => null);
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const raw = payload?.message;
+      const detail =
+        typeof raw === 'string'
+          ? raw
+          : Array.isArray(raw)
+            ? raw.join('. ')
+            : response.statusText;
+      throw new Error(detail || `HTTP ${response.status}`);
     }
 
-    const result = await response.json();
-    return result.data as TruckReception;
+    return payload.data as TruckReception;
   } catch (error) {
     console.error('Error actualizando turno del camion:', error);
     throw error;

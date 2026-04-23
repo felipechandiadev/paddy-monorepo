@@ -76,16 +76,28 @@ export const AssignTurnoRollerDialog: React.FC<AssignTurnoRollerDialogProps> = (
   useLayoutEffect(() => {
     if (!open || truckId == null) return;
     setError(null);
-    let firstFree = RECEPTION_TURNO_MIN;
-    for (let n = RECEPTION_TURNO_MIN; n <= RECEPTION_TURNO_MAX; n++) {
-      if (isFree(n)) {
-        firstFree = n;
-        break;
+    const current = trucks.find((t) => t.id === truckId);
+    let initial: number | null = null;
+    if (current?.numero_turno != null) {
+      const n = Number(current.numero_turno);
+      if (n >= RECEPTION_TURNO_MIN && n <= RECEPTION_TURNO_MAX) {
+        initial = n;
       }
     }
-    setCenterSlot(firstFree);
-    requestAnimationFrame(() => scrollToSlot(firstFree));
-  }, [open, truckId, scrollToSlot, isFree]);
+    if (initial == null) {
+      for (let n = RECEPTION_TURNO_MIN; n <= RECEPTION_TURNO_MAX; n++) {
+        if (isFree(n)) {
+          initial = n;
+          break;
+        }
+      }
+    }
+    if (initial == null) {
+      initial = RECEPTION_TURNO_MIN;
+    }
+    setCenterSlot(initial);
+    requestAnimationFrame(() => scrollToSlot(initial));
+  }, [open, truckId, scrollToSlot, isFree, trucks]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,8 +118,10 @@ export const AssignTurnoRollerDialog: React.FC<AssignTurnoRollerDialogProps> = (
   const occupantPlate = slotOccupantPlate(centerSlot);
   const centerIsFree = isFree(centerSlot);
 
+  const unchanged = truck?.numero_turno != null && Number(truck.numero_turno) === centerSlot;
+
   const handleAssign = async () => {
-    if (truckId == null || !centerIsFree) return;
+    if (truckId == null || !centerIsFree || unchanged) return;
     setError(null);
     setBusy(true);
     try {
@@ -134,7 +148,13 @@ export const AssignTurnoRollerDialog: React.FC<AssignTurnoRollerDialogProps> = (
     <Dialog
       open={open}
       onClose={onClose}
-      title={truck ? `Asignar turno — ${truck.license_plate}` : 'Asignar turno'}
+      title={
+        truck
+          ? truck.numero_turno != null
+            ? `Cambiar turno — ${truck.license_plate}`
+            : `Asignar turno — ${truck.license_plate}`
+          : 'Turno'
+      }
       size="md"
       scroll="body"
       showCloseButton
@@ -142,8 +162,8 @@ export const AssignTurnoRollerDialog: React.FC<AssignTurnoRollerDialogProps> = (
       bodyClassName="pt-2"
     >
       <p className="text-sm text-muted-foreground mb-3">
-        Desplaza la lista para centrar un número. Solo los cupos <span className="text-foreground font-medium">libres</span>{' '}
-        se pueden asignar.
+        Desplaza la lista para elegir un número. Tu cupo actual sigue disponible para este camión; el resto libre
+        puede asignarse. Los ocupados por otras patentes no se pueden guardar.
       </p>
 
       {error && (
@@ -219,9 +239,15 @@ export const AssignTurnoRollerDialog: React.FC<AssignTurnoRollerDialogProps> = (
           type="button"
           variant="primary"
           onClick={() => void handleAssign()}
-          disabled={busy || !centerIsFree || truckId == null}
+          disabled={busy || !centerIsFree || truckId == null || unchanged}
         >
-          {busy ? 'Guardando…' : `Asignar turno ${centerSlot}`}
+          {busy
+            ? 'Guardando…'
+            : unchanged
+              ? 'Sin cambios'
+              : truck?.numero_turno != null
+                ? `Guardar turno ${centerSlot}`
+                : `Asignar turno ${centerSlot}`}
         </Button>
       </div>
     </Dialog>

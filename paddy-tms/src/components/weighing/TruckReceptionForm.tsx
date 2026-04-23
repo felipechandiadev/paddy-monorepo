@@ -45,11 +45,6 @@ interface TruckReceptionFormProps {
   selectedTruck?: TruckReception | null;
   serialWeight: number | null;
   isSerialConnected: boolean;
-  /** Web Serial API disponible (HTTPS / localhost). */
-  serialAvailable?: boolean;
-  /** Abre el selector de puerto (requiere gesto del usuario la primera vez). */
-  onConnectSerial?: () => void;
-  serialConnecting?: boolean;
   onTruckCreated?: (truck: TruckReception) => void;
   onTareFinalized?: (truck: TruckReception) => void;
   onCancel?: () => void;
@@ -60,9 +55,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   selectedTruck,
   serialWeight,
   isSerialConnected,
-  serialAvailable = false,
-  onConnectSerial,
-  serialConnecting = false,
   onTruckCreated,
   onTareFinalized,
   onCancel,
@@ -90,12 +82,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  /** Evita mismatch SSR: `serialAvailable` solo existe en el navegador. */
-  const [clientMounted, setClientMounted] = useState(false);
-
-  useEffect(() => {
-    setClientMounted(true);
-  }, []);
 
   const loadProducers = useCallback(async () => {
     try {
@@ -208,35 +194,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     mode === 'tare' && selectedTruck?.gross_weight && formData.tare_weight
       ? selectedTruck.gross_weight - Number(formData.tare_weight)
       : null;
-
-  const serialScaleNotice =
-    clientMounted && serialAvailable ? (
-      <div className="mb-4 rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        {isSerialConnected ? (
-          <p className="text-xs text-muted-foreground">
-            Balanza conectada: el peso del campo inferior se actualiza desde el puerto serie.
-          </p>
-        ) : (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Si la balanza no enlaza sola, elija el puerto serie (requiere un clic del usuario).
-            </p>
-            {onConnectSerial ? (
-              <Button
-                type="button"
-                variant="outlined"
-                size="sm"
-                className="shrink-0"
-                onClick={() => onConnectSerial()}
-                disabled={serialConnecting}
-              >
-                {serialConnecting ? 'Conectando…' : 'Conectar puerto serie'}
-              </Button>
-            ) : null}
-          </>
-        )}
-      </div>
-    ) : null;
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -370,7 +327,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
       <>
         <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
           <h2 className="text-xl font-bold text-foreground mb-2">Nueva Recepción</h2>
-          {serialScaleNotice}
 
           <form onSubmit={handleCreateSubmit} className="space-y-4">
           {/* Success Alert */}
@@ -531,7 +487,6 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     return (
       <div className="bg-background rounded-lg border border-border p-6 h-full overflow-y-auto">
         <h2 className="text-lg font-bold text-foreground mb-2">Registrar Peso Tara</h2>
-        {serialScaleNotice}
 
         {/* Información General - Grid compacta */}
         <div className="grid grid-cols-2 gap-3 mb-6 p-4 bg-neutral/5 rounded-lg">

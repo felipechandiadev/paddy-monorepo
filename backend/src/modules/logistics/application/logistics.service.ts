@@ -119,7 +119,10 @@ export class LogisticsService {
         numero_turno: numero,
       },
     });
-    if (conflict && conflict.id !== excludeTruckId) {
+    if (
+      conflict &&
+      (excludeTruckId == null || Number(conflict.id) !== Number(excludeTruckId))
+    ) {
       throw new BadRequestException(
         `El turno ${numero} ya está asignado a otra recepción en espera`,
       );
@@ -137,7 +140,10 @@ export class LogisticsService {
         numero_turno: numero,
       },
     });
-    if (conflict && conflict.id !== excludeTruckId) {
+    if (
+      conflict &&
+      (excludeTruckId == null || Number(conflict.id) !== Number(excludeTruckId))
+    ) {
       throw new BadRequestException(
         `El turno ${numero} ya está asignado a otro despacho en espera`,
       );
@@ -560,13 +566,24 @@ export class LogisticsService {
     const truckReception = await this.getTruckReceptionById(id);
 
     if (updateData.numero_turno !== undefined) {
+      if (updateData.numero_turno === null) {
+        throw new BadRequestException(
+          'numero_turno no puede ser nulo; envíe un entero entre 1 y 100',
+        );
+      }
+      const n = Number(updateData.numero_turno);
+      if (!Number.isInteger(n) || !Number.isFinite(n)) {
+        throw new BadRequestException(
+          'numero_turno debe ser un número entero',
+        );
+      }
       if (truckReception.status !== TruckReceptionStatus.ESPERA) {
         throw new BadRequestException(
           'Solo se puede cambiar el turno en recepciones en espera',
         );
       }
-      await this.assertReceptionTurnoAvailable(updateData.numero_turno, id);
-      truckReception.numero_turno = updateData.numero_turno;
+      await this.assertReceptionTurnoAvailable(n, id);
+      truckReception.numero_turno = n;
     }
 
     const saved = await this.truckReceptionRepository.save(truckReception);
