@@ -83,7 +83,7 @@ const LoginForm: React.FC = () => {
         router.push("/paddy");
       }
     } catch (error) {
-      if (process.env.NODE_ENV !== "production") {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== "production") {
         console.error("Login error:", error);
       }
 

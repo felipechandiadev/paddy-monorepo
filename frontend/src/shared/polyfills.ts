@@ -169,7 +169,7 @@ if (typeof CustomEvent !== 'function') {
 }
 
 // Log de polyfills aplicadas (solo en desarrollo)
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
   console.log(
     '%c Polyfills de compatibilidad cargadas',
     'color: green; font-weight: bold'
