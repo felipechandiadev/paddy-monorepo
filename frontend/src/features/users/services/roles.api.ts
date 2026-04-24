@@ -36,6 +36,11 @@ export async function fetchRoles(accessToken: string): Promise<RoleOption[]> {
     return [
       { id: 'ADMIN', label: 'Administrador', description: 'Acceso total al sistema' },
       { id: 'CONSULTANT', label: 'Consultor', description: 'Acceso de solo lectura' },
+      {
+        id: 'TRUCK_RECEPTION',
+        label: 'Recepción y desapacho de carga',
+        description: 'Operador de báscula / TMS (recepción y desapacho)',
+      },
     ];
   }
 }

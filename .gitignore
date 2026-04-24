@@ -17,6 +17,9 @@ backend/.env.*.local
 backend/coverage/
 backend/tsconfig.build.tsbuildinfo
 
+# ===== Deploy (secretos solo en servidor) =====
+deploy/secrets/*.env
+
 # ===== Frontend (Next.js) =====
 frontend/.next/
 frontend/node_modules/

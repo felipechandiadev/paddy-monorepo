@@ -1,9 +1,0 @@
-{
-  "app": {
-    "[project]/paddy/paddy-tms/src/app/receptions/page": [],
-    "[project]/paddy/paddy-tms/src/app/weighing/page": []
-  },
-  "appUsingSizeAdjust": true,
-  "pages": {},
-  "pagesUsingSizeAdjust": false
-}

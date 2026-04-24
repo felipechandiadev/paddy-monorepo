@@ -1,4 +1,4 @@
-export type { User, UsersResponse } from './types/users.types';
+export type { User, UserRole, UsersResponse } from './types/users.types';
 export { usersApi } from './services/users.api';
 export { fetchRoles } from './services/roles.api';
 export { fetchUsers } from './actions/fetchUsers.action';

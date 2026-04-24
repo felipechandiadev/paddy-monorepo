@@ -107,7 +107,7 @@ const LoginForm: React.FC = () => {
 
         {/* Company Info */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">AYG</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Paddy AyG</h1>
           <p className="text-sm text-foreground font-medium leading-tight">
             SOC.COMERCIAL E INDUSTRIAL<br />APARICIO Y GARCIA LTDA.
           </p>
@@ -127,6 +127,7 @@ const LoginForm: React.FC = () => {
             <TextField
               id="paddy-login-email"
               label="Email"
+              labelAlwaysVisible
               type="email"
               value={values.email}
               onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
@@ -142,6 +143,7 @@ const LoginForm: React.FC = () => {
             <TextField
               id="paddy-login-password"
               label="Contraseña"
+              labelAlwaysVisible
               type="password"
               value={values.password}
               onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}

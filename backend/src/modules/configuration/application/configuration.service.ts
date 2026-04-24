@@ -530,8 +530,8 @@ export class ConfigurationService {
         description: 'Acceso de solo lectura',
       },
       [RoleEnum.TRUCK_RECEPTION]: {
-        label: 'Recepción de camión',
-        description: 'Operador de báscula / TMS logístico (recepción y pesaje)',
+        label: 'Recepción y desapacho de carga',
+        description: 'Operador de báscula / TMS (recepción y desapacho)',
       },
     };
 

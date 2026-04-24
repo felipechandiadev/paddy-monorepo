@@ -1,0 +1,13 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/despachos/administrar/page": "/despachos/administrar",
+  "/despachos/lista/page": "/despachos/lista",
+  "/despachos/page": "/despachos",
+  "/monitor/page": "/monitor",
+  "/page": "/",
+  "/receptions/page": "/receptions",
+  "/weighing/[id]/page": "/weighing/[id]",
+  "/weighing/page": "/weighing"
+}

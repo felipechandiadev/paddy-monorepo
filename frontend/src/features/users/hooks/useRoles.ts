@@ -9,6 +9,7 @@ export function useRoles(enabled = true) {
   const [roles, setRoles] = useState<RoleOption[]>([
     { id: 'ADMIN', label: 'Administrador' },
     { id: 'CONSULTANT', label: 'Consultor' },
+    { id: 'TRUCK_RECEPTION', label: 'Recepción y desapacho de carga' },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -3,6 +3,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { revalidatePath } from 'next/cache';
+import type { UserRole } from '../types/users.types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -10,7 +11,7 @@ interface UpdateUserRequest {
   email?: string;
   password?: string;
   name?: string;
-  role?: 'ADMIN' | 'CONSULTANT';
+  role?: UserRole;
 }
 
 export async function updateUser(userId: string, data: UpdateUserRequest) {

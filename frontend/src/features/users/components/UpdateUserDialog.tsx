@@ -6,7 +6,7 @@ import { TextField } from '@/shared/components/ui/TextField/TextField';
 import Select from '@/shared/components/ui/Select/Select';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
-import { User } from '../types/users.types';
+import { User, type UserRole } from '../types/users.types';
 import { useRoles } from '../hooks/useRoles';
 
 interface UpdateUserDialogProps {
@@ -19,7 +19,7 @@ export default function UpdateUserDialog({ open, user, onClose }: UpdateUserDial
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'CONSULTANT'>('ADMIN');
+  const [role, setRole] = useState<UserRole>('ADMIN');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { roles, isLoading: isLoadingRoles } = useRoles(open);
@@ -133,7 +133,7 @@ export default function UpdateUserDialog({ open, user, onClose }: UpdateUserDial
           <Select
             label="Rol"
             value={role}
-            onChange={(value) => setRole((value as 'ADMIN' | 'CONSULTANT') || 'ADMIN')}
+            onChange={(value) => setRole((value as UserRole) || 'ADMIN')}
             options={roles}
             disabled={isLoading || isLoadingRoles}
             required

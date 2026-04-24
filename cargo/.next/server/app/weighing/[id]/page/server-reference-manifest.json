@@ -1,0 +1,20 @@
+{
+  "node": {
+    "409933649b6d66b837382562db06be6f6b62360f32": {
+      "workers": {
+        "app/weighing/[id]/page": {
+          "moduleId": 34518,
+          "async": false,
+          "exportedName": "fetchTruckReceptions",
+          "filename": "paddy/cargo/src/features/logistics/actions/truck.action.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/[id]/page": "action-browser"
+      },
+      "exportedName": "fetchTruckReceptions",
+      "filename": "paddy/cargo/src/features/logistics/actions/truck.action.ts"
+    }
+  },
+  "edge": {}
+}

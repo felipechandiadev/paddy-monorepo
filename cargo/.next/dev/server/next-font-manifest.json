@@ -1,0 +1,13 @@
+{
+  "app": {
+    "[project]/paddy/cargo/src/app/despachos/lista/page": [],
+    "[project]/paddy/cargo/src/app/despachos/page": [],
+    "[project]/paddy/cargo/src/app/monitor/page": [],
+    "[project]/paddy/cargo/src/app/page": [],
+    "[project]/paddy/cargo/src/app/receptions/page": [],
+    "[project]/paddy/cargo/src/app/weighing/page": []
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

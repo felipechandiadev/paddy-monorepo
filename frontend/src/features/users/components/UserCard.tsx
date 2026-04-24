@@ -20,6 +20,8 @@ export default function UserCard({ user, onEdit, onDelete, onManagePermissions }
         return 'primary';
       case 'CONSULTANT':
         return 'info';
+      case 'TRUCK_RECEPTION':
+        return 'success';
       default:
         return 'secondary-outlined';
     }
@@ -31,6 +33,8 @@ export default function UserCard({ user, onEdit, onDelete, onManagePermissions }
         return 'Administrador';
       case 'CONSULTANT':
         return 'Consultor';
+      case 'TRUCK_RECEPTION':
+        return 'Recepción y desapacho de carga';
       default:
         return role;
     }

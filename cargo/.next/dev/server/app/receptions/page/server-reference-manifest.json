@@ -1,0 +1,170 @@
+{
+  "node": {
+    "0037935cdcff978a6805f61981c08fe8cdfab5eaf9": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "getNextTurnoAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "getNextTurnoAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "00ffed22151d008e6a1c3373c7ae3614463e364065": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "getTurnosTodayAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "getTurnosTodayAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "401fd7e2cce3cc7b43e9956d041f18b7c603deb92a": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "exportedName": "createTruckReceptionAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "4021f17fb898e1ad86fcca663f85fed167403e6876": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "getTruckReceptionsGridAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "getTruckReceptionsGridAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "4033c54ef6a1cf7531097325a91c4fd9100a53bead": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "getTruckReceptionByIdAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "exportedName": "getTruckReceptionByIdAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "405e7bbec01d48e9d7d90f457ec0439586ff0b456f": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "exportedName": "deleteTruckReceptionAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "40607a23e110a792b478bd237b3a01d9cf5060c36c": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "recordTareWeightAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "recordTareWeightAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "60052f665745ab54597007d2d90027fb8d4202a216": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "exportedName": "updateTruckReceptionAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "608d8ff96e8b098cee62cf6b38d1544b5a5ec66e31": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateTruckTurnoAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "updateTruckTurnoAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "60af9d152c7f1d88e888614da640f34a00bd2f0c61": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateTruckStatusAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "exportedName": "updateTruckStatusAction",
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+    },
+    "403780f9f3cbf4ac7c6190415e81ad5b3abe649d0d": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": "[project]/paddy/cargo/.next-internal/server/app/receptions/page/actions.js { ACTIONS_MODULE0 => \"[project]/paddy/cargo/src/actions/truckReceptionActions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/paddy/cargo/src/actions/fetchProducersAction.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "exportedName": "fetchProducersAction",
+      "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+    }
+  },
+  "edge": {}
+}

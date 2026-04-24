@@ -1,0 +1,383 @@
+{
+  "node": {
+    "00f7d2fee18dfe2db1bceb2a9fe970266d26ffc70b": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "getDispatchesWeighingQueueTodayAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        },
+        "app/despachos/page": {
+          "moduleId": 62177,
+          "async": false,
+          "exportedName": "getDispatchesWeighingQueueTodayAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "rsc",
+        "app/despachos/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "getDispatchesWeighingQueueTodayAction"
+    },
+    "403e7184ae12b4855e08d5a20152c143595ae8f511": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+        },
+        "app/despachos/page": {
+          "moduleId": 62177,
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+        },
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "fetchProducersAction",
+          "filename": "paddy/cargo/src/actions/fetchProducersAction.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser",
+        "app/despachos/page": "action-browser",
+        "app/receptions/page": "action-browser",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/fetchProducersAction.ts",
+      "exportedName": "fetchProducersAction"
+    },
+    "4062a11ffbe98c67bd714265435c2d47190c7488af": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "createTruckDispatchWithTareAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        },
+        "app/despachos/page": {
+          "moduleId": 62177,
+          "async": false,
+          "exportedName": "createTruckDispatchWithTareAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser",
+        "app/despachos/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "createTruckDispatchWithTareAction"
+    },
+    "404a3e035975dd86691f1bbf0f6207059502c45593": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "registerDispatchGrossWeightAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        },
+        "app/despachos/page": {
+          "moduleId": 62177,
+          "async": false,
+          "exportedName": "registerDispatchGrossWeightAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser",
+        "app/despachos/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "registerDispatchGrossWeightAction"
+    },
+    "401e4137934bac29f3c8c5117e930ae6e440f26483": {
+      "workers": {
+        "app/despachos/page": {
+          "moduleId": 62177,
+          "async": false,
+          "exportedName": "createProducerAction",
+          "filename": "paddy/cargo/src/actions/producerActions.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "createProducerAction",
+          "filename": "paddy/cargo/src/actions/producerActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/page": "action-browser",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/producerActions.ts",
+      "exportedName": "createProducerAction"
+    },
+    "4001e3d4967b4a523b97899fded8068a94bcf55bc5": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "getTruckDispatchByIdAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "getTruckDispatchByIdAction"
+    },
+    "406743b8c88f8b2d25aded3deafc0ca6be414e9226": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "deleteTruckDispatchAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "deleteTruckDispatchAction"
+    },
+    "40df4760adb3b7d0f0c5d93301f80bdf57b7e50c58": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "getTruckDispatchesGridAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "rsc"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "getTruckDispatchesGridAction"
+    },
+    "607ad8b96422b08b254e6d3bec693973c60dc2d221": {
+      "workers": {
+        "app/despachos/lista/page": {
+          "moduleId": 7384,
+          "async": false,
+          "exportedName": "updateTruckDispatchAction",
+          "filename": "paddy/cargo/src/actions/truckDispatchActions.ts"
+        }
+      },
+      "layer": {
+        "app/despachos/lista/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckDispatchActions.ts",
+      "exportedName": "updateTruckDispatchAction"
+    },
+    "00da09eb1fb037438ebf79a618afde6151cc951323": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "getNextTurnoAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "getNextTurnoAction"
+    },
+    "00fe1dee3a84b0bfdc92fb8dfb26d6de83c85733ec": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "getTurnosTodayAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "getTurnosTodayAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "getTurnosTodayAction"
+    },
+    "4012e37caf61547478e4bb6333613fc261fa5c81a2": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "createTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "createTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "createTruckReceptionAction"
+    },
+    "405c430df5bc9763bce3f7ab8bceb0fce55d6d661a": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "getTruckReceptionByIdAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "getTruckReceptionByIdAction"
+    },
+    "4076a711bdfe032335bddd9b93fe1be024516c80d6": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "recordTareWeightAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "recordTareWeightAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "recordTareWeightAction"
+    },
+    "40b18970c766c9d89f4d11e905e43eb23cc3abc00d": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "getTruckReceptionsGridAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "getTruckReceptionsGridAction"
+    },
+    "40b804523bea94614b271aade358ddbff42b0ab36b": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "deleteTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "deleteTruckReceptionAction"
+    },
+    "600805eb235e1a60a528385ba808de379b52a6b9ef": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "updateTruckReceptionAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "updateTruckReceptionAction"
+    },
+    "60132de1940242d362655e8f4a4d235ae596adef9b": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "updateTruckTurnoAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        },
+        "app/weighing/page": {
+          "moduleId": 92123,
+          "async": false,
+          "exportedName": "updateTruckTurnoAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc",
+        "app/weighing/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "updateTruckTurnoAction"
+    },
+    "60c5399c77080937cb4059063068f69f7e68907f8f": {
+      "workers": {
+        "app/receptions/page": {
+          "moduleId": 72572,
+          "async": false,
+          "exportedName": "updateTruckStatusAction",
+          "filename": "paddy/cargo/src/actions/truckReceptionActions.ts"
+        }
+      },
+      "layer": {
+        "app/receptions/page": "rsc"
+      },
+      "filename": "paddy/cargo/src/actions/truckReceptionActions.ts",
+      "exportedName": "updateTruckStatusAction"
+    },
+    "409933649b6d66b837382562db06be6f6b62360f32": {
+      "workers": {
+        "app/weighing/[id]/page": {
+          "moduleId": 34518,
+          "async": false,
+          "exportedName": "fetchTruckReceptions",
+          "filename": "paddy/cargo/src/features/logistics/actions/truck.action.ts"
+        }
+      },
+      "layer": {
+        "app/weighing/[id]/page": "action-browser"
+      },
+      "filename": "paddy/cargo/src/features/logistics/actions/truck.action.ts",
+      "exportedName": "fetchTruckReceptions"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "Sb2wZWX/lZ0iBqJN52yMz7z6P4z+eoaRCRiT7XSdd7I="
+}

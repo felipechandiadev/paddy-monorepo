@@ -1,0 +1,9 @@
+{
+  "[project]/paddy/cargo/src/shared/components/ui/DataGrid/DataGrid.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/paddy/cargo/src/shared/components/ui/DataGrid/DataGrid.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/paddy_cargo_src_shared_components_ui_DataGrid_d337d9cd._.js",
+      "static/chunks/paddy_cargo_src_shared_components_ui_DataGrid_DataGrid_tsx_fec1d957._.js"
+    ]
+  }
+}

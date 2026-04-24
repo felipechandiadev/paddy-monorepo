@@ -1,8 +1,8 @@
 # Cambios de la semana (según historial Git)
 
-**Periodo considerado:** 21 al 23 de abril de 2026 (commits con fecha de autor en ese rango).  
-**Total de commits:** 83.  
-**HEAD al generar este documento:** `01620a43509165c1f3a968a99a65e760f3d9e4f6`.
+**Periodo considerado:** 21 al 23 de abril de 2026 (fecha de autor del commit).  
+**Total de commits:** 84.  
+**HEAD al actualizar este documento:** `67440b3a27067766cbb972d8598aa68c1be13e11`.
 
 Este resumen se elaboró a partir de los mensajes de commit en el repositorio. No incluye cambios locales que aún no estén confirmados en Git.
 
@@ -37,7 +37,8 @@ Este resumen se elaboró a partir de los mensajes de commit en el repositorio. N
 - Refactor de recepción de camiones hacia **Server Actions**; autenticación en peticiones del cliente (**truckReceptionService**, **validateAuth** con `Authorization`).
 - **TruckList**: diseño de tarjetas, orden visual turno / patente, hora en formato **24 h**, separador de miles en peso bruto, iconos y arrastre (DnD).
 - DnD para **reordenar la cola** (intercambio de posiciones y actualización de **numero_turno**), con iteraciones de UX y feedback al reordenar en ESPERA.
-- Cabecera de pesaje: turnos y barra superior (commit 23/04).
+- Cabecera de pesaje: turnos y barra superior (23/04).
+- **Despachos:** páginas administrar/lista, DataGrid, formularios y provider de pesaje de despacho; ampliación de acciones y socket (`67440b3`).
 
 ### Recepciones y UI administrativa
 
@@ -51,14 +52,30 @@ Este resumen se elaboró a partir de los mensajes de commit en el repositorio. N
 - **ChangePasswordDialog** alineado con la auth de paddy-tms.
 - Correcciones en **Select**, **Alert**, imports default, **Badge**, **LoginPage** / **TextField**, **fetchProducersAction** con cookies de servidor.
 
+### Frontend principal (app **paddy**)
+
+- Rutas de gestión **truck-receptions** y **truck-dispatches** con grillas, diálogos y formularios alineados al TMS.
+- Feature **logistics-trucks** (acciones, tipos, ticket de impresión); utilidades **formatGridCell**, producto logístico y turno en recepciones.
+- Ajustes en **DataGrid** (cuerpo, celdas); **TopBar** y vistas de productores (recepciones, impresión, tipos).
+
 ### Otros (monorepo)
 
 - **Inventory Book:** descarga de Excel vía Server Action (commit `d0ff8bd`).
+- **Finanzas / operaciones / helpers:** cambios en servicios y utilidades (p. ej. exportaciones, RUT) incluidos en la consolidación `67440b3`.
+
+### Consolidación **23/04** (`67440b3`)
+
+- Limpieza del repositorio: documentación y scripts obsoletos en la raíz, `base_other_projects`, carpeta `hooks`, artefactos JSON/SQL sueltos; eliminación de `paddy.code-workspace`.
+- **Respaldo programado:** `@nestjs/schedule`, servicio `mysqldump` y scheduler; variables `DATABASE_BACKUP_*` documentadas en `backend/.env.example`.
+- **Variables de entorno:** secciones con banner en `backend/.env.example`, nuevo `frontend/.env.example`, `paddy-tms/.env.local.example`.
+- **Backend logística:** DTOs nuevos para flujo de despacho de camiones (`create-truck-dispatch-with-tare`, `register-dispatch-gross-weight`, `update-truck-dispatch`).
+- Incorporación de este archivo **`CAMBIOS_SEMANA_2026-04-21.md`** al repositorio.
 
 ---
 
 ## Lista completa de commits (orden cronológico inverso: más reciente primero)
 
+- `67440b3` — chore: limpieza de repo, respaldos MySQL programados y mejoras logística/TMS (2026-04-23)
 - `01620a4` — fix(tms): DataGrid URL updates use pathname; receptions force-dynamic (2026-04-23)
 - `facc671` — feat(tms): pesaje — cabecera, turnos y barra superior (2026-04-23)
 - `969247b` — fix(weighing): mejor feedback visual al reordenar cola en espera (2026-04-23)
@@ -152,4 +169,4 @@ git log --since="2026-04-21 00:00" --until="2026-04-24 00:00" \
   --pretty=format:"- \`%h\` — %s (%ad)" --date=short
 ```
 
-Para otra semana, ajusta las fechas en `--since` y `--until`.
+Para incluir cualquier commit del 24/04 con hora temprana, amplía `--until` (por ejemplo `2026-04-25 00:00`). Para otra semana, ajusta las fechas en `--since` y `--until`.

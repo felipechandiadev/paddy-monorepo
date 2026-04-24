@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST="{\n  \"app\": {\n    \"[project]/paddy/paddy-tms/src/app/receptions/page\": [],\n    \"[project]/paddy/paddy-tms/src/app/weighing/page\": []\n  },\n  \"appUsingSizeAdjust\": true,\n  \"pages\": {},\n  \"pagesUsingSizeAdjust\": false\n}"

@@ -1,0 +1,8 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/paddy/cargo/src/app/despachos/lista/page": []
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

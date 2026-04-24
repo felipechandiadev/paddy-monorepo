@@ -7,6 +7,7 @@ import Select from '@/shared/components/ui/Select/Select';
 import { Button } from '@/shared/components/ui/Button/Button';
 import Alert from '@/shared/components/ui/Alert/Alert';
 import { useRoles } from '../hooks/useRoles';
+import type { UserRole } from '../types/users.types';
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -17,7 +18,7 @@ export default function CreateUserDialog({ open, onClose }: CreateUserDialogProp
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'CONSULTANT'>('ADMIN');
+  const [role, setRole] = useState<UserRole>('ADMIN');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { roles, isLoading: isLoadingRoles } = useRoles(open);
@@ -117,7 +118,7 @@ export default function CreateUserDialog({ open, onClose }: CreateUserDialogProp
           <Select
             label="Rol"
             value={role}
-            onChange={(value) => setRole((value as 'ADMIN' | 'CONSULTANT') || 'ADMIN')}
+            onChange={(value) => setRole((value as UserRole) || 'ADMIN')}
             options={roles}
             disabled={isLoading || isLoadingRoles}
             required

@@ -3,13 +3,14 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { revalidatePath } from 'next/cache';
+import type { UserRole } from '../types/users.types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 interface CreateUserRequest {
   email: string;
   password: string;
-  role: 'ADMIN' | 'CONSULTANT';
+  role: UserRole;
   name: string;
 }
 

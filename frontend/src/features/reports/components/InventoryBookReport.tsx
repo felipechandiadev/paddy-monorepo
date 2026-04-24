@@ -186,7 +186,11 @@ const InventoryBookReport: React.FC<InventoryBookReportProps> = ({
         return;
       }
 
-      const blob = new Blob([result.data], {
+      const bytes = result.data;
+      // Copia explícita: Blob/TS estricto no aceptan Uint8Array<ArrayBufferLike> ni SharedArrayBuffer.
+      const copy = new Uint8Array(bytes.byteLength);
+      copy.set(bytes);
+      const blob = new Blob([copy], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
 
