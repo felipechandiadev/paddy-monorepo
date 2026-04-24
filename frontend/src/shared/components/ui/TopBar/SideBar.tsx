@@ -32,7 +32,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Paddy AyG';
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '1.2.0';
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '1.2.6';
 const APP_RELEASE = process.env.NEXT_PUBLIC_APP_RELEASE || '21-Diciembre-2025';
 
 const SideBar: React.FC<SideBarProps> = ({

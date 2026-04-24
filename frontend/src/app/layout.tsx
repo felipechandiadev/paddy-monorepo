@@ -32,6 +32,10 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  other: {
+    "msapplication-TileColor": "#1C2046",
+    "msapplication-config": "/browserconfig.xml",
+  },
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
