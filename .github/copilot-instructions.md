@@ -4,7 +4,7 @@
 **Paddy** is a rice reception & financial management system with two integrated services:
 - **Backend** (NestJS + TypeORM + MySQL): `backend/` → Rice reception processing, transactions, producer management, auditing
   - ✅ **Status**: DDD Architecture implemented (auth, users, producers modules complete)
-  - **Setup Guide**: See [backend/SETUP.md](../backend/SETUP.md)
+  - **Setup**: See [backend/README.md](../backend/README.md)
 
 
 ## 🚀 Quick Start

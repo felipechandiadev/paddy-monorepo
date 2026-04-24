@@ -3,7 +3,7 @@
 /**
  * SEED COSECHA - Test Seeder
  * 
- * Genera datos de prueba siguiendo EXACTAMENTE las especificaciones de SEED_COSECHA_GUIDE.md:
+ * Genera datos de prueba con la siguiente forma (histórico seed cosecha):
  * - 2 usuarios (admin + consultor)
  * - 3 temporadas (2024, 2025, 2026)
  * - 4 tipos de arroz

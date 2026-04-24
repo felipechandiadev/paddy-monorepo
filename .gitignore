@@ -1,73 +1,198 @@
-# ===== Node/npm =====
+# =============================================================================
+# Paddy — .gitignore raíz (monorepo)
+# Objetivo: no versionar dependencias, builds, cachés, secretos ni artefactos locales.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Dependencias Node / package managers
+# -----------------------------------------------------------------------------
 node_modules/
+jspm_packages/
+bower_components/
+
+# Logs npm/yarn/pnpm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-pnpm-lock.yaml
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# -----------------------------------------------------------------------------
+# Builds y salidas compiladas (cualquier paquete)
+# -----------------------------------------------------------------------------
 dist/
 build/
+out/
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.vercel/
+.netlify/
 
-# ===== Backend =====
-backend/dist/
+# Bundlers / transpile caches
+.turbo/
+.parcel-cache/
+.cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# -----------------------------------------------------------------------------
+# Backend (NestJS) — /backend
+# -----------------------------------------------------------------------------
 backend/node_modules/
-backend/.env
-backend/.env.local
-backend/.env.*.local
+backend/dist/
 backend/coverage/
-backend/tsconfig.build.tsbuildinfo
+backend/.nyc_output/
+# Volcados JSON del CLI `npm run backup:db` (ver también backend/.gitignore)
+backend/backups/
+backend/*.log
 
-# ===== Deploy (secretos solo en servidor) =====
-deploy/secrets/*.env
-
-# ===== Frontend (Next.js) =====
-frontend/.next/
+# -----------------------------------------------------------------------------
+# Frontend (Next.js) — /frontend
+# -----------------------------------------------------------------------------
 frontend/node_modules/
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
+frontend/.next/
 frontend/out/
-frontend/.turbo/
+frontend/build/
 frontend/dist/
+frontend/.turbo/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/playwright/.cache/
 
-# ===== IDEs & Editors =====
+# -----------------------------------------------------------------------------
+# App TMS / báscula (Next.js) — /cargo
+# -----------------------------------------------------------------------------
+cargo/node_modules/
+cargo/.next/
+cargo/out/
+cargo/build/
+cargo/dist/
+cargo/.turbo/
+cargo/coverage/
+cargo/playwright-report/
+cargo/test-results/
+cargo/blob-report/
+cargo/playwright/.cache/
+
+# -----------------------------------------------------------------------------
+# Legacy / otras apps Next en repo (si existen)
+# -----------------------------------------------------------------------------
+paddy-tms/node_modules/
+paddy-tms/.next/
+paddy-tms/out/
+paddy-tms/build/
+paddy-tms/dist/
+paddy-tms/.turbo/
+paddy-tms/coverage/
+paddy-tms/playwright-report/
+paddy-tms/test-results/
+paddy-tms/*.tsbuildinfo
+
+# -----------------------------------------------------------------------------
+# Informe (Vivliostyle / documentación) — fuera del repo
+# -----------------------------------------------------------------------------
+/informe/
+
+# -----------------------------------------------------------------------------
+# Deploy — secretos reales (ejemplos y .gitkeep sí se versionan)
+# -----------------------------------------------------------------------------
+deploy/secrets/*.env
+!deploy/secrets/.gitkeep
+
+# -----------------------------------------------------------------------------
+# Variables de entorno y secretos (nunca commitear)
+# -----------------------------------------------------------------------------
+# `.env.*` ignoraría también `.env.example`; por eso las excepciones con !.
+.env
+.env.*
+!.env.example
+!**/.env.example
+!**/.env.local.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# -----------------------------------------------------------------------------
+# Bases de datos — volcados y dumps locales (no migraciones .ts del repo)
+# -----------------------------------------------------------------------------
+# Ajusta si en el futuro versionas ficheros .sql concretos (usa reglas ! para excepciones).
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+dump.sql
+**/paddy-mysqldump-*.sql
+
+# -----------------------------------------------------------------------------
+# Testing / cobertura
+# -----------------------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+results.xml
+
+# -----------------------------------------------------------------------------
+# SO y archivos basura
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Editores e IDEs
+# -----------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
-.env.local
-.env.*.local
-*.sublime-project
-*.sublime-workspace
-
-# ===== Logs =====
-*.log
-logs/
-lerna-debug.log
-
-# ===== Misc =====
-.turbo/
-dist/
-build/
-*.tgz
-
-# ===== OS =====
-.DS_Store
-Thumbs.db
-
-# ===== Editor backups =====
-*~
 *.orig
 *.bak
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
 
-# ===== MySQL/Database =====
-*.sql
-dump.sql
-backup-*.sql
+# -----------------------------------------------------------------------------
+# Temporal y miscelánea
+# -----------------------------------------------------------------------------
+tmp/
+temp/
+*.tgz
+*.tar.gz
+*.zip
+logs/
+*.log
 
-# ===== Certificates =====
-*.pem
-*.key
-*.crt
+# -----------------------------------------------------------------------------
+# Herramientas opcionales
+# -----------------------------------------------------------------------------
+# Playwright (por si se ejecuta desde raíz)
+playwright-report/
+test-results/
+blob-report/
+
+# Storybook
+storybook-static/
+
+# Docker overrides locales
+docker-compose.override.yml
+
+# -----------------------------------------------------------------------------
+# Notas / resumen semanal local (no versionar)
+# -----------------------------------------------------------------------------
+/CAMBIOS_SEMANA_*.md
