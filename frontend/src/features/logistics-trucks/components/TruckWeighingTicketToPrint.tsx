@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { TruckReception } from '@/features/logistics-trucks/types';
+import type { TruckDispatch, TruckReception } from '@/features/logistics-trucks/types';
 import { formatLogisticsProductLabel } from '@/lib/logisticsProduct';
 import { formatChileanRut } from '@/shared/utils/chileanRutFormatter';
 import styles from './TruckWeighingTicketToPrint.module.css';
@@ -41,12 +41,15 @@ function formatKgTicket(value?: number | string | null) {
 }
 
 export interface TruckWeighingTicketToPrintProps {
-  truck: TruckReception;
+  truck: TruckReception | TruckDispatch;
+  /** Folio siempre es `truck.id`; el subtítulo depende de la operación. */
+  variant?: 'reception' | 'dispatch';
   observations?: string;
 }
 
 export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProps> = ({
   truck,
+  variant = 'reception',
   observations,
 }) => {
   const entry = toDate(truck.entry_at);
@@ -58,10 +61,8 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
   const productorLine = `${producerRut} ${producerName}`.trim();
 
   const folioFormatted = Number(truck.id).toLocaleString('es-CL');
-  const numberLine =
-    truck.numero_turno != null
-      ? Number(truck.numero_turno).toLocaleString('es-CL')
-      : folioFormatted;
+  const operationSubtitle =
+    variant === 'dispatch' ? 'Despacho de Carga' : 'Recepción de Carga';
 
   const guia = truck.dispatch_guide?.trim() || '—';
 
@@ -76,8 +77,8 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
         </div>
         <div className={styles.documentMeta}>
           <h2 className={styles.ticketTitle}>TICKET DE PESAJE</h2>
-          <p className={styles.ticketNumber}>Nº {numberLine}</p>
-          <p className={styles.documentSubtitle}>Recepción de Carga</p>
+          <p className={styles.ticketNumber}>Folio Nº {folioFormatted}</p>
+          <p className={styles.documentSubtitle}>{operationSubtitle}</p>
           {exit && (
             <p className={styles.documentDate} suppressHydrationWarning>
               Fecha: {formatDateDash(exit)}

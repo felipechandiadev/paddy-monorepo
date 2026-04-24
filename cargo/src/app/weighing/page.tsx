@@ -90,7 +90,7 @@ const WeighingPageContent: React.FC = () => {
         onClose={closePrint}
         title={
           printTruck
-            ? `Ticket de pesaje — Nº ${printTruck.numero_turno?.toLocaleString('es-CL') ?? ''}`
+            ? `Ticket de pesaje — Folio Nº ${printTruck.id.toLocaleString('es-CL')}`
             : 'Ticket de pesaje'
         }
         printLabel="Imprimir"

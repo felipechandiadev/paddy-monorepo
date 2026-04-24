@@ -50,6 +50,25 @@ export interface UpdateTruckReceptionPayload {
   product?: LogisticsProductCode;
 }
 
+/** Despacho de carga (misma forma operativa que recepción para ticket / API). */
+export interface TruckDispatch {
+  id: number;
+  status: 'ESPERA' | 'FINISHED';
+  producer_id: number;
+  product?: LogisticsProductCode;
+  producer?: TruckReceptionProducerRef;
+  license_plate: string;
+  driver_name?: string | null;
+  carrier_company?: string;
+  dispatch_guide?: string;
+  gross_weight?: number;
+  tare_weight?: number;
+  net_weight?: number;
+  entry_at: Date;
+  finished_at?: Date;
+  created_by?: string;
+}
+
 export interface TruckReceptionGridRow {
   id: number;
   status: string;

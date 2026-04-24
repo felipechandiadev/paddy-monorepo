@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { TextField } from '@/shared/components/ui/TextField/TextField';
 import { Button } from '@/shared/components/ui/Button/Button';
@@ -19,7 +19,7 @@ const initialValues: LoginValues = {
 };
 
 export default function LoginPageContent() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [values, setValues] = useState<LoginValues>(initialValues);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -39,13 +39,17 @@ export default function LoginPageContent() {
     }
 
     setIsLoading(true);
-    
-    // Instead of waiting for signIn to return, just submit and let NextAuth handle everything
-    // The form will redirect automatically via NextAuth's built-in redirect
+
+    const redirectParam = searchParams.get('redirect')?.trim();
+    const callbackUrl =
+      redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+        ? redirectParam
+        : '/weighing';
+
     signIn('credentials', {
       email: values.email.trim().toLowerCase(),
       password: values.password,
-      callbackUrl: '/weighing',
+      callbackUrl,
     });
   };
 

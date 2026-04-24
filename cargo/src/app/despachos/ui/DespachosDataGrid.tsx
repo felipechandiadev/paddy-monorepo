@@ -284,7 +284,7 @@ export const DespachosDataGrid: React.FC<DespachosDataGridProps> = ({
         onClose={closePrint}
         title={
           printTruck
-            ? `Ticket de despacho — Folio ${printTruck.id.toLocaleString('es-CL')}`
+            ? `Ticket de despacho — Folio Nº ${printTruck.id.toLocaleString('es-CL')}`
             : 'Ticket de despacho'
         }
         printLabel="Imprimir"

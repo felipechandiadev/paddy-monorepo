@@ -51,7 +51,7 @@ function nonEmptyDetail(value: string | null | undefined): string | null {
 
 export interface TruckWeighingTicketToPrintProps {
   truck: TruckReception | TruckDispatch;
-  /** Recepción: Nº de turno (o folio si no hay turno). Despacho: siempre folio (`id`). */
+  /** Recepción o despacho: el número mostrado es siempre el folio (`id`), no el turno. */
   variant?: 'reception' | 'dispatch';
   /** Texto libre bajo “Observaciones” (opcional). */
   observations?: string;
@@ -76,11 +76,6 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
 
   const isDispatch = variant === 'dispatch';
   const folioFormatted = Number(truck.id).toLocaleString('es-CL');
-  const numberLine = isDispatch
-    ? folioFormatted
-    : truck.numero_turno != null
-      ? Number(truck.numero_turno).toLocaleString('es-CL')
-      : folioFormatted;
 
   const operationSubtitle = isDispatch ? 'Despacho de Carga' : 'Recepción de Carga';
 
@@ -99,9 +94,7 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
         </div>
         <div className={styles.documentMeta}>
           <h2 className={styles.ticketTitle}>TICKET DE PESAJE</h2>
-          <p className={styles.ticketNumber}>
-            {isDispatch ? `Folio Nº ${numberLine}` : `Nº ${numberLine}`}
-          </p>
+          <p className={styles.ticketNumber}>Folio Nº {folioFormatted}</p>
           <p className={styles.documentSubtitle}>{operationSubtitle}</p>
           {exit && (
             <p className={styles.documentDate} suppressHydrationWarning>

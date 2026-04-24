@@ -287,7 +287,7 @@ export function TruckReceptionsCargoDataGrid({
         onClose={closePrint}
         title={
           printTruck
-            ? `Ticket de recepción — Nº ${printTruck.numero_turno?.toLocaleString('es-CL') ?? '—'}`
+            ? `Ticket de recepción — Folio Nº ${printTruck.id.toLocaleString('es-CL')}`
             : 'Ticket de recepción'
         }
         printLabel="Imprimir"

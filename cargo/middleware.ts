@@ -1,37 +1,31 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-const protectedRoutes = [
-  '/weighing',
-  '/receptions',
-  '/despachos',
-];
+const protectedRoutes = ['/weighing', '/receptions', '/despachos'];
 
-const publicRoutes = [
-  '/login',
-  '/monitor',
-];
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const token = request.cookies.get('auth_token')?.value;
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
   const isAuthenticated = !!token;
 
-  // Check if route is protected
-  const isProtected = protectedRoutes.some(route => pathname.startsWith(route));
-  const isPublic = publicRoutes.some(route => pathname.startsWith(route));
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
-  // Redirect unauthenticated users from protected routes to login
   if (isProtected && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login
-  if (pathname === '/login' && isAuthenticated) {
-    return NextResponse.redirect(new URL('/weighing', request.url));
+  if (pathname === '/' && isAuthenticated) {
+    const next =
+      request.nextUrl.searchParams.get('redirect')?.trim() || '/weighing';
+    const safe = next.startsWith('/') && !next.startsWith('//') ? next : '/weighing';
+    return NextResponse.redirect(new URL(safe, request.url));
   }
 
   return NextResponse.next();
