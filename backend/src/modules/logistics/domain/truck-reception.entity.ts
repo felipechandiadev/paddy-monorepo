@@ -83,6 +83,9 @@ export class TruckReception {
   @Column({ type: 'varchar', length: 100, nullable: true })
   created_by: string;
 
+  @Column({ type: 'text', nullable: true })
+  notes: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 

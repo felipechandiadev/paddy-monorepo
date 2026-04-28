@@ -69,6 +69,7 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
     driver_name: '',
     carrier_company: '',
     dispatch_guide: '',
+    notes: '',
     gross_weight: '' as string,
 
     // Modo: tare
@@ -143,6 +144,7 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
         driver_name: '',
         carrier_company: '',
         dispatch_guide: '',
+        notes: '',
         gross_weight: '',
         tare_weight: '',
       });
@@ -221,12 +223,14 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
 
     try {
       const driverTrim = formData.driver_name.trim();
+      const notesTrim = formData.notes.trim();
       const newTruck = await createTruckReceptionAction({
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
         ...(driverTrim ? { driver_name: driverTrim } : {}),
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
+        ...(notesTrim ? { notes: notesTrim } : {}),
         gross_weight: weight,
         product: formData.product,
       });
@@ -250,6 +254,7 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
         driver_name: '',
         carrier_company: '',
         dispatch_guide: '',
+        notes: '',
         gross_weight: '',
         tare_weight: '',
       });
@@ -437,6 +442,16 @@ export const TruckReceptionForm: React.FC<TruckReceptionFormProps> = ({
             label="Guía de Despacho"
             value={formData.dispatch_guide}
             onChange={(e) => setFormData((prev) => ({ ...prev, dispatch_guide: e.target.value }))}
+            disabled={isLoading}
+            labelAlwaysVisible
+          />
+
+          <TextField
+            label="Notas"
+            type="textarea"
+            rows={3}
+            value={formData.notes}
+            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
             disabled={isLoading}
             labelAlwaysVisible
           />

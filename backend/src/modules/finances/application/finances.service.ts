@@ -3114,16 +3114,38 @@ export class FinancesService {
           ? (mergedCalculationDetails.paymentDetails as Record<string, unknown>)
           : undefined;
 
-      const paymentInfo =
-        (completeDto.paymentDetails ?? mergedPaymentDetails ?? {}) as Record<
-          string,
-          unknown
-        >;
+      const paymentDetailsRaw =
+        (completeDto.paymentDetails ??
+          (mergedCalculationDetails as any).paymentDetailsList ??
+          mergedPaymentDetails ??
+          null) as
+          | null
+          | Record<string, unknown>
+          | Array<Record<string, unknown>>;
+
+      const paymentList: Array<Record<string, unknown>> = Array.isArray(
+        paymentDetailsRaw,
+      )
+        ? paymentDetailsRaw
+        : paymentDetailsRaw && typeof paymentDetailsRaw === 'object'
+          ? [paymentDetailsRaw]
+          : [];
+
+      // Persist normalized payment list back into calculationDetails (json)
+      if (paymentList.length > 0) {
+        (mergedCalculationDetails as any).paymentDetailsList = paymentList;
+        // Compat: keep `paymentDetails` as a single object when only one payment exists.
+        (mergedCalculationDetails as any).paymentDetails =
+          paymentList.length === 1 ? paymentList[0] : undefined;
+      }
+
+      const primaryPaymentInfo: Record<string, unknown> =
+        paymentList[0] ?? {};
 
       const settledAt =
         this.parseDateInput(
-          typeof paymentInfo.paymentDate === 'string'
-            ? (paymentInfo.paymentDate as string)
+          typeof primaryPaymentInfo.paymentDate === 'string'
+            ? (primaryPaymentInfo.paymentDate as string)
             : null,
         ) ?? new Date();
 
@@ -3161,37 +3183,65 @@ export class FinancesService {
         receptionPrintLines,
       );
 
-      // Create settlement payment transaction
-      const rawPaymentMethod = paymentInfo.paymentMethod;
-      const settlementPaymentMethod: PaymentMethodEnum | null =
-        rawPaymentMethod === PaymentMethodEnum.TRANSFER ||
-        rawPaymentMethod === PaymentMethodEnum.CHECK ||
-        rawPaymentMethod === PaymentMethodEnum.CASH
-          ? (rawPaymentMethod as PaymentMethodEnum)
-          : null;
+      // Create settlement payment transaction(s)
+      const paymentsToPersist =
+        paymentList.length > 0 ? paymentList : [{} as Record<string, unknown>];
 
-      const settlementTransaction = manager.create(Transaction, {
-        producerId: settlement.producerId,
-        settlementId: id,
-        type: TransactionTypeEnum.SETTLEMENT,
-        amount: calculation.amountDue,
-        transactionDate: paymentInfo.paymentDate
-          ? this.parseDateOnly(paymentInfo.paymentDate as string) ?? new Date()
-          : new Date(),
-        referenceNumber: paymentInfo.referenceNumber
-          ? String(paymentInfo.referenceNumber).trim() || null
-          : null,
-        notes: paymentInfo.notes
-          ? String(paymentInfo.notes).trim() || null
-          : null,
-        metadata: {
-          paymentMethod: settlementPaymentMethod,
-          paymentDate: paymentInfo.paymentDate || null,
-          bankAccountIndex: paymentInfo.bankAccountIndex ?? null,
-        },
-      });
+      for (const paymentInfo of paymentsToPersist) {
+        const rawPaymentMethod = paymentInfo.paymentMethod;
+        const settlementPaymentMethod: PaymentMethodEnum | null =
+          rawPaymentMethod === PaymentMethodEnum.TRANSFER ||
+          rawPaymentMethod === PaymentMethodEnum.CHECK ||
+          rawPaymentMethod === PaymentMethodEnum.CASH
+            ? (rawPaymentMethod as PaymentMethodEnum)
+            : null;
 
-      await manager.save(Transaction, settlementTransaction);
+        const amountRaw = paymentInfo.amount;
+        const amount =
+          amountRaw === undefined || amountRaw === null
+            ? // Backward compat: if only one payment is provided (or none), use amountDue.
+              calculation.amountDue
+            : Number(amountRaw);
+
+        if (paymentsToPersist.length > 1 && (amountRaw === undefined || amountRaw === null)) {
+          throw new BadRequestException(
+            'Cada pago debe incluir un monto (amount) cuando se envía una colección de pagos.',
+          );
+        }
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+          throw new BadRequestException(
+            'El monto (amount) del pago debe ser un número positivo.',
+          );
+        }
+
+        const settlementTransaction = manager.create(Transaction, {
+          producerId: settlement.producerId,
+          settlementId: id,
+          type: TransactionTypeEnum.SETTLEMENT,
+          amount,
+          transactionDate: paymentInfo.paymentDate
+            ? this.parseDateOnly(paymentInfo.paymentDate as string) ?? new Date()
+            : new Date(),
+          referenceNumber: paymentInfo.referenceNumber
+            ? String(paymentInfo.referenceNumber).trim() || null
+            : null,
+          notes: paymentInfo.notes
+            ? String(paymentInfo.notes).trim() || null
+            : null,
+          metadata: {
+            paymentMethod: settlementPaymentMethod,
+            paymentDate: paymentInfo.paymentDate || null,
+            bankAccountIndex: paymentInfo.bankAccountIndex ?? null,
+            bank: paymentInfo.bank ? String(paymentInfo.bank).trim() || null : null,
+            transferAccount: paymentInfo.transferAccount
+              ? String(paymentInfo.transferAccount).trim() || null
+              : null,
+          },
+        });
+
+        await manager.save(Transaction, settlementTransaction);
+      }
 
       const completedSettlement = await manager.findOne(Settlement, {
         where: { id, deletedAt: IsNull() },

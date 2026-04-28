@@ -236,6 +236,10 @@ export class LogisticsService {
         gross_weight: createTruckDto.gross_weight,
         product: createTruckDto.product ?? LogisticsProduct.ARROZ_PADDY,
         created_by: createTruckDto.created_by,
+        notes:
+          createTruckDto.notes != null && String(createTruckDto.notes).trim() !== ''
+            ? String(createTruckDto.notes).trim()
+            : null,
         status: TruckReceptionStatus.ESPERA,
         numero_turno: numeroTurno,
         turno_date: today,
@@ -388,6 +392,10 @@ export class LogisticsService {
         gross_weight: createTruckDto.gross_weight,
         product: createTruckDto.product ?? LogisticsProduct.ARROZ_PADDY,
         created_by: createTruckDto.created_by,
+        notes:
+          createTruckDto.notes != null && String(createTruckDto.notes).trim() !== ''
+            ? String(createTruckDto.notes).trim()
+            : null,
         status: TruckReceptionStatus.ESPERA,
         numero_turno: numeroTurno,
         turno_date: today,
@@ -444,6 +452,11 @@ export class LogisticsService {
         tare_weight: tw,
         product: dto.product ?? LogisticsProduct.ARROZ_PADDY,
         created_by: dto.created_by,
+        notes:
+          // CreateTruckDispatchWithTareDto no incluye notes aún, pero si llega en runtime lo tomamos.
+          (dto as any).notes != null && String((dto as any).notes).trim() !== ''
+            ? String((dto as any).notes).trim()
+            : null,
         status: TruckReceptionStatus.ESPERA,
         numero_turno: null,
         turno_date: today,
@@ -1230,7 +1243,8 @@ export class LogisticsService {
       updateData.dispatch_guide !== undefined ||
       updateData.gross_weight !== undefined ||
       updateData.tare_weight !== undefined ||
-      updateData.product !== undefined;
+      updateData.product !== undefined ||
+      updateData.notes !== undefined;
 
     if (hasDetailUpdate) {
       if (updateData.producer_id !== undefined) {
@@ -1263,6 +1277,12 @@ export class LogisticsService {
       if (updateData.dispatch_guide !== undefined) {
         truckReception.dispatch_guide =
           updateData.dispatch_guide?.trim() ?? '';
+      }
+
+      if (updateData.notes !== undefined) {
+        const n =
+          updateData.notes == null ? '' : String(updateData.notes).trim();
+        truckReception.notes = n === '' ? null : n;
       }
 
       if (updateData.gross_weight !== undefined) {
@@ -1347,7 +1367,8 @@ export class LogisticsService {
       updateData.dispatch_guide !== undefined ||
       updateData.gross_weight !== undefined ||
       updateData.tare_weight !== undefined ||
-      updateData.product !== undefined;
+      updateData.product !== undefined ||
+      updateData.notes !== undefined;
 
     if (hasDetailUpdate) {
       if (updateData.producer_id !== undefined) {
@@ -1378,6 +1399,12 @@ export class LogisticsService {
 
       if (updateData.dispatch_guide !== undefined) {
         td.dispatch_guide = updateData.dispatch_guide?.trim() ?? '';
+      }
+
+      if (updateData.notes !== undefined) {
+        const n =
+          updateData.notes == null ? '' : String(updateData.notes).trim();
+        td.notes = n === '' ? null : n;
       }
 
       if (updateData.gross_weight !== undefined) {

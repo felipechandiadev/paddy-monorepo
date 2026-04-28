@@ -84,6 +84,7 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
   const guia = truck.dispatch_guide?.trim() || '—';
   const driverLine = nonEmptyDetail(truck.driver_name);
   const carrierLine = nonEmptyDetail(truck.carrier_company);
+  const notesLine = nonEmptyDetail((truck as any).notes);
 
   return (
     <div className={styles.sheet}>
@@ -181,7 +182,7 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
 
       <section className={styles.obsBox}>
         <p className={styles.obsLabel}>Observaciones:</p>
-        <p className={styles.obsBody}>{observations?.trim() || '\u00A0'}</p>
+        <p className={styles.obsBody}>{notesLine || observations?.trim() || '\u00A0'}</p>
       </section>
     </div>
   );

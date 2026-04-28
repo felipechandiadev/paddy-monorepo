@@ -17,6 +17,7 @@ export interface TruckReception {
   driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string | null;
   gross_weight?: number;
   tare_weight?: number;
   net_weight?: number;
@@ -31,6 +32,7 @@ export interface CreateTruckWithGrossWeightPayload {
   driver_name?: string;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string;
   gross_weight: number;
   tare_weight?: number;
   product: LogisticsProductCode;
@@ -45,6 +47,7 @@ export interface UpdateTruckReceptionPayload {
   driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string | null;
   gross_weight?: number;
   tare_weight?: number;
   product?: LogisticsProductCode;
@@ -61,6 +64,7 @@ export interface TruckDispatch {
   driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string | null;
   gross_weight?: number;
   tare_weight?: number;
   net_weight?: number;

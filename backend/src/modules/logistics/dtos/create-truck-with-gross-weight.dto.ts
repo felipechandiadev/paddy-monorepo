@@ -76,4 +76,10 @@ export class CreateTruckWithGrossWeightDto {
 
   @IsOptional()
   created_by?: string;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v != null && String(v).trim() !== '')
+  @IsString({ message: 'Las notas deben ser texto' })
+  @Length(0, 2000, { message: 'Las notas deben tener máximo 2000 caracteres' })
+  notes?: string;
 }

@@ -84,6 +84,7 @@ export class TruckReceptionService {
         driver_name: payload.driver_name ?? '',
         carrier_company: payload.carrier_company,
         dispatch_guide: payload.dispatch_guide,
+        notes: payload.notes ?? null,
         gross_weight: payload.gross_weight,
         created_by: payload.created_by,
         entry_at: new Date(),

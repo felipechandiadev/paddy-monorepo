@@ -113,6 +113,45 @@ const getTotalRiceAmount = (settlement: Settlement): number => {
   return getNetRiceAmount(settlement) + getRiceVatAmount(settlement);
 };
 
+type SettlementPaymentLine = {
+  amount: number | null;
+};
+
+const getSettlementPaymentsTotal = (settlement: Settlement): number => {
+  const calculationDetails = getCalculationDetails(settlement);
+
+  const listRaw = Array.isArray((calculationDetails as any).paymentDetailsList)
+    ? ((calculationDetails as any).paymentDetailsList as Array<Record<string, unknown>>)
+    : null;
+
+  const singleRaw =
+    calculationDetails.paymentDetails && typeof calculationDetails.paymentDetails === 'object'
+      ? (calculationDetails.paymentDetails as Record<string, unknown>)
+      : null;
+
+  const rows = listRaw?.length ? listRaw : singleRaw ? [singleRaw] : [];
+
+  const parsed: SettlementPaymentLine[] = rows.map((raw) => {
+    const amountRaw = raw.amount;
+    const amount = amountRaw === null || amountRaw === undefined ? NaN : Number(amountRaw);
+    return {
+      amount: Number.isFinite(amount) && amount > 0 ? amount : null,
+    };
+  });
+
+  return parsed.reduce((sum, p) => sum + toSafeNumber(p.amount), 0);
+};
+
+const getSettlementBalance = (settlement: Settlement): number => {
+  const summary = getSettlementSummary(settlement);
+  const amountDue =
+    toSafeNumber(settlement.amountDue) ||
+    toSafeNumber(summary.finalBalance) ||
+    0;
+  const payments = getSettlementPaymentsTotal(settlement);
+  return amountDue - payments;
+};
+
 const getDisplayStatus = (settlement: Settlement): SettlementDisplayStatus =>
   settlement.deletedAt ? 'annulled' : settlement.status;
 
@@ -418,6 +457,30 @@ const SettlementsDataGrid: React.FC<SettlementsDataGridProps> = ({
       valueGetter: (params) => toSafeNumber((params.row as Settlement).liquidationTotal),
       renderCell: ({ value }) => (
         <span className="font-semibold text-green-700">
+          {currencyFormatter.format(Number(value || 0))}
+        </span>
+      ),
+    },
+    {
+      field: 'paymentsTotal',
+      headerName: 'Pagos',
+      minWidth: 125,
+      sortable: true,
+      valueGetter: (params) => getSettlementPaymentsTotal(params.row as Settlement),
+      renderCell: ({ value }) => (
+        <span className="font-semibold text-red-700">
+          {currencyFormatter.format(Number(value || 0))}
+        </span>
+      ),
+    },
+    {
+      field: 'balance',
+      headerName: 'Saldo',
+      minWidth: 125,
+      sortable: true,
+      valueGetter: (params) => getSettlementBalance(params.row as Settlement),
+      renderCell: ({ value }) => (
+        <span className="font-semibold text-blue-700">
           {currencyFormatter.format(Number(value || 0))}
         </span>
       ),

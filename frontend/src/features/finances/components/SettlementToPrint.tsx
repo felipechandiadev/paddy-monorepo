@@ -63,6 +63,68 @@ const getPurchaseInvoice = (settlement: Settlement): Record<string, unknown> => 
   return purchaseInvoice as Record<string, unknown>;
 };
 
+type SettlementPaymentLine = {
+  paymentDate: string | null;
+  paymentMethod: string | null;
+  amount: number | null;
+  referenceNumber: string | null;
+  bank: string | null;
+  transferAccount: string | null;
+  bankAccountIndex: number | null;
+  notes: string | null;
+};
+
+const getSettlementPayments = (settlement: Settlement): SettlementPaymentLine[] => {
+  const calculationDetails = getCalculationDetails(settlement);
+
+  const listRaw = Array.isArray((calculationDetails as any).paymentDetailsList)
+    ? ((calculationDetails as any).paymentDetailsList as Array<Record<string, unknown>>)
+    : null;
+
+  const singleRaw =
+    calculationDetails.paymentDetails && typeof calculationDetails.paymentDetails === 'object'
+      ? (calculationDetails.paymentDetails as Record<string, unknown>)
+      : null;
+
+  const rows = listRaw?.length ? listRaw : singleRaw ? [singleRaw] : [];
+
+  return rows.map((raw) => {
+    const amountRaw = raw.amount;
+    const parsedAmount = amountRaw === null || amountRaw === undefined ? NaN : Number(amountRaw);
+    const bankIdxRaw = raw.bankAccountIndex;
+    const bankIdx = bankIdxRaw === null || bankIdxRaw === undefined ? NaN : Number(bankIdxRaw);
+
+    return {
+      paymentDate:
+        raw.paymentDate === null || raw.paymentDate === undefined
+          ? null
+          : String(raw.paymentDate),
+      paymentMethod:
+        raw.paymentMethod === null || raw.paymentMethod === undefined
+          ? null
+          : String(raw.paymentMethod),
+      amount: Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : null,
+      referenceNumber:
+        raw.referenceNumber === null || raw.referenceNumber === undefined
+          ? null
+          : String(raw.referenceNumber).trim() || null,
+      bank:
+        raw.bank === null || raw.bank === undefined
+          ? null
+          : String(raw.bank).trim() || null,
+      transferAccount:
+        raw.transferAccount === null || raw.transferAccount === undefined
+          ? null
+          : String(raw.transferAccount).trim() || null,
+      bankAccountIndex: Number.isFinite(bankIdx) ? bankIdx : null,
+      notes:
+        raw.notes === null || raw.notes === undefined
+          ? null
+          : String(raw.notes).trim() || null,
+    };
+  });
+};
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
@@ -166,6 +228,7 @@ function getReceptionTotal(line: ReceptionPrintLine): number {
 export default function SettlementToPrint({ settlement }: SettlementToPrintProps) {
   const receptionLines = settlement.settlementReceptions ?? [];
   const advanceLines = settlement.settlementAdvances ?? [];
+  const settlementPayments = getSettlementPayments(settlement);
 
   const summary = getSummary(settlement);
   const dryingInvoice = getServiceInvoice(settlement, 'drying');
@@ -241,10 +304,16 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
   const servicesTotal =
     toSafeNumber(summary.totalServicesWithVat) || dryingTotal + interestTotal;
 
-  const balanceTotal =
+  const balanceTotalBeforePayments =
     toSafeNumber(settlement.amountDue) ||
     toSafeNumber(summary.finalBalance) ||
     (paddyTotal - totalAdvances - servicesTotal);
+
+  const paymentsTotal =
+    settlementPayments.reduce((s, p) => s + toSafeNumber(p.amount), 0) ||
+    (settlementPayments.length === 1 ? balanceTotalBeforePayments : 0);
+
+  const balanceTotal = balanceTotalBeforePayments - paymentsTotal;
 
   const balanceIva = paddyIva - dryingIva - interestIva;
   const balanceNeto = balanceTotal - balanceIva;
@@ -264,6 +333,12 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
     toSafeNumber(purchaseInvoice.ivaAmount) || paddyIva;
   const paddyInvoiceSubtotal =
     toSafeNumber(purchaseInvoice.totalAmount) || paddyTotal;
+
+  const billingSummaryTotal =
+    paddyInvoiceSubtotal - totalAdvances - interestTotal - dryingTotal;
+  const billingSummaryNet =
+    paddyInvoiceNet - totalAdvances - interestNeto - dryingNeto;
+  const billingSummaryVat = paddyInvoiceVat - interestIva - dryingIva;
 
   const interestInvoiceFolio = String(interestInvoice.invoiceNumber ?? '').trim() || '-';
   const interestInvoiceDate = formatDate(
@@ -456,7 +531,7 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
       </section>
 
       <section className={styles.blockSection}>
-        <h3 className={styles.blockTitle}>Anticipos asociados</h3>
+        <h3 className={styles.blockTitle}>Anticipos</h3>
         <table className={styles.detailTable}>
           <thead>
             <tr>
@@ -539,7 +614,7 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
       <section className={styles.blockSection}>
         <div className={styles.summaryTablesRow}>
           <div className={styles.billingBox}>
-            <h3 className={styles.blockTitle}>Facturacion</h3>
+            <h3 className={styles.blockTitle}>Resumen de Facturación</h3>
             <table className={styles.billingTable}>
               <thead>
                 <tr>
@@ -549,7 +624,7 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
                   <th>Fecha</th>
                   <th className={styles.rightAlign}>Neto</th>
                   <th className={styles.rightAlign}>IVA</th>
-                  <th className={styles.rightAlign}>Subtotal</th>
+                  <th className={styles.rightAlign}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -563,77 +638,97 @@ export default function SettlementToPrint({ settlement }: SettlementToPrintProps
                   <td className={styles.rightAlign}>{formatCurrency(paddyInvoiceSubtotal)}</td>
                 </tr>
                 <tr>
-                  <td>Intereses</td>
-                  <td>Factura venta</td>
-                  <td>{interestInvoiceFolio}</td>
-                  <td>{interestInvoiceDate}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(interestNeto)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(interestIva)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(interestTotal)}</td>
-                </tr>
-                <tr>
-                  <td>Secado</td>
-                  <td>Factura venta</td>
-                  <td>{dryingInvoiceFolio}</td>
-                  <td>{dryingInvoiceDate}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(dryingNeto)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(dryingIva)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(dryingTotal)}</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr className={styles.billingTotalsRow}>
-                  <td colSpan={4}>Total</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceNeto)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceIva)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceTotal)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div className={styles.summaryBox}>
-            <h3 className={styles.blockTitle}>Resumen Liquidacion</h3>
-            <table className={styles.billingTable}>
-              <thead>
-                <tr>
-                  <th>Concepto</th>
-                  <th className={styles.rightAlign}>Neto</th>
-                  <th className={styles.rightAlign}>IVA</th>
-                  <th className={styles.rightAlign}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Paddy</td>
-                  <td className={styles.rightAlign}>{formatCurrency(summaryPaddyNeto)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(summaryPaddyIva)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(summaryPaddyTotal)}</td>
-                </tr>
-                <tr>
                   <td>(-) {advanceLines.length} Anticipo{advanceLines.length !== 1 ? 's' : ''}</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
                   <td className={styles.rightAlign}>{formatCurrency(-totalAdvances)}</td>
                   <td />
                   <td className={styles.rightAlign}>{formatCurrency(-totalAdvances)}</td>
                 </tr>
                 <tr>
                   <td>(-) Intereses</td>
+                  <td>Factura venta</td>
+                  <td>{interestInvoiceFolio}</td>
+                  <td>{interestInvoiceDate}</td>
                   <td className={styles.rightAlign}>{formatCurrency(-interestNeto)}</td>
                   <td className={styles.rightAlign}>{formatCurrency(-interestIva)}</td>
                   <td className={styles.rightAlign}>{formatCurrency(-interestTotal)}</td>
                 </tr>
+                <tr>
+                  <td>(-) Secado</td>
+                  <td>Factura venta</td>
+                  <td>{dryingInvoiceFolio}</td>
+                  <td>{dryingInvoiceDate}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(-dryingNeto)}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(-dryingIva)}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(-dryingTotal)}</td>
+                </tr>
               </tbody>
               <tfoot>
                 <tr className={styles.billingTotalsRow}>
-                  <td>Saldo a liquidar</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceNeto)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceIva)}</td>
-                  <td className={styles.rightAlign}>{formatCurrency(balanceTotal)}</td>
+                  <td>Total</td>
+                  <td />
+                  <td />
+                  <td />
+                  <td className={styles.rightAlign}>{formatCurrency(billingSummaryNet)}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(billingSummaryVat)}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(billingSummaryTotal)}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
+      </section>
+
+      <section className={styles.blockSection}>
+        <h3 className={styles.blockTitle}>Pagos</h3>
+        <table className={styles.detailTable}>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th className={styles.rightAlign}>Monto</th>
+              <th>Medio de pago</th>
+              <th>Banco</th>
+              <th>Referencia</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {settlementPayments.length === 0 ? (
+              <tr>
+                <td className={styles.emptyCell} colSpan={6}>
+                  Sin pagos asociados registrados.
+                </td>
+              </tr>
+            ) : (
+              settlementPayments.map((p, idx) => (
+                <tr key={`${p.paymentDate ?? 'no-date'}-${idx}`}>
+                  <td>{formatDate(p.paymentDate)}</td>
+                  <td className={styles.rightAlign}>
+                    {formatCurrency(
+                      p.amount ??
+                        (settlementPayments.length === 1 ? balanceTotal : 0),
+                    )}
+                  </td>
+                  <td>{getPaymentMethodLabel(p.paymentMethod)}</td>
+                  <td>{p.bank ?? '-'}</td>
+                  <td>{p.referenceNumber ?? '-'}</td>
+                  <td>{p.notes ?? '-'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+          {settlementPayments.length > 0 && (
+            <tfoot>
+              <tr className={styles.totalsRow}>
+                <td>Total</td>
+                <td className={styles.rightAlign}>{formatCurrency(paymentsTotal)}</td>
+                <td colSpan={4} />
+              </tr>
+            </tfoot>
+          )}
+        </table>
       </section>
 
       <section className={styles.signatureSection}>

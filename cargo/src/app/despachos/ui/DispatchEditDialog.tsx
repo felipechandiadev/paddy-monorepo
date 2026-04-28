@@ -9,6 +9,7 @@ import Alert from '@/shared/components/ui/Alert/Alert';
 import Select from '@/shared/components/ui/Select/Select';
 import { fetchProducersAction, ProducerOption } from '@/actions/fetchProducersAction';
 import {
+  getTruckDispatchByIdAction,
   updateTruckDispatchAction,
   type TruckDispatchGridRow,
 } from '@/actions/truckDispatchActions';
@@ -37,6 +38,7 @@ export const DispatchEditDialog: React.FC<DispatchEditDialogProps> = ({
     driver_name: '',
     carrier_company: '',
     dispatch_guide: '',
+    notes: '',
     tare_weight: '' as string,
     gross_weight: '' as string,
   });
@@ -83,6 +85,7 @@ export const DispatchEditDialog: React.FC<DispatchEditDialogProps> = ({
       driver_name: row.driver_name ?? '',
       carrier_company: row.carrier_company ?? '',
       dispatch_guide: row.dispatch_guide ?? '',
+      notes: '',
       tare_weight:
         row.tare_weight != null && row.tare_weight !== ''
           ? String(row.tare_weight)
@@ -93,6 +96,17 @@ export const DispatchEditDialog: React.FC<DispatchEditDialogProps> = ({
           : '',
     });
   }, [open, row]);
+
+  useEffect(() => {
+    if (!open || !row?.id) {
+      return;
+    }
+    void (async () => {
+      const full = await getTruckDispatchByIdAction(row.id);
+      const notes = full?.notes != null ? String(full.notes) : '';
+      setFormData((prev) => ({ ...prev, notes }));
+    })();
+  }, [open, row?.id]);
 
   const producerAutocompleteOptions = useMemo(() => {
     const normalizedQuery = producerSearch.trim().toLowerCase();
@@ -169,12 +183,14 @@ export const DispatchEditDialog: React.FC<DispatchEditDialogProps> = ({
 
     try {
       const driverTrim = formData.driver_name.trim();
+      const notesTrim = formData.notes.trim();
       await updateTruckDispatchAction(row.id, {
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
         driver_name: driverTrim === '' ? null : driverTrim,
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
+        notes: notesTrim === '' ? null : notesTrim,
         tare_weight: tare,
         ...(grossNum !== undefined ? { gross_weight: grossNum } : {}),
         product: formData.product,
@@ -287,6 +303,16 @@ export const DispatchEditDialog: React.FC<DispatchEditDialogProps> = ({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, dispatch_guide: e.target.value }))
           }
+          disabled={isLoading}
+        />
+
+        <TextField
+          label="Notas (opcional)"
+          name="dispatch-edit-notes"
+          type="textarea"
+          rows={3}
+          value={formData.notes}
+          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
           disabled={isLoading}
         />
 

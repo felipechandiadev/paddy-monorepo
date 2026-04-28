@@ -188,8 +188,18 @@ interface PaymentDetailsForm {
   notes: string;
 }
 
+interface PaymentDetailsLineForm extends PaymentDetailsForm {
+  /** Monto del pago (CLP). Obligatorio si hay múltiples pagos. */
+  amount: string;
+  /** Banco informado para el pago (transferencia/cheque/efectivo). */
+  bank: string;
+  /** Cuenta asociada (ej: número de cuenta transferencia). */
+  transferAccount: string;
+}
+
 interface PaymentDetailsErrors {
   paymentDate?: string;
+  amount?: string;
 }
 
 const PAYMENT_METHOD_OPTIONS: { id: string; label: string }[] = [
@@ -203,12 +213,15 @@ const buildInitialPurchaseInvoice = (): PurchaseInvoiceForm => ({
   invoiceDate: '',
 });
 
-const buildInitialPaymentDetails = (): PaymentDetailsForm => ({
+const buildInitialPaymentDetails = (): PaymentDetailsLineForm => ({
   paymentMethod: null,
   paymentDate: '',
   referenceNumber: '',
   bankAccountIndex: null,
   notes: '',
+  amount: '',
+  bank: '',
+  transferAccount: '',
 });
 
 const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
@@ -243,8 +256,10 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
 
   const [purchaseInvoice, setPurchaseInvoice] = useState<PurchaseInvoiceForm>(buildInitialPurchaseInvoice);
   const [purchaseInvoiceErrors, setPurchaseInvoiceErrors] = useState<PurchaseInvoiceErrors>({});
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetailsForm>(buildInitialPaymentDetails);
-  const [paymentDetailsErrors, setPaymentDetailsErrors] = useState<PaymentDetailsErrors>({});
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetailsLineForm[]>([
+    buildInitialPaymentDetails(),
+  ]);
+  const [paymentDetailsErrors, setPaymentDetailsErrors] = useState<PaymentDetailsErrors[]>([]);
   const [summaryValidationMessage, setSummaryValidationMessage] = useState<string | null>(null);
   const [isCreatingSettlement, setIsCreatingSettlement] = useState(false);
   const [isLoadingSettlement, setIsLoadingSettlement] = useState(false);
@@ -437,23 +452,44 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
             ? (calculationDetails.purchaseInvoice as Record<string, unknown>)
             : {};
 
+        const paymentDetailsListRaw =
+          Array.isArray((calculationDetails as any).paymentDetailsList)
+            ? ((calculationDetails as any).paymentDetailsList as Array<Record<string, unknown>>)
+            : null;
+
         const paymentDetailsRaw =
           calculationDetails.paymentDetails &&
           typeof calculationDetails.paymentDetails === 'object'
             ? (calculationDetails.paymentDetails as Record<string, unknown>)
-            : {};
-
-        const paymentMethodRaw = normalizeTextInput(
-          paymentDetailsRaw.paymentMethod
-        ).toLowerCase();
-        const paymentMethod: PaymentMethod | null =
-          paymentMethodRaw === 'transfer' ||
-          paymentMethodRaw === 'check' ||
-          paymentMethodRaw === 'cash'
-            ? (paymentMethodRaw as PaymentMethod)
             : null;
 
-        const paymentBankAccountIndex = Number(paymentDetailsRaw.bankAccountIndex);
+        const normalizePaymentLine = (
+          raw: Record<string, unknown> | null,
+        ): PaymentDetailsLineForm => {
+          const paymentMethodRaw = normalizeTextInput(raw?.paymentMethod).toLowerCase();
+          const paymentMethod: PaymentMethod | null =
+            paymentMethodRaw === 'transfer' ||
+            paymentMethodRaw === 'check' ||
+            paymentMethodRaw === 'cash'
+              ? (paymentMethodRaw as PaymentMethod)
+              : null;
+
+          const paymentBankAccountIndex = Number(raw?.bankAccountIndex);
+          const rawAmount = Number(raw?.amount);
+
+          return {
+            paymentMethod,
+            paymentDate: normalizeDateInput(raw?.paymentDate),
+            referenceNumber: normalizeTextInput(raw?.referenceNumber),
+            bankAccountIndex: Number.isFinite(paymentBankAccountIndex)
+              ? paymentBankAccountIndex
+              : null,
+            notes: normalizeTextInput(raw?.notes ?? settlement.notes ?? ''),
+            amount: Number.isFinite(rawAmount) && rawAmount > 0 ? String(Math.round(rawAmount)) : '',
+            bank: normalizeTextInput(raw?.bank),
+            transferAccount: normalizeTextInput(raw?.transferAccount),
+          };
+        };
 
         setServiceInvoices(nextServiceInvoices);
         setServiceInvoiceErrors(buildInitialServiceInvoiceErrors());
@@ -462,18 +498,12 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
           invoiceDate: normalizeDateInput(purchaseInvoiceRaw.invoiceDate),
         });
         setPurchaseInvoiceErrors({});
-        setPaymentDetails({
-          paymentMethod,
-          paymentDate: normalizeDateInput(paymentDetailsRaw.paymentDate),
-          referenceNumber: normalizeTextInput(paymentDetailsRaw.referenceNumber),
-          bankAccountIndex: Number.isFinite(paymentBankAccountIndex)
-            ? paymentBankAccountIndex
-            : null,
-          notes: normalizeTextInput(
-            paymentDetailsRaw.notes ?? settlement.notes ?? ''
-          ),
-        });
-        setPaymentDetailsErrors({});
+        const nextPaymentDetails = paymentDetailsListRaw?.length
+          ? paymentDetailsListRaw.map((row) => normalizePaymentLine(row))
+          : [normalizePaymentLine(paymentDetailsRaw)];
+
+        setPaymentDetails(nextPaymentDetails);
+        setPaymentDetailsErrors([]);
       } finally {
         if (isMounted) {
           setIsLoadingProducers(false);
@@ -501,8 +531,8 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
       setServiceInvoiceErrors(buildInitialServiceInvoiceErrors());
       setPurchaseInvoice(buildInitialPurchaseInvoice());
       setPurchaseInvoiceErrors({});
-      setPaymentDetails(buildInitialPaymentDetails());
-      setPaymentDetailsErrors({});
+      setPaymentDetails([buildInitialPaymentDetails()]);
+      setPaymentDetailsErrors([]);
       setSummaryValidationMessage(null);
       return;
     }
@@ -809,8 +839,16 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
     const summaryItems: string[] = [];
     if (!purchaseInvoice.invoiceNumber.trim()) summaryItems.push('Numero de factura de compra');
     if (!purchaseInvoice.invoiceDate) summaryItems.push('Fecha de factura de compra');
-    if (!paymentDetails.paymentMethod) summaryItems.push('Metodo de pago');
-    if (!paymentDetails.paymentDate) summaryItems.push('Fecha de pago');
+    const primaryPayment = paymentDetails[0];
+    if (!primaryPayment?.paymentMethod) summaryItems.push('Metodo de pago');
+    if (!primaryPayment?.paymentDate) summaryItems.push('Fecha de pago');
+    if (paymentDetails.length > 1) {
+      const missingAmounts = paymentDetails.some((p) => {
+        const amount = Number(String(p.amount ?? '').replace(/[^\d.-]/g, ''));
+        return !Number.isFinite(amount) || amount <= 0;
+      });
+      if (missingAmounts) summaryItems.push('Monto de pago (todas las lineas)');
+    }
     if (summaryItems.length > 0) {
       sections.push({ section: 'Resumen y pago (Paso 4)', items: summaryItems });
     }
@@ -1326,7 +1364,7 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
 
   const validateSummaryForm = (): boolean => {
     const nextPurchaseErrors: PurchaseInvoiceErrors = {};
-    const nextPaymentErrors: PaymentDetailsErrors = {};
+    const nextPaymentErrors: PaymentDetailsErrors[] = [];
     let hasErrors = false;
 
     const invoiceNum = purchaseInvoice.invoiceNumber.trim();
@@ -1343,12 +1381,28 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
       }
     }
 
-    if (paymentDetails.paymentDate) {
-      const d = new Date(`${paymentDetails.paymentDate}T00:00:00`);
-      if (Number.isNaN(d.getTime())) {
-        nextPaymentErrors.paymentDate = 'La fecha de pago no es valida.';
-        hasErrors = true;
+    for (let i = 0; i < paymentDetails.length; i++) {
+      const line = paymentDetails[i];
+      const lineErrors: PaymentDetailsErrors = {};
+
+      if (line.paymentDate) {
+        const d = new Date(`${line.paymentDate}T00:00:00`);
+        if (Number.isNaN(d.getTime())) {
+          lineErrors.paymentDate = 'La fecha de pago no es valida.';
+          hasErrors = true;
+        }
       }
+
+      // Si hay múltiples pagos, exigir amount por línea (backend lo requiere).
+      if (paymentDetails.length > 1) {
+        const amount = Number(String(line.amount ?? '').replace(/[^\d.-]/g, ''));
+        if (!Number.isFinite(amount) || amount <= 0) {
+          lineErrors.amount = 'Monto requerido';
+          hasErrors = true;
+        }
+      }
+
+      nextPaymentErrors[i] = lineErrors;
     }
 
     setPurchaseInvoiceErrors(nextPurchaseErrors);
@@ -1377,6 +1431,48 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
     setSummaryValidationMessage(null);
 
     try {
+      const primaryPayment = paymentDetails[0] ?? buildInitialPaymentDetails();
+      const paymentListPayload = paymentDetails
+        .map((p) => {
+          const amount = Number(String(p.amount ?? '').replace(/[^\d.-]/g, ''));
+          const bankAccount =
+            p.paymentMethod === 'transfer' &&
+            p.bankAccountIndex !== null &&
+            p.bankAccountIndex !== undefined &&
+            selectedProducer?.bankAccounts?.[p.bankAccountIndex]
+              ? selectedProducer.bankAccounts[p.bankAccountIndex]
+              : null;
+
+          const bankText = String(bankAccount?.bankName ?? p.bank ?? '').trim();
+          const transferAccountText = String(
+            bankAccount?.accountNumber ?? p.transferAccount ?? '',
+          ).trim();
+          const bank = bankText || null;
+          const transferAccount = transferAccountText || null;
+
+          return {
+            paymentMethod: p.paymentMethod,
+            paymentDate: p.paymentDate || null,
+            referenceNumber: p.referenceNumber.trim() || null,
+            bankAccountIndex: p.bankAccountIndex,
+            bank,
+            transferAccount,
+            notes: p.notes.trim() || null,
+            amount: Number.isFinite(amount) && amount > 0 ? Math.round(amount) : null,
+          };
+        })
+        // remove empty lines (no date/method/ref/amount/notes)
+        .filter((p) => {
+          const hasCore =
+            p.paymentMethod ||
+            p.paymentDate ||
+            p.referenceNumber ||
+            p.bankAccountIndex !== null ||
+            p.notes ||
+            p.amount !== null;
+          return hasCore;
+        });
+
       const calculationDetails: Record<string, unknown> = {
         summary: {
           totalReceptions: selectedReceptionsCount,
@@ -1411,20 +1507,18 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
           ivaAmount: selectedReceptionsIvaAmount,
           totalAmount: selectedReceptionsTotalAmount,
         },
-        paymentDetails: {
-          paymentMethod: paymentDetails.paymentMethod,
-          paymentDate: paymentDetails.paymentDate || null,
-          referenceNumber: paymentDetails.referenceNumber.trim() || null,
-          bankAccountIndex: paymentDetails.bankAccountIndex,
-          notes: paymentDetails.notes.trim() || null,
-        },
+        ...(paymentListPayload.length === 1
+          ? { paymentDetails: paymentListPayload[0] }
+          : paymentListPayload.length > 1
+            ? { paymentDetailsList: paymentListPayload }
+            : {}),
       };
 
       const sharedPayload = {
         receptionIds: selectedReceptionIds,
         advanceIds: selectedAdvanceIds,
         calculationDetails,
-        notes: paymentDetails.notes.trim(),
+        notes: primaryPayment.notes.trim(),
       };
 
       const result = isEditMode
@@ -1476,6 +1570,47 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
     setSummaryValidationMessage(null);
 
     try {
+      const primaryPayment = paymentDetails[0] ?? buildInitialPaymentDetails();
+      const paymentListPayload = paymentDetails
+        .map((p) => {
+          const amount = Number(String(p.amount ?? '').replace(/[^\d.-]/g, ''));
+          const bankAccount =
+            p.paymentMethod === 'transfer' &&
+            p.bankAccountIndex !== null &&
+            p.bankAccountIndex !== undefined &&
+            selectedProducer?.bankAccounts?.[p.bankAccountIndex]
+              ? selectedProducer.bankAccounts[p.bankAccountIndex]
+              : null;
+
+          const bankText = String(bankAccount?.bankName ?? p.bank ?? '').trim();
+          const transferAccountText = String(
+            bankAccount?.accountNumber ?? p.transferAccount ?? '',
+          ).trim();
+          const bank = bankText || null;
+          const transferAccount = transferAccountText || null;
+
+          return {
+            paymentMethod: p.paymentMethod,
+            paymentDate: p.paymentDate || null,
+            referenceNumber: p.referenceNumber.trim() || null,
+            bankAccountIndex: p.bankAccountIndex,
+            bank,
+            transferAccount,
+            notes: p.notes.trim() || null,
+            amount: Number.isFinite(amount) && amount > 0 ? Math.round(amount) : null,
+          };
+        })
+        .filter((p) => {
+          const hasCore =
+            p.paymentMethod ||
+            p.paymentDate ||
+            p.referenceNumber ||
+            p.bankAccountIndex !== null ||
+            p.notes ||
+            p.amount !== null;
+          return hasCore;
+        });
+
       const calculationDetails: Record<string, unknown> = {
         summary: {
           totalReceptions: selectedReceptionsCount,
@@ -1510,20 +1645,18 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
           ivaAmount: selectedReceptionsIvaAmount,
           totalAmount: selectedReceptionsTotalAmount,
         },
-        paymentDetails: {
-          paymentMethod: paymentDetails.paymentMethod,
-          paymentDate: paymentDetails.paymentDate || null,
-          referenceNumber: paymentDetails.referenceNumber.trim() || null,
-          bankAccountIndex: paymentDetails.bankAccountIndex,
-          notes: paymentDetails.notes.trim() || null,
-        },
+        ...(paymentListPayload.length === 1
+          ? { paymentDetails: paymentListPayload[0] }
+          : paymentListPayload.length > 1
+            ? { paymentDetailsList: paymentListPayload }
+            : {}),
       };
 
       const sharedPayload = {
         receptionIds: selectedReceptionIds,
         advanceIds: selectedAdvanceIds,
         calculationDetails,
-        notes: paymentDetails.notes.trim(),
+        notes: primaryPayment.notes.trim(),
       };
 
       let targetId: number | undefined = isEditMode ? (settlementId as number) : undefined;
@@ -1553,14 +1686,21 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
 
       const completePayload: CompleteSettlementPayload = {
         calculationDetails,
-        notes: paymentDetails.notes.trim() || undefined,
-        paymentDetails: {
-          paymentMethod: paymentDetails.paymentMethod ?? undefined,
-          paymentDate: paymentDetails.paymentDate || undefined,
-          referenceNumber: paymentDetails.referenceNumber.trim() || undefined,
-          bankAccountIndex: paymentDetails.bankAccountIndex ?? undefined,
-          notes: paymentDetails.notes.trim() || undefined,
-        },
+        notes: primaryPayment.notes.trim() || undefined,
+        paymentDetails:
+          paymentListPayload.length === 0
+            ? {
+                paymentMethod: primaryPayment.paymentMethod ?? undefined,
+                paymentDate: primaryPayment.paymentDate || undefined,
+                referenceNumber: primaryPayment.referenceNumber.trim() || undefined,
+                bankAccountIndex: primaryPayment.bankAccountIndex ?? undefined,
+                notes: primaryPayment.notes.trim() || undefined,
+              }
+            : paymentListPayload.length === 1
+              ? {
+                  ...(paymentListPayload[0] as any),
+                }
+              : (paymentListPayload as any),
       };
 
       const completeResult = await completeSettlement(targetId!, completePayload);
@@ -2743,80 +2883,213 @@ const NewSettlementDialog: React.FC<NewSettlementDialogProps> = ({
                           Informacion del pago al momento de liquidar la deuda. Opcional mientras la pre-liquidacion este en draft.
                         </p>
 
-                        <div className="grid gap-2">
-                          <Select
-                            label="Metodo de pago"
-                            options={PAYMENT_METHOD_OPTIONS}
-                            value={paymentDetails.paymentMethod}
-                            placeholder="Selecciona metodo de pago"
-                            onChange={(val) =>
-                              setPaymentDetails((prev) => ({
-                                ...prev,
-                                paymentMethod: (val as PaymentMethod | null) ?? null,
-                                bankAccountIndex: null,
-                              }))
-                            }
-                            allowClear
-                            compact
+                        <div className="mb-2 flex items-center justify-end">
+                          <IconButton
+                            icon="add"
+                            variant="basicSecondary"
+                            size="sm"
+                            ariaLabel="Agregar pago"
+                            onClick={() => {
+                              setPaymentDetails((prev) => [...prev, buildInitialPaymentDetails()]);
+                              setPaymentDetailsErrors((prev) => [...prev, {}]);
+                              setSummaryValidationMessage(null);
+                            }}
                           />
+                        </div>
 
-                          <div>
-                            <TextField
-                              label="Fecha de pago"
-                              type="date"
-                              value={paymentDetails.paymentDate}
-                              onChange={(e) => {
-                                setPaymentDetails((prev) => ({ ...prev, paymentDate: e.target.value }));
-                                setPaymentDetailsErrors((prev) => ({ ...prev, paymentDate: undefined }));
-                                setSummaryValidationMessage(null);
-                              }}
-                              compact
-                            />
-                            {paymentDetailsErrors.paymentDate && (
-                              <p className="mt-1 text-xs text-red-600">{paymentDetailsErrors.paymentDate}</p>
-                            )}
-                          </div>
+                        <div className="grid gap-3">
+                          {paymentDetails.map((line, idx) => (
+                            <div key={idx} className="rounded-lg border border-gray-200 p-2">
+                              <div className="mb-2 flex items-center justify-between">
+                                <p className="text-[11px] font-semibold text-neutral-700">
+                                  Pago {idx + 1}
+                                </p>
+                                {paymentDetails.length > 1 && (
+                                  <IconButton
+                                    icon="delete"
+                                    variant="ghost"
+                                    size="sm"
+                                    ariaLabel={`Eliminar pago ${idx + 1}`}
+                                    onClick={() => {
+                                      setPaymentDetails((prev) => prev.filter((_, i) => i !== idx));
+                                      setPaymentDetailsErrors((prev) => prev.filter((_, i) => i !== idx));
+                                      setSummaryValidationMessage(null);
+                                    }}
+                                  />
+                                )}
+                              </div>
 
-                          <TextField
-                            label="Numero de referencia"
-                            value={paymentDetails.referenceNumber}
-                            onChange={(e) =>
-                              setPaymentDetails((prev) => ({ ...prev, referenceNumber: e.target.value }))
-                            }
-                            placeholder="N° transferencia o cheque"
-                            compact
-                          />
+                              <div className="grid gap-2 md:grid-cols-2">
+                                <Select
+                                  label="Metodo de pago"
+                                  options={PAYMENT_METHOD_OPTIONS}
+                                  value={line.paymentMethod}
+                                  placeholder="Selecciona metodo de pago"
+                                  onChange={(val) =>
+                                    setPaymentDetails((prev) =>
+                                      prev.map((p, i) =>
+                                        i === idx
+                                          ? {
+                                              ...p,
+                                              paymentMethod: (val as PaymentMethod | null) ?? null,
+                                              bankAccountIndex: null,
+                                            }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  allowClear
+                                  compact
+                                />
 
-                          {paymentDetails.paymentMethod === 'transfer' &&
-                            selectedProducer?.bankAccounts &&
-                            selectedProducer.bankAccounts.length > 0 && (
-                              <Select
-                                label="Cuenta destino del productor"
-                                options={selectedProducer.bankAccounts.map((acc, idx) => ({
-                                  id: idx,
-                                  label: `${acc.bankName} · ${acc.accountTypeName} · ${acc.accountNumber}`,
-                                }))}
-                                value={paymentDetails.bankAccountIndex}
-                                onChange={(val) =>
-                                  setPaymentDetails((prev) => ({
-                                    ...prev,
-                                    bankAccountIndex: val !== null ? Number(val) : null,
-                                  }))
-                                }
-                                allowClear
-                                compact
-                              />
-                            )}
+                                <div>
+                                  <TextField
+                                    label="Fecha de pago"
+                                    type="date"
+                                    value={line.paymentDate}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setPaymentDetails((prev) =>
+                                        prev.map((p, i) =>
+                                          i === idx ? { ...p, paymentDate: value } : p,
+                                        ),
+                                      );
+                                      setPaymentDetailsErrors((prev) =>
+                                        prev.map((err, i) =>
+                                          i === idx ? { ...err, paymentDate: undefined } : err,
+                                        ),
+                                      );
+                                      setSummaryValidationMessage(null);
+                                    }}
+                                    compact
+                                  />
+                                  {!!paymentDetailsErrors[idx]?.paymentDate && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                      {paymentDetailsErrors[idx]?.paymentDate}
+                                    </p>
+                                  )}
+                                </div>
 
-                          <TextField
-                            label="Notas"
-                            value={paymentDetails.notes}
-                            onChange={(e) =>
-                              setPaymentDetails((prev) => ({ ...prev, notes: e.target.value }))
-                            }
-                            placeholder="Observaciones adicionales"
-                            compact
-                          />
+                                <div>
+                                  <TextField
+                                    label="Monto"
+                                    value={line.amount}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setPaymentDetails((prev) =>
+                                        prev.map((p, i) => (i === idx ? { ...p, amount: value } : p)),
+                                      );
+                                      setPaymentDetailsErrors((prev) =>
+                                        prev.map((err, i) => (i === idx ? { ...err, amount: undefined } : err)),
+                                      );
+                                      setSummaryValidationMessage(null);
+                                    }}
+                                    placeholder="Ej: 2500000"
+                                    compact
+                                  />
+                                  {!!paymentDetailsErrors[idx]?.amount && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                      {paymentDetailsErrors[idx]?.amount}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <TextField
+                                  label="Numero de referencia"
+                                  value={line.referenceNumber}
+                                  onChange={(e) =>
+                                    setPaymentDetails((prev) =>
+                                      prev.map((p, i) =>
+                                        i === idx ? { ...p, referenceNumber: e.target.value } : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="N° transferencia o cheque"
+                                  compact
+                                />
+
+                                {line.paymentMethod === 'transfer' &&
+                                  selectedProducer?.bankAccounts &&
+                                  selectedProducer.bankAccounts.length > 0 && (
+                                    <Select
+                                      label="Cuenta destino del productor"
+                                      options={selectedProducer.bankAccounts.map((acc, accIdx) => ({
+                                        id: accIdx,
+                                        label: `${acc.bankName} · ${acc.accountTypeName} · ${acc.accountNumber}`,
+                                      }))}
+                                      value={line.bankAccountIndex}
+                                      onChange={(val) =>
+                                        setPaymentDetails((prev) =>
+                                          prev.map((p, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...p,
+                                                  bankAccountIndex:
+                                                    val !== null ? Number(val) : null,
+                                                  bank:
+                                                    val !== null
+                                                      ? selectedProducer.bankAccounts[Number(val)]
+                                                          ?.bankName ?? p.bank
+                                                      : p.bank,
+                                                  transferAccount:
+                                                    val !== null
+                                                      ? selectedProducer.bankAccounts[Number(val)]
+                                                          ?.accountNumber ?? p.transferAccount
+                                                      : p.transferAccount,
+                                                }
+                                              : p,
+                                          ),
+                                        )
+                                      }
+                                      allowClear
+                                      compact
+                                    />
+                                  )}
+
+                                <TextField
+                                  label="Banco"
+                                  value={line.bank}
+                                  onChange={(e) =>
+                                    setPaymentDetails((prev) =>
+                                      prev.map((p, i) =>
+                                        i === idx ? { ...p, bank: e.target.value } : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="Ej: Banco Estado"
+                                  compact
+                                />
+
+                                <TextField
+                                  label="Cuenta"
+                                  value={line.transferAccount}
+                                  onChange={(e) =>
+                                    setPaymentDetails((prev) =>
+                                      prev.map((p, i) =>
+                                        i === idx
+                                          ? { ...p, transferAccount: e.target.value }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="N° cuenta (si aplica)"
+                                  compact
+                                />
+
+                                <TextField
+                                  label="Notas"
+                                  value={line.notes}
+                                  onChange={(e) =>
+                                    setPaymentDetails((prev) =>
+                                      prev.map((p, i) => (i === idx ? { ...p, notes: e.target.value } : p)),
+                                    )
+                                  }
+                                  placeholder="Observaciones adicionales"
+                                  compact
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
 

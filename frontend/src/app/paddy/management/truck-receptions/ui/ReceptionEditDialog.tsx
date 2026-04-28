@@ -11,7 +11,10 @@ import {
   fetchProducersForLogisticsAction,
   type ProducerOption,
 } from '@/features/logistics-trucks/actions/fetchProducersForLogistics.action';
-import { updateTruckReceptionAction } from '@/features/logistics-trucks/actions/truck-reception.actions';
+import {
+  getTruckReceptionByIdAction,
+  updateTruckReceptionAction,
+} from '@/features/logistics-trucks/actions/truck-reception.actions';
 import type { TruckReceptionGridRow } from '@/features/logistics-trucks/types';
 import {
   LOGISTICS_PRODUCT_OPTIONS,
@@ -39,6 +42,7 @@ export const ReceptionEditDialog: React.FC<ReceptionEditDialogProps> = ({
     driver_name: '',
     carrier_company: '',
     dispatch_guide: '',
+    notes: '',
     gross_weight: '' as string,
     tare_weight: '' as string,
     numero_turno: '' as string,
@@ -81,6 +85,7 @@ export const ReceptionEditDialog: React.FC<ReceptionEditDialogProps> = ({
       driver_name: row.driver_name ?? '',
       carrier_company: row.carrier_company ?? '',
       dispatch_guide: row.dispatch_guide ?? '',
+      notes: '',
       gross_weight:
         row.gross_weight != null && row.gross_weight !== ''
           ? String(row.gross_weight)
@@ -92,6 +97,17 @@ export const ReceptionEditDialog: React.FC<ReceptionEditDialogProps> = ({
       numero_turno: row.numero_turno != null ? String(row.numero_turno) : '',
     });
   }, [open, row]);
+
+  useEffect(() => {
+    if (!open || !row?.id) {
+      return;
+    }
+    void (async () => {
+      const full = await getTruckReceptionByIdAction(row.id);
+      const notes = full?.notes != null ? String(full.notes) : '';
+      setFormData((prev) => ({ ...prev, notes }));
+    })();
+  }, [open, row?.id]);
 
   const producerAutocompleteOptions = useMemo(() => {
     const normalizedQuery = producerSearch.trim().toLowerCase();
@@ -176,12 +192,14 @@ export const ReceptionEditDialog: React.FC<ReceptionEditDialogProps> = ({
 
     try {
       const driverTrim = formData.driver_name.trim();
+      const notesTrim = formData.notes.trim();
       await updateTruckReceptionAction(row.id, {
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
         driver_name: driverTrim === '' ? null : driverTrim,
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
+        notes: notesTrim === '' ? null : notesTrim,
         gross_weight: weight,
         ...(tareNum !== undefined ? { tare_weight: tareNum } : {}),
         product: formData.product,
@@ -312,6 +330,16 @@ export const ReceptionEditDialog: React.FC<ReceptionEditDialogProps> = ({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, dispatch_guide: e.target.value }))
           }
+          disabled={isLoading}
+        />
+
+        <TextField
+          label="Notas (opcional)"
+          name="reception-edit-notes"
+          type="textarea"
+          rows={3}
+          value={formData.notes}
+          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
           disabled={isLoading}
         />
 

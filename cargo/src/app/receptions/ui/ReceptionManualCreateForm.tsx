@@ -29,6 +29,7 @@ export const ReceptionManualCreateForm: React.FC<ReceptionManualCreateFormProps>
     driver_name: '',
     carrier_company: '',
     dispatch_guide: '',
+    notes: '',
     gross_weight: '' as string,
     tare_weight: '' as string,
   });
@@ -115,12 +116,14 @@ export const ReceptionManualCreateForm: React.FC<ReceptionManualCreateFormProps>
 
     try {
       const driverTrim = formData.driver_name.trim();
+      const notesTrim = formData.notes.trim();
       await createTruckReceptionAction({
         producer_id: formData.producer_id,
         license_plate: formData.license_plate.trim(),
         ...(driverTrim ? { driver_name: driverTrim } : {}),
         carrier_company: formData.carrier_company.trim() || undefined,
         dispatch_guide: formData.dispatch_guide.trim() || undefined,
+        ...(notesTrim ? { notes: notesTrim } : {}),
         gross_weight: weight,
         ...(tareNum !== undefined ? { tare_weight: tareNum } : {}),
         product: formData.product,
@@ -134,6 +137,7 @@ export const ReceptionManualCreateForm: React.FC<ReceptionManualCreateFormProps>
         driver_name: '',
         carrier_company: '',
         dispatch_guide: '',
+        notes: '',
         gross_weight: '',
         tare_weight: '',
       });
@@ -247,6 +251,19 @@ export const ReceptionManualCreateForm: React.FC<ReceptionManualCreateFormProps>
           value={formData.dispatch_guide}
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, dispatch_guide: e.target.value }))
+          }
+          disabled={isLoading}
+          labelAlwaysVisible
+        />
+
+        <TextField
+          label="Notas (opcional)"
+          name="reception-create-notes"
+          type="textarea"
+          rows={3}
+          value={formData.notes}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
           disabled={isLoading}
           labelAlwaysVisible

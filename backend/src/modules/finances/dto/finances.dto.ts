@@ -9,6 +9,7 @@ import {
   IsBoolean,
   IsInt,
   IsObject,
+  ValidateIf,
   Min,
 } from 'class-validator';
 import {
@@ -281,8 +282,12 @@ export class CompleteSettlementDto {
   notes?: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.paymentDetails !== undefined && !Array.isArray(o.paymentDetails))
   @IsObject()
-  paymentDetails?: Record<string, unknown>;
+  @ValidateIf((o) => Array.isArray(o.paymentDetails))
+  @IsArray()
+  @IsObject({ each: true })
+  paymentDetails?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
 export class SettlementActionDto {

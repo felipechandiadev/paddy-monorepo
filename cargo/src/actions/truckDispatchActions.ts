@@ -23,6 +23,7 @@ export interface TruckDispatch {
   driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string | null;
   gross_weight?: number;
   tare_weight?: number;
   net_weight?: number;
@@ -37,6 +38,7 @@ export interface CreateTruckDispatchWithTarePayload {
   driver_name?: string;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string;
   tare_weight: number;
   product: LogisticsProductCode;
   created_by?: string;
@@ -75,6 +77,7 @@ function parseDispatchFromApi(raw: Record<string, unknown>): TruckDispatch {
       raw.carrier_company != null ? String(raw.carrier_company) : undefined,
     dispatch_guide:
       raw.dispatch_guide != null ? String(raw.dispatch_guide) : undefined,
+    notes: raw.notes != null ? String(raw.notes) : null,
     gross_weight:
       raw.gross_weight != null ? Number(raw.gross_weight) : undefined,
     tare_weight: raw.tare_weight != null ? Number(raw.tare_weight) : undefined,
@@ -137,6 +140,7 @@ export async function createTruckDispatchWithTareAction(
       driver_name: payload.driver_name,
       carrier_company: payload.carrier_company,
       dispatch_guide: payload.dispatch_guide,
+      notes: payload.notes,
       tare_weight: payload.tare_weight,
       product: payload.product,
       created_by: payload.created_by,
@@ -204,6 +208,7 @@ export interface UpdateTruckDispatchPayload {
   driver_name?: string | null;
   carrier_company?: string;
   dispatch_guide?: string;
+  notes?: string | null;
   gross_weight?: number;
   tare_weight?: number;
   product?: LogisticsProductCode;
