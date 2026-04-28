@@ -83,6 +83,21 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+type ReceptionWithRawApiDates = PrintableReception & {
+  reception_date?: string | Date | null;
+  created_at?: string | Date | null;
+  updatedAt?: string | Date | null;
+  updated_at?: string | Date | null;
+};
+
+function nonEmpty(
+  v: string | Date | null | undefined,
+): string | Date | undefined {
+  if (v == null) return undefined;
+  if (typeof v === 'string' && v.trim() === '') return undefined;
+  return v;
+}
+
 export const ReceptionToPrint: React.FC<ReceptionToPrintProps> = ({
   reception,
   isLoadingAnalysis = false,
@@ -321,6 +336,15 @@ export const ReceptionToPrint: React.FC<ReceptionToPrintProps> = ({
   const isPreview = reception.templateName === 'Previsualización' || reception.id === 0;
   const receptionNumber = isPreview ? '-' : (reception.id > 0 ? reception.id : reception.guide);
   const dryPercent = analysis?.dryPercent ?? reception.dryPercent;
+  /** Fecha de recepción explícita; si no viene del backend, mostrar creación. */
+  const r = reception as ReceptionWithRawApiDates;
+  const headerReceptionDate =
+    nonEmpty(r.receptionDate) ??
+    nonEmpty(r.reception_date) ??
+    nonEmpty(r.createdAt) ??
+    nonEmpty(r.created_at) ??
+    nonEmpty(r.updatedAt) ??
+    nonEmpty(r.updated_at);
 
   return (
     <div className={styles.sheet}>
@@ -334,7 +358,7 @@ export const ReceptionToPrint: React.FC<ReceptionToPrintProps> = ({
         <div className={styles.documentMeta}>
           <h2 className={styles.documentTitle}>RECEPCION PADDY</h2>
           <p className={styles.documentDate} suppressHydrationWarning>
-            Fecha: {formatDateValue(reception.receptionDate)}
+            Fecha: {formatDateValue(headerReceptionDate)}
           </p>
           {!isPreview && (
             <p className={styles.guideBadge}>Folio {receptionNumber}</p>

@@ -54,6 +54,8 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
 }) => {
   const entry = toDate(truck.entry_at);
   const exit = toDate(truck.finished_at);
+  /** Encabezado "Fecha:": salida si existe; si no, entrada (mismo criterio que en cargo). */
+  const documentDate = exit ?? entry;
   const producerRut = truck.producer?.rut
     ? formatChileanRut(String(truck.producer.rut))
     : '—';
@@ -79,9 +81,9 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
           <h2 className={styles.ticketTitle}>TICKET DE PESAJE</h2>
           <p className={styles.ticketNumber}>Folio Nº {folioFormatted}</p>
           <p className={styles.documentSubtitle}>{operationSubtitle}</p>
-          {exit && (
+          {documentDate && (
             <p className={styles.documentDate} suppressHydrationWarning>
-              Fecha: {formatDateDash(exit)}
+              Fecha: {formatDateDash(documentDate)}
             </p>
           )}
         </div>
@@ -103,7 +105,7 @@ export const TruckWeighingTicketToPrint: React.FC<TruckWeighingTicketToPrintProp
           </div>
         </div>
 
-        <div className={styles.blockRow}>
+        <div className={`${styles.blockRow} ${styles.producerBlockRow}`}>
           <span className={styles.label}>Productor:</span>
           <span className={styles.value}>{productorLine}</span>
         </div>

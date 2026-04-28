@@ -21,9 +21,43 @@ export function parseDate(value?: string | Date | DateTime | null): DateTime | n
     return DateTime.fromJSDate(value, { zone: 'utc' });
   }
 
-  // For dates without time info (YYYY-MM-DD format), fromISO parses them as local time
-  // This prevents timezone offset issues when input is date-only strings
-  return DateTime.fromISO(String(value));
+  const s = String(value).trim();
+  if (!s) return null;
+
+  // dd-MM-yyyy (e.g. 23-04-2026): first segment 1-2 digits, last segment 4-digit year. Not yyyy-MM-dd.
+  const mDashDmy = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (mDashDmy) {
+    const day = Number(mDashDmy[1]);
+    const month = Number(mDashDmy[2]);
+    const year = Number(mDashDmy[3]);
+    const dmy = DateTime.fromObject({ year, month, day }, { zone: 'local' });
+    if (dmy.isValid) return dmy;
+  }
+  const mSlashDmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mSlashDmy) {
+    const fromSlash = DateTime.fromFormat(s, 'd/M/yyyy', { zone: 'local' });
+    if (fromSlash.isValid) return fromSlash;
+  }
+
+  // Backend / TypeORM: "2026-04-23 12:00:00" (MySQL) — fromISO() NO lo acepta; el grid usa new Date() y sí.
+  if (/^\d{4}-\d{2}-\d{2} \d/.test(s)) {
+    const sql = DateTime.fromSQL(s, { zone: 'utc' });
+    if (sql.isValid) return sql;
+  }
+
+  if (s.includes('T')) {
+    const withZone = DateTime.fromISO(s, { zone: 'utc' });
+    if (withZone.isValid) return withZone;
+  }
+
+  const dateOnly = DateTime.fromISO(s);
+  if (dateOnly.isValid) return dateOnly;
+
+  const js = new Date(s);
+  if (!Number.isNaN(js.getTime())) {
+    return DateTime.fromJSDate(js, { zone: 'utc' });
+  }
+  return null;
 }
 
 /**

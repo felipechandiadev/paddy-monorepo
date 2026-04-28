@@ -216,7 +216,8 @@ export const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({ rows, to
             icon="delete"
             variant="ghost"
             size="sm"
-            ariaLabel="Eliminar recepción"
+            className="text-destructive hover:bg-destructive/10"
+            ariaLabel="Eliminar recepción de carga"
             onClick={() => setDeleteRow(row)}
           />
         </div>
@@ -228,8 +229,8 @@ export const ReceptionsDataGrid: React.FC<ReceptionsDataGridProps> = ({ rows, to
       {
         field: 'actions',
         headerName: '',
-        width: 136,
-        minWidth: 136,
+        width: 156,
+        minWidth: 156,
         align: 'center',
         headerAlign: 'center',
         sortable: false,
